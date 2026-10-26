@@ -1,3 +1,5 @@
+import { homeView, isWorkoutComplete } from "./home.js";
+import { setupPwa } from "./pwa.js";
 import { landingPage } from "./landing.js";
 import { createProgramImporter } from "./import-ui.js";
 import { programsView, programForm } from "./programs.js";
@@ -120,7 +122,10 @@ function programDialog() {
 let lastRenderSignedIn = false;
 function render() {
   const signedIn = cloud.isSignedIn();
-  if (signedIn !== lastRenderSignedIn) window.scrollTo(0, 0);
+  if (signedIn !== lastRenderSignedIn) {
+    window.scrollTo(0, 0);
+    tab = signedIn && state.activeProgramId ? "home" : "planner";
+  }
   lastRenderSignedIn = signedIn;
   if (!cloud.isSignedIn()) {
     document.title = "Buff — Your next chapter starts with a plan.";
@@ -137,21 +142,25 @@ function render() {
       Math.min(selectedProgramWeek, program().weeks),
     );
   const pageTitle =
-    tab === "programs"
-      ? program()
-        ? program().name
-        : "Your next chapter."
-      : tab === "planner"
-        ? "Your week, in motion."
-        : "Look how far you’ve come.";
+    tab === "home"
+      ? "Your next good workout."
+      : tab === "programs"
+        ? program()
+          ? program().name
+          : "Your next chapter."
+        : tab === "planner"
+          ? "Your week, in motion."
+          : "Look how far you’ve come.";
   const pageDescription =
-    tab === "programs"
-      ? program()
-        ? `${program().weeks} weeks · ${dateLabel(program().startDate)} – ${dateLabel(programEnd(program()))}`
-        : "Create a program. Build it week by week. Make it your own."
-      : tab === "planner"
-        ? "A little planning. A little consistency. A stronger you."
-        : "Every set is a step forward. Here’s the work you’ve put in.";
+    tab === "home"
+      ? "Your program. One workout at a time."
+      : tab === "programs"
+        ? program()
+          ? `${program().weeks} weeks · ${dateLabel(program().startDate)} – ${dateLabel(programEnd(program()))}`
+          : "Create a program. Build it week by week. Make it your own."
+        : tab === "planner"
+          ? "A little planning. A little consistency. A stronger you."
+          : "Every set is a step forward. Here’s the work you’ve put in.";
 
   const weekly = state.workouts.filter(
     (w) => w.date >= week && w.date <= addDays(week, 6),
@@ -162,8 +171,8 @@ function render() {
   }).length;
   const total = weekly.reduce((n, w) => n + progress(w).total, 0);
   const done = weekly.reduce((n, w) => n + progress(w).done, 0);
-  app.innerHTML = `<aside class="sidebar"><a class="brand" href="/" aria-label="Buff home"><span class="brand-icon">b.</span>buff<span class="brand-dot">.</span></a><div class="workspace-label">YOUR WORKSPACE</div><nav><button data-tab="programs" class="nav-item ${tab === "programs" ? "active" : ""}"><span>▤</span> Programs</button><button data-tab="planner" class="nav-item ${tab === "planner" ? "active" : ""}"><span>▦</span> Weekly planner</button><button data-tab="history" class="nav-item ${tab === "history" ? "active" : ""}"><span>◷</span> Workout history</button></nav><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">Y</span><div><strong>Your workspace</strong><small>Personal training journal</small></div></div></aside>
-<main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Workout history"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content"><div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div><div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div></div>
+  app.innerHTML = `<aside class="sidebar"><a class="brand" href="/" aria-label="Buff home"><span class="brand-icon">b.</span>buff<span class="brand-dot">.</span></a><div class="workspace-label">YOUR WORKSPACE</div><nav><button data-tab="home" class="nav-item ${tab === "home" ? "active" : ""}"><span>⌂</span> Home</button><button data-tab="programs" class="nav-item ${tab === "programs" ? "active" : ""}"><span>▤</span> Programs</button><button data-tab="planner" class="nav-item ${tab === "planner" ? "active" : ""}"><span>▦</span> Weekly planner</button><button data-tab="history" class="nav-item ${tab === "history" ? "active" : ""}"><span>◷</span> Workout history</button></nav><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">Y</span><div><strong>Your workspace</strong><small>Personal training journal</small></div></div></aside>
+<main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "home" ? "Home" : tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Workout history"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content"><div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div><div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div></div>
 ${storageError ? '<div class="notice">Device storage is unavailable or was reset. Your changes may not persist after closing this page.</div>' : ""}
 ${
   tab === "planner"
@@ -192,7 +201,9 @@ ${
           esc,
           dateLabel,
         })
-      : history()
+      : tab === "home"
+        ? homeView({ state, workoutCard, esc, dateLabel })
+        : history()
 }
 <footer><span class="footer-logo">b.</span> Progress isn’t always loud. Sometimes it’s just showing up. <span>YOU’VE GOT THIS</span></footer></div></main>${modal ? dialog() : ""}`;
   const strip = app.querySelector(".program-weeks"),
@@ -204,7 +215,7 @@ ${
 function workoutCard(w) {
   const p = progress(w);
   let lastGroup = null;
-  return `<article class="workout-card"><div class="workout-heading"><div class="workout-symbol">${upArrow}</div><div class="workout-title"><div class="tag">${p.total && p.done === p.total ? "COMPLETED" : programSummary(w) ? esc(programSummary(w)) : "STRENGTH & CONDITIONING"}</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises <span>·</span> ${p.total} sets <span>·</span> ${p.done} sets completed</p></div><div class="workout-actions"><button class="button subtle" data-action="edit-workout" data-id="${w.id}">Edit plan</button><button class="button primary" data-action="log" data-id="${w.id}">${p.done ? "Continue logging" : "Log workout"} <span>→</span></button></div></div>${w.note ? `<p class="workout-note">${esc(w.note)}</p>` : ""}<div class="exercise-table"><div class="exercise-table-head"><span>EXERCISE</span><span>SETS</span><span>TARGET</span><span>WEIGHT</span><span></span></div>${w.exercises
+  return `<article class="workout-card ${isWorkoutComplete(w) ? "workout-complete" : ""}"><div class="workout-heading"><div class="workout-symbol">${upArrow}</div><div class="workout-title"><div class="tag">${p.total && p.done === p.total ? "COMPLETED" : programSummary(w) ? esc(programSummary(w)) : "STRENGTH & CONDITIONING"}</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises <span>·</span> ${p.total} sets <span>·</span> ${p.done} sets completed</p></div><div class="workout-actions"><button class="button subtle" data-action="edit-workout" data-id="${w.id}">Edit plan</button><button class="button primary" data-action="log" data-id="${w.id}">${p.done ? "Continue logging" : "Log workout"} <span>→</span></button></div></div>${w.note ? `<p class="workout-note">${esc(w.note)}</p>` : ""}<div class="exercise-table"><div class="exercise-table-head"><span>EXERCISE</span><span>SETS</span><span>TARGET</span><span>WEIGHT</span><span></span></div>${w.exercises
     .map((e, i) => {
       const newGroup = e.group && e.group !== lastGroup;
       lastGroup = e.group;
@@ -271,6 +282,15 @@ app.addEventListener("click", (event) => {
     cloud.open(a === "landing-signup" ? "signup" : "signin");
     return;
   }
+  if (a === "start-program") {
+    const id = b.dataset.program;
+    if (state.programs.some((p) => p.id === id)) {
+      state.activeProgramId = id;
+      tab = "home";
+      save();
+      window.scrollTo(0, 0);
+    }
+  }
   if (a === "new-program") modal = { type: "new-program" };
   if (a === "open-program") {
     selectedProgramId = b.dataset.program;
@@ -293,6 +313,8 @@ app.addEventListener("click", (event) => {
     for (const w of state.workouts)
       if (w.programId === selectedProgramId) delete w.programId;
     state.programs = state.programs.filter((p) => p.id !== selectedProgramId);
+    if (state.activeProgramId === selectedProgramId)
+      delete state.activeProgramId;
     selectedProgramId = null;
     modal = null;
     save();
@@ -586,3 +608,5 @@ const importer = createProgramImporter({
 });
 render();
 cloud.start();
+
+setupPwa();

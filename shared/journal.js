@@ -21,6 +21,12 @@ export function validState(s) {
     (!Array.isArray(s.programs) || s.programs.length > 500)
   )
     return false;
+  if (
+    s.activeProgramId !== undefined &&
+    s.activeProgramId !== null &&
+    !text(s.activeProgramId, 100)
+  )
+    return false;
   const programs = new Map();
   for (const p of s.programs || []) {
     if (

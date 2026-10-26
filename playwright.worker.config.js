@@ -11,6 +11,8 @@ export default defineConfig({
     "exercise-history.spec.js",
     "log-defaults.spec.js",
     "landing.spec.js",
+    "pwa.spec.js",
+    "active-program.spec.js",
   ],
   workers: 1,
   use: {

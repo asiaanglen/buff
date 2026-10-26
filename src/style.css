@@ -1391,7 +1391,7 @@ button:disabled {
     width: 100%;
     margin: 6px 0 0;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
   .nav-item {
     justify-content: center;
@@ -2280,4 +2280,106 @@ button:disabled {
   height: 1px;
   background: #eee8f4;
   flex: 1;
+}
+
+.pwa-help {
+  position: fixed;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  right: 14px;
+  z-index: 30;
+  border: 1px solid #ded5f5;
+  border-radius: 20px;
+  background: #fff;
+  color: #403453;
+  padding: 9px 14px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px #26233312;
+}
+.pwa-dialog {
+  border: 0;
+  border-radius: 22px;
+  padding: 28px;
+  max-width: 440px;
+  width: calc(100% - 48px);
+  max-height: 85dvh;
+  overflow: auto;
+  color: #262333;
+}
+.pwa-dialog::backdrop {
+  background: #26233380;
+}
+.pwa-dialog p {
+  line-height: 1.6;
+  margin: 16px 0;
+}
+.pwa-note {
+  font-size: 13px;
+  color: #686475;
+}
+.pwa-dialog [hidden] {
+  display: none;
+}
+
+.next-workout {
+  margin: 24px 0 36px;
+  padding: 20px;
+  border: 2px solid #c6b5e6;
+  border-radius: 20px;
+  background: #f4f0fb;
+}
+.next-workout > .eyebrow {
+  margin-bottom: 16px;
+}
+.next-workout .workout-card {
+  margin-bottom: 0;
+}
+.home-workouts-title {
+  margin-bottom: 18px;
+}
+.home-workout {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 20px;
+  margin-bottom: 12px;
+  border: 1px solid #e5e3ea;
+  border-radius: 16px;
+  background: white;
+}
+.home-workout h3 {
+  margin: 8px 0 0;
+}
+.home-workout small {
+  color: #686475;
+}
+.workout-next {
+  border-color: #bda7df;
+}
+.workout-complete {
+  background: #eeeff1;
+  border-color: #d9dbdf;
+  color: #72757d;
+}
+.workout-complete h2,
+.workout-complete h3,
+.workout-complete strong {
+  color: #72757d;
+}
+.workout-complete .exercise-row {
+  background: transparent;
+}
+@media (max-width: 600px) {
+  .next-workout {
+    padding: 12px;
+  }
+  .home-workout {
+    flex-wrap: wrap;
+  }
+  .program-toolbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
 }

@@ -137,3 +137,13 @@ Unit/API tests cover dates, independent set logs, credentials, and the preserved
 The previous Node/SQLite backend is retained for compatibility and development. Its existing databases and password hashes are unchanged; it is no longer the recommended hosted setup. Stop a running Worker/Vite development server before running the Node browser suite, which uses ports 3001 and 5173.
 
 Run the Node backend with `PUBLIC_ORIGIN=http://127.0.0.1:5173 npm run server`, then `BUFF_API_TARGET=http://127.0.0.1:3001 npm run dev`. Existing Node accounts are not automatically migrated into D1. Keep the original database and download any account journals before switching hosting providers. Guest data already in your browser can be imported when creating the D1 account.
+
+## Install Buff on your phone
+
+Buff is an installable PWA at https://buff.asiaanglen.workers.dev. Tap **Install Buff** for instructions or use Chrome's native install prompt when available. On iPhone/iPad, open it in Safari → Share → Add to Home Screen → Open as Web App (if shown) → Add. On Android, use Chrome → menu → Install app / Add to Home screen. No store account or paid hosting is required.
+
+The manifest includes standard, maskable, and Apple home-screen icons. The service worker caches only public installation resources and a generic offline page; it never caches account APIs, journal data, or authenticated HTML. Opening the installed app requires a connection to verify the account. An already loaded journal retains the existing offline editing and reconnect sync behavior.
+
+## Start a program
+
+Choose **Start program** in the program library or program detail to make it your active program. Your signed-in **Home** page features the earliest unfinished workout in scheduled order, regardless of the current calendar week. Completing every set greys out that workout and promotes the next one after closing the log. Completed logs stay available, and undoing a completed set makes the workout unfinished again. Starting another program changes the focus without resetting any logs. The active choice is stored in your account journal and syncs across devices.
