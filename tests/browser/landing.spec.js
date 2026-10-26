@@ -39,7 +39,7 @@ test("landing page signup leads to the planner, signed-in reloads stay there, an
   ).toBeVisible();
   const email = `landing-${Date.now()}@example.com`;
   await page.getByLabel("Email", { exact: true }).fill(email);
-  await page.getByLabel(/^Password/).fill("a private landing password");
+  await page.getByLabel(/^Password/).fill("x");
   await page
     .getByRole("button", { name: "Create account →", exact: true })
     .click();

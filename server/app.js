@@ -122,11 +122,11 @@ export function createApp({
         !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
         email.length > 254 ||
         typeof password !== "string" ||
-        password.length < 12 ||
+        password.length === 0 ||
         password.length > 200
       )
         return res.status(400).json({
-          error: "Use a valid email and a password of 12–200 characters.",
+          error: "Use a valid email and a non-empty password of at most 200 characters.",
         });
       const normalized = email.trim().toLowerCase();
       if (db.prepare("SELECT id FROM users WHERE email=?").get(normalized))

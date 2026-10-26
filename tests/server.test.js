@@ -24,14 +24,14 @@ test("accounts isolate journals, durable revisions prevent lost updates, and ses
       (
         await req("/auth/signup", "POST", {
           email: "a@example.com",
-          password: "short",
+          password: "",
         })
       ).status,
       400,
     );
     const a = await req("/auth/signup", "POST", {
       email: "a@example.com",
-      password: "a long safe password",
+      password: "x",
     });
     assert.equal(a.status, 200);
     const cookie = a.headers.get("set-cookie").split(";")[0];
@@ -85,7 +85,7 @@ test("accounts isolate journals, durable revisions prevent lost updates, and ses
     );
     const signIn = await req("/auth/signin", "POST", {
       email: "A@example.com",
-      password: "a long safe password",
+      password: "x",
     });
     assert.equal(signIn.status, 200);
     const second = signIn.headers.get("set-cookie").split(";")[0];
