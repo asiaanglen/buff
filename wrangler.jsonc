@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "buff",
+  "account_id": "8447d2f9fbf3e27878055f12eab784f8",
   "main": "worker/index.js",
   "compatibility_date": "2026-10-26",
   "workers_dev": true,
@@ -14,7 +15,7 @@
     {
       "binding": "DB",
       "database_name": "buff",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "50c0fabf-368b-4cba-bf6c-138c861ec637",
       "migrations_dir": "migrations",
     },
   ],

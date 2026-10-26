@@ -2,6 +2,10 @@
 
 A responsive weekly workout planner with accounts, cross-device sync, supersets, repetition or time targets, per-set logging, history, and weekly progress.
 
+## Deployed app
+
+Buff is deployed at **https://buff.asiaanglen.workers.dev**. Cloudflare confirmed the deployment and enabled public routing. This environment’s egress policy currently blocks requests to that new hostname, so live sign-in/sync verification is pending a network settings update. The Workers/D1 workflow passed its local runtime tests.
+
 ## Free hosting: Cloudflare Workers + D1
 
 The frontend and API run together on a Cloudflare Worker. Accounts and workout history live in Cloudflare D1, so no paid server or persistent disk is needed. Use a Cloudflare **Free** account/Workers plan and stay within its Workers and D1 allowances. Free hosting is subject to request, database, and storage quotas; monitor usage in Cloudflare. Nothing in this project enables a paid plan or automatic upgrades.
@@ -18,15 +22,15 @@ To deploy yourself with Wrangler:
 
 1. Install dependencies with `npm ci` (Node.js 24+).
 2. Authenticate with `npx wrangler login`, or provide `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` through your environment.
-3. Run `npx wrangler d1 create buff`. Check for an existing database first; do not reuse an unrelated database or overwrite an existing Worker. The checked-in database ID is a local-development placeholder, not a live database.
-4. Set the returned database ID in the `DB` binding in `wrangler.jsonc`.
+3. For this existing deployment, the Worker `buff` and its D1 database already exist; reuse the checked-in bindings. Do not recreate or delete the database. For a different account, set its `account_id`, inspect existing resources, then create a dedicated database with `npx wrangler d1 create buff` if needed. Do not overwrite an unrelated Worker or database.
+4. When deploying to a different account, set the returned database ID in the `DB` binding in `wrangler.jsonc`. The existing deployment already has its real database ID configured.
 5. Run `npm run db:migrate:remote` to create the database tables.
 6. Run `npm run deploy`, then open the returned HTTPS `workers.dev` URL. If Cloudflare asks you to register a workers.dev subdomain, choose one in your account.
 7. Create an account and sign into that same account and URL on your other devices.
 
 The deployed app requires **no API keys or secrets in its runtime configuration**: Wrangler supplies `DB` and `ASSETS` bindings. Origin checks use the current site origin automatically. `PUBLIC_ORIGIN` is optional if you need to restrict sign-ins and writes to a single domain.
 
-No Cloudflare deployment has been performed yet; account access is required before creating the remote resources.
+The deployed Worker uses D1 database `buff` (`50c0fabf-368b-4cba-bf6c-138c861ec637`). Deployment credentials are separate from app accounts: create your own Buff account through the site; no owner login or default password has been created.
 
 ## Local development
 
