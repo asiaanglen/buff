@@ -15,7 +15,16 @@
     <title>Buff — Your week. Your progress.</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <section class="boot-screen" role="status" aria-live="polite">
+        <div class="boot-content">
+          <span class="boot-mark" aria-hidden="true">b.</span
+          ><span class="boot-spinner" aria-hidden="true"></span>
+          <h1>Loading Buff</h1>
+          <p>Getting your workouts ready…</p>
+        </div>
+      </section>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

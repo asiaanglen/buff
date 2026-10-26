@@ -179,3 +179,5 @@ Choose **Swap exercise** to open the library and select a replacement or enter a
 ## Connect to AI
 
 The signed-in **Connect to AI** tab provides separate step-by-step setup guides for Claude and ChatGPT, a copyable MCP endpoint derived from the current host, permission descriptions, example prompts, troubleshooting, provider help links and a link to manage connected apps. Users authorize their own accounts through Buff OAuth; the page does not automatically connect external AI accounts. Custom app/connector availability and exact menus depend on the AI service’s plan and workspace settings.
+
+Startup shows a branded loading screen while the session and journal are checked, including in the initial HTML before JavaScript loads. Authenticated users go straight from loading to their planner/Home; anonymous users see the public landing page only after the session check. Failed startup shows a retry screen. Session, journal-load and provider-discovery requests have a 15-second timeout. **Swap exercise** sits beside the exercise name in both previews and expanded exercise headings.

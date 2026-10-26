@@ -21,6 +21,7 @@ export default defineConfig({
     "inline-swap.spec.js",
     "connect-ai.spec.js",
     "add-sets.spec.js",
+    "loading.spec.js",
   ],
   workers: 1,
   use: {

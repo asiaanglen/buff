@@ -77,7 +77,9 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
     return body;
   }
   async function loadAccount(nextUser) {
-    const remote = await request("/state");
+    const remote = await request("/state", {
+      signal: AbortSignal.timeout(15000),
+    });
     let cached;
     try {
       cached = JSON.parse(localStorage.getItem(`buff-account-${nextUser.id}`));
@@ -195,7 +197,9 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
   }
   async function refreshProviders() {
     try {
-      const p = await request("/auth/providers");
+      const p = await request("/auth/providers", {
+        signal: AbortSignal.timeout(15000),
+      });
       googleEnabled = p.google === true;
       googleLinked = p.googleLinked === true;
     } catch {
@@ -370,7 +374,7 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
     async start() {
       try {
         const [{ user: sessionUser }] = await Promise.all([
-          request("/auth/session"),
+          request("/auth/session", { signal: AbortSignal.timeout(15000) }),
           refreshProviders(),
         ]);
         const errors = {
@@ -406,7 +410,9 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
         }
       } catch {
         notify("Device only — sync server unavailable");
+        return { ok: false };
       }
+      return { ok: true };
     },
   };
 }
