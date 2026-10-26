@@ -53,6 +53,12 @@ Vite serves the frontend and proxies `/api` to the local Worker on port 8787. Wr
 
 The Worker can also serve the last built frontend directly, without Vite. When doing so, start `npx wrangler dev --port 8787` without the development-only `PUBLIC_ORIGIN` override.
 
+## Public landing page and authentication
+
+Signed-out visitors see the public landing page with **Sign in** and **Get started free** actions. Opening `/app` or another private app URL without a valid session returns to the landing page; there is no guest planner entry. Signed-in users go directly to their planner, and signing out returns to the landing page. Existing device-only journals are preserved and can be imported into an authenticated account.
+
+Google sign-in is implemented but not enabled until a Google OAuth Web client and Worker credentials are configured. No Google client was created automatically. See [Google sign-in setup](docs/google-signin.md) for the exact callback URL and secure configuration steps. Matching emails are never silently linked to password accounts.
+
 ## Exercise history and weight units
 
 All weights are displayed and entered in **pounds (lbs)**, including program imports and MCP tools. Legacy journals labeled `kg` are converted on read (1 kg = 2.2046226218 lbs, rounded to two decimals) and saved as pounds on the next normal save. Existing planned weights and actual logs retain the same physical weight; reps, seconds, completion and exercise identities are unchanged. Unit markers prevent converting an already migrated journal again. Plain CSV `weight` or `weight_lbs` means pounds; an explicit `weight_kg` column is converted automatically.
@@ -99,7 +105,7 @@ Programs and their workout assignments sync with your account. Existing journals
 
 Use **Account** in the top bar to create an account and sign in. On other devices, use the same deployed URL and account. Plans, supersets, and completed set logs sync automatically. While the page is visible, it checks for changes every 30 seconds and on focus/reconnect. Local edits sync after a short debounce.
 
-Edits made while offline are cached per account and retried when the server is reachable. Load the app online before going offline; offline reload is not supported. Your first cloud journal imports guest workouts from that device. Later sign-ins load the existing cloud journal; **Import guest workouts** adds guest workout IDs that are not already present. Signing out returns to your separate guest journal.
+Edits made while offline are cached per account and retried when the server is reachable. Load the app online before going offline; offline reload is not supported. Your first cloud journal imports guest workouts from that device. Later sign-ins load the existing cloud journal; **Import guest workouts** adds guest workout IDs that are not already present. Signing out returns to the landing page and retains the separate device-only journal for later authenticated import.
 
 Concurrent changes do not silently overwrite one another. Sync pauses and offers a downloadable backup and an explicit choice of which journal version to keep. The conflict remains pending across reloads. Local account caches remain on the device after sign-out; use a trusted device and clear site data when needed.
 

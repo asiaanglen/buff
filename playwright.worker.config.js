@@ -10,6 +10,7 @@ export default defineConfig({
     "import.spec.js",
     "exercise-history.spec.js",
     "log-defaults.spec.js",
+    "landing.spec.js",
   ],
   workers: 1,
   use: {

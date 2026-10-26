@@ -101,10 +101,8 @@ test("browser sends a stretched credential, never the raw password, to the Worke
   page.on("request", (r) => {
     if (r.url().endsWith("/api/auth/signup")) submitted = r.postDataJSON();
   });
-  await page.goto("/");
-  await page
-    .getByRole("button", { name: "Account and cross-device sync" })
-    .click();
+  await page.goto("/app");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page
     .getByRole("button", { name: "New to Buff? Create an account" })
     .click();

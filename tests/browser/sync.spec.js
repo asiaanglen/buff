@@ -8,10 +8,8 @@ test("two isolated devices share workouts, retain offline changes, and resolve c
     b = await second.newPage();
   const email = `sync-${Date.now()}@example.com`;
   async function auth(page, signup) {
-    await page.goto("/");
-    await page
-      .getByRole("button", { name: "Account and cross-device sync" })
-      .click();
+    await page.goto("/app");
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
     if (signup)
       await page
         .getByRole("button", { name: "New to Buff? Create an account" })

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./auth-fixture.js";
 import { exercise, initialState, addDays, key } from "../../src/model.js";
 test("logger shows previous actual weights and reps per set without marking prefilled targets completed", async ({
   page,
@@ -17,7 +17,7 @@ test("logger shows previous actual weights and reps per set without marking pref
     (data) => localStorage.setItem("buff-v1", JSON.stringify(data)),
     state,
   );
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "Log workout" }).click();
   const bench = page.locator(".log-exercise").filter({
     has: page.getByRole("heading", {
@@ -71,7 +71,7 @@ test("existing device history is displayed in pounds after conversion without ch
     (data) => localStorage.setItem("buff-v1", JSON.stringify(data)),
     state,
   );
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "Log workout" }).click();
   const bench = page.locator(".log-exercise").filter({
     has: page.getByRole("heading", {
@@ -83,9 +83,7 @@ test("existing device history is displayed in pounds after conversion without ch
     "88.18 lbs × 8 reps",
   );
   await expect(bench).toContainText("WEIGHT (lbs)");
-  const saved = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("buff-v1")),
-  );
+  const saved = await page.evaluate(() => window.readTestJournal());
   expect(saved.unit).toBe("lbs");
   expect(saved.workouts[0].exercises[0].logs[0].actual).toBe("8");
 });

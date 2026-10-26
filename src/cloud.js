@@ -9,7 +9,9 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
     busy = null,
     timer,
     generation = 0,
-    status = "Saved on this device";
+    status = "Saved on this device",
+    googleEnabled = false,
+    googleLinked = false;
   const rawReturn = new URL(location.href).searchParams.get("buff_return_to");
   let returnTo = null;
   try {
@@ -182,8 +184,29 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
       if (!conflict) schedule();
     }
   }
+  function googleControls() {
+    if (!googleEnabled) return "";
+    if (user)
+      return googleLinked
+        ? '<p class="google-connected">✓ Google is connected to your account.</p>'
+        : '<button class="button subtle google-button" data-cloud="link-google">Connect Google to this account</button>';
+    const target = returnTo || (location.pathname === "/app" ? "/app" : "/");
+    return `<a class="google-button" href="/api/auth/google/start?return_to=${encodeURIComponent(target)}"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M43.6 24.5c0-1.5-.1-2.9-.4-4.3H24v8.2h11a9.4 9.4 0 0 1-4.1 6.2V40h6.7c3.9-3.6 6-8.9 6-15.5Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9L31 34c-1.8 1.2-4.1 1.9-7 1.9-5.3 0-9.8-3.6-11.4-8.4H5.7V33A20.4 20.4 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.5a12.3 12.3 0 0 1 0-7v-5.6H5.7a20 20 0 0 0 0 18.2l6.9-5.6Z"/><path fill="#EA4335" d="M24 12.1c3 0 5.6 1 7.7 3l5.8-5.8A19.5 19.5 0 0 0 24 4 20.4 20.4 0 0 0 5.7 15l6.9 5.5c1.6-4.8 6.1-8.4 11.4-8.4Z"/></svg>Continue with Google</a><div class="auth-divider">or use email</div>`;
+  }
+  async function refreshProviders() {
+    try {
+      const p = await request("/auth/providers");
+      googleEnabled = p.google === true;
+      googleLinked = p.googleLinked === true;
+    } catch {
+      googleEnabled = false;
+    }
+    const slot = root.querySelector("#google-auth-slot");
+    if (slot) slot.innerHTML = googleControls();
+  }
   function open(mode = "signin", message = "") {
-    root.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title"><div class="modal-header"><div><div class="eyebrow">YOUR WORKOUTS, EVERYWHERE</div><h2 id="account-title">${user ? "Your account" : mode === "signup" ? "Create your account" : "Sign in to Buff"}</h2></div><button class="icon-button close" data-cloud="close" aria-label="Close account">×</button></div><p class="account-intro">${user ? `Signed in as <strong>${escape(user.email)}</strong>` : "Use the same account on every device to sync your plans and workout logs."}</p><p class="account-message" role="status">${escape(message)}</p>${user ? `<p class="sync-detail" data-sync-status>${escape(status)}</p><div class="account-actions"><button class="button primary" data-cloud="sync">Sync now</button><button class="button subtle" data-cloud="download">Download a backup</button></div><div class="conflict-actions" ${conflict ? "" : "hidden"}><h3>Two devices changed your journal</h3><p>Neither version has been overwritten. Download your local backup before choosing.</p><button class="button subtle" data-cloud="use-cloud">Use cloud version</button><button class="button subtle" data-cloud="use-local">Replace cloud with this device</button></div><p class="account-help">Changes save automatically. You can safely keep editing when offline; pending changes sync when the server is reachable.</p><p><a class="text-button" href="/connections">Manage connected AI apps →</a></p><div class="modal-footer"><button class="text-button" data-cloud="import">Import guest workouts</button><button class="text-button danger" data-cloud="signout">Sign out</button></div>` : `<form id="auth-form"><label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>Password<input name="password" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" required minlength="12" maxlength="200"><small>At least 12 characters.</small></label><button class="button primary auth-submit" type="submit">${mode === "signup" ? "Create account" : "Sign in"} →</button></form><button class="text-button auth-switch" data-cloud="${mode === "signup" ? "signin" : "signup"}">${mode === "signup" ? "Already have an account? Sign in" : "New to Buff? Create an account"}</button><p class="account-help">Guest workouts stay on this device. Your first cloud journal starts with your device’s workouts. Password reset is not available yet; keep your password somewhere safe.</p>`}</section></div>`;
+    root.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title"><div class="modal-header"><div><div class="eyebrow">YOUR WORKOUTS, EVERYWHERE</div><h2 id="account-title">${user ? "Your account" : mode === "signup" ? "Create your account" : "Sign in to Buff"}</h2></div><button class="icon-button close" data-cloud="close" aria-label="Close account">×</button></div><p class="account-intro">${user ? `Signed in as <strong>${escape(user.email)}</strong>` : "Use the same account on every device to sync your plans and workout logs."}</p><p class="account-message" role="status">${escape(message)}</p><div id="google-auth-slot">${googleControls()}</div>${user ? `<p class="sync-detail" data-sync-status>${escape(status)}</p><div class="account-actions"><button class="button primary" data-cloud="sync">Sync now</button><button class="button subtle" data-cloud="download">Download a backup</button></div><div class="conflict-actions" ${conflict ? "" : "hidden"}><h3>Two devices changed your journal</h3><p>Neither version has been overwritten. Download your local backup before choosing.</p><button class="button subtle" data-cloud="use-cloud">Use cloud version</button><button class="button subtle" data-cloud="use-local">Replace cloud with this device</button></div><p class="account-help">Changes save automatically. You can safely keep editing when offline; pending changes sync when the server is reachable.</p><p><a class="text-button" href="/connections">Manage connected AI apps →</a></p><div class="modal-footer"><button class="text-button" data-cloud="import">Import guest workouts</button><button class="text-button danger" data-cloud="signout">Sign out</button></div>` : `<form id="auth-form"><label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>Password<input name="password" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" required minlength="12" maxlength="200"><small>At least 12 characters.</small></label><button class="button primary auth-submit" type="submit">${mode === "signup" ? "Create account" : "Sign in"} →</button></form><button class="text-button auth-switch" data-cloud="${mode === "signup" ? "signin" : "signup"}">${mode === "signup" ? "Already have an account? Sign in" : "New to Buff? Create an account"}</button><p class="account-help">Guest workouts stay on this device. Your first cloud journal starts with your device’s workouts. Password reset is not available yet; keep your password somewhere safe.</p>`}</section></div>`;
+    void refreshProviders();
     root.dataset.mode = mode;
     root.querySelector("input,button")?.focus();
   }
@@ -230,6 +253,15 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
     }
     b.disabled = true;
     try {
+      if (action === "link-google") {
+        const result = await request(
+          "/auth/google/link?return_to=" +
+            encodeURIComponent(location.pathname === "/app" ? "/app" : "/"),
+          { method: "POST", body: "{}" },
+        );
+        location.assign(result.url);
+        return;
+      }
       if (action === "sync") {
         await sync();
         open();
@@ -289,6 +321,7 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
         await busy;
         await request("/auth/signout", { method: "POST", body: "{}" });
         user = null;
+        history.replaceState(null, "", "/");
         dirty = false;
         conflict = false;
         revision = 0;
@@ -332,14 +365,45 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
   return {
     save,
     open,
+    isSignedIn: () => Boolean(user),
     label: () => (user ? `${status} · ${user.email}` : status),
     async start() {
       try {
-        const { user: sessionUser } = await request("/auth/session");
+        const [{ user: sessionUser }] = await Promise.all([
+          request("/auth/session"),
+          refreshProviders(),
+        ]);
+        const errors = {
+          google_failed:
+            "Google sign-in could not be completed. Please try again.",
+          google_cancelled: "Google sign-in was cancelled.",
+          google_account_exists:
+            "A Buff account already uses this email. Sign in with your password, then connect Google in Account.",
+          google_identity_in_use:
+            "This Google account is already connected to another Buff account.",
+          google_session_changed:
+            "Your Buff session changed. Sign in and connect Google again.",
+        };
+        const query = new URL(location.href),
+          message = errors[query.searchParams.get("auth_error")] || "";
+        if (query.searchParams.has("auth_error")) {
+          query.searchParams.delete("auth_error");
+          history.replaceState(
+            null,
+            "",
+            query.pathname + query.search + query.hash,
+          );
+        }
+
         if (sessionUser) {
           await loadAccount(sessionUser);
           if (returnTo) location.assign(returnTo);
-        } else if (returnTo) open();
+          else if (message) open("signin", message);
+        } else {
+          if (!returnTo && location.pathname !== "/")
+            history.replaceState(null, "", "/");
+          if (returnTo || message) open("signin", message);
+        }
       } catch {
         notify("Device only — sync server unavailable");
       }

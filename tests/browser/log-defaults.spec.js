@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./auth-fixture.js";
 import { initialState } from "../../src/model.js";
 test("target defaults can be accepted without editing and do not complete sets on open", async ({
   page,
@@ -8,7 +8,7 @@ test("target defaults can be accepted without editing and do not complete sets o
     (data) => localStorage.setItem("buff-v1", JSON.stringify(data)),
     state,
   );
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "Log workout" }).click();
   await expect(
     page.getByLabel("Barbell bench press set 1 weight", { exact: true }),
@@ -24,9 +24,7 @@ test("target defaults can be accepted without editing and do not complete sets o
   ).toHaveValue("45");
   expect(
     await page.evaluate(
-      () =>
-        JSON.parse(localStorage.getItem("buff-v1")).workouts[0].exercises[0]
-          .logs[0],
+      () => window.readTestJournal().workouts[0].exercises[0].logs[0],
     ),
   ).toEqual({ weight: "", actual: "", done: false });
   await page
@@ -35,9 +33,7 @@ test("target defaults can be accepted without editing and do not complete sets o
   await page.getByLabel("Plank set 1 completed", { exact: true }).check();
   await page.getByRole("button", { name: "Done logging" }).click();
   await expect(page.locator(".workout-card")).toContainText("2 sets completed");
-  const saved = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("buff-v1")),
-  );
+  const saved = await page.evaluate(() => window.readTestJournal());
   expect(saved.workouts[0].exercises[0].logs[0]).toEqual({
     weight: "40",
     actual: "8",
@@ -67,7 +63,7 @@ test("existing results and zero values are preserved; clearing a default prevent
     (data) => localStorage.setItem("buff-v1", JSON.stringify(data)),
     state,
   );
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "Continue logging" }).click();
   await expect(
     page.getByLabel("Barbell bench press set 1 weight", { exact: true }),

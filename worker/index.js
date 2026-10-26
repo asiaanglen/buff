@@ -1,3 +1,4 @@
+import { handleGoogle, googleConfigured } from "./google.js";
 import { inPounds } from "../shared/weights.js";
 import { handleOAuth } from "./oauth.js";
 import { identify, sessionToken, cookie } from "./session.js";
@@ -83,6 +84,25 @@ async function api(request, env) {
       (env.PUBLIC_ORIGIN || new URL(request.url).origin)
   )
     return failure("Request origin is not allowed.", 403);
+  if (path === "/api/auth/providers" && method === "GET") {
+    const enabled = googleConfigured(env),
+      user = enabled ? await identify(request, db) : null;
+    const linked = user
+      ? Boolean(
+          await db
+            .prepare("SELECT subject FROM google_identities WHERE user_id=?")
+            .bind(user.id)
+            .first(),
+        )
+      : false;
+    return json({ google: enabled, googleLinked: linked });
+  }
+  if (path.startsWith("/api/auth/google/")) {
+    if (path.endsWith("/start") || path.endsWith("/link"))
+      if (!(await authLimit(request, db)))
+        return failure("Too many sign-in attempts. Try again later.", 429);
+    return handleGoogle(request, env);
+  }
   if (path === "/api/health" && method === "GET") {
     const table = await db
       .prepare("SELECT name FROM sqlite_master WHERE name='journals'")

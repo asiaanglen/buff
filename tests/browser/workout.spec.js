@@ -1,10 +1,10 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./auth-fixture.js";
 test("plans workouts with supersets, logs reps and time, and persists after reload", async ({
   page,
 }) => {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  await page.goto("/app");
   await page
     .getByRole("button", { name: "Plan a workout", exact: false })
     .first()
@@ -59,7 +59,7 @@ test("plans workouts with supersets, logs reps and time, and persists after relo
 test("edits, reschedules, removes exercises and deletes workouts", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "Edit Barbell bench press" }).click();
   await page.getByLabel("Sets", { exact: true }).fill("5");
   await page.getByRole("button", { name: "Save changes" }).click();
@@ -87,7 +87,7 @@ test("mobile layout fits the screen and allows timed set logging", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("/app");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -104,7 +104,7 @@ test("mobile layout fits the screen and allows timed set logging", async ({
 });
 test("desktop visual and no horizontal overflow", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1100 });
-  await page.goto("/");
+  await page.goto("/app");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

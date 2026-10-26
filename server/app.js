@@ -99,6 +99,17 @@ export function createApp({
     });
     res.json({ user: { id: user.id, email: user.email } });
   }
+  app.get("/api/auth/providers", (_req, res) =>
+    res.json({ google: false, googleLinked: false }),
+  );
+  app.get("/api/auth/google/start", (_req, res) =>
+    res
+      .status(503)
+      .json({
+        error:
+          "Google sign-in is available on the Workers deployment after configuration.",
+      }),
+  );
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
   app.get("/api/auth/session", (req, res) =>
     res.json({ user: identify(req) || null }),
