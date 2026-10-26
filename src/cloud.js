@@ -258,7 +258,7 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
         revision = remote.revision;
         conflict = false;
         if (action === "use-cloud") {
-          setState(remote.state || { version: 1, unit: "kg", workouts: [] });
+          setState(remote.state || { version: 1, unit: "lbs", workouts: [] });
           dirty = false;
           persist();
           notify("Synced");
@@ -297,7 +297,7 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
         try {
           guest = JSON.parse(localStorage.getItem("buff-v1"));
         } catch {}
-        setState(guest || { version: 1, unit: "kg", workouts: [] });
+        setState(guest || { version: 1, unit: "lbs", workouts: [] });
         notify("Saved on this device");
         root.innerHTML = "";
       }

@@ -1499,3 +1499,43 @@ button:disabled {
     font-size: 11px;
   }
 }
+.previous-performance {
+  background: #f3effa;
+  border-left: 3px solid #a18bd5;
+  border-radius: 6px;
+  padding: 11px 14px;
+  margin: 12px 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.previous-performance > span {
+  font-size: 8px;
+  color: #9b87b4;
+  letter-spacing: 0.8px;
+}
+.previous-performance > strong {
+  font-size: 13px;
+  color: #7b63a0;
+  font-weight: 600;
+}
+.previous-performance > small {
+  font-size: 10px;
+  color: #a293b2;
+}
+.previous-performance.empty-history {
+  font-size: 10px;
+  color: #a79ab4;
+  border-left-color: #ddd4eb;
+  background: #faf8fc;
+}
+.log-input-cell {
+  min-width: 0;
+}
+.previous-set {
+  display: block;
+  font-size: 9px;
+  color: #a495b5;
+  margin: 4px 0 0 2px;
+  line-height: 1.4;
+}

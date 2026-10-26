@@ -12,6 +12,8 @@ import {
   exercise,
   initialState,
   progress,
+  previousExercisePerformance,
+  inPounds,
   programWeek,
   programEnd,
   programError,
@@ -29,6 +31,14 @@ try {
 } catch {
   state = initialState();
   storageError = true;
+}
+if (state.unit === "kg") {
+  state = inPounds(state);
+  try {
+    localStorage.setItem("buff-v1", JSON.stringify(state));
+  } catch {
+    storageError = true;
+  }
 }
 let week = weekStart(),
   selected = key(new Date()),
@@ -213,10 +223,22 @@ function dialog() {
           ? selectedProgramId
           : null),
   );
-  return `<div class="modal-backdrop"><section class="modal ${modal.type === "log" ? "log-modal" : ""}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="eyebrow">YOUR TRAINING JOURNAL</div><h2 id="modal-title">${modal.type === "log" ? esc(w.name) : modal.type === "exercise" ? (e ? "Edit exercise" : "Add an exercise") : modal.type === "edit" ? "Edit workout" : "Plan a workout"}</h2></div><button class="icon-button close" data-action="close" aria-label="Close dialog">×</button></div>${modal.type === "log" ? logForm(w) : modal.type === "exercise" ? `<form id="exercise-form"><label>Exercise name<input name="name" required maxlength="100" placeholder="e.g. Dumbbell bench press" value="${esc(e?.name || "")}"></label><div class="form-grid"><label>Sets<input name="sets" type="number" required min="1" max="30" value="${e?.sets || 3}"></label><label>Track by<select name="mode"><option value="reps" ${e?.mode !== "time" ? "selected" : ""}>Repetitions</option><option value="time" ${e?.mode === "time" ? "selected" : ""}>Time (seconds)</option></select></label><label>Target per set<input name="target" type="number" required min="1" max="10000" value="${e?.target || 10}"></label><label>Planned weight (${state.unit})<input name="weight" type="number" min="0" max="2000" step="0.25" value="${e?.weight || 0}"></label></div><label>Superset group <span class="optional">optional</span><input name="group" maxlength="12" placeholder="e.g. A" value="${esc(e?.group || "")}"><small>Use the same group for exercises you want to alternate.</small></label><div class="modal-footer">${e ? '<button type="button" class="text-button danger" data-action="delete-exercise">Remove exercise</button>' : "<span></span>"}<button class="button primary" type="submit">${e ? "Save changes" : "Add exercise"} →</button></div></form>` : `<form id="workout-form"><label>Workout name<input name="name" required maxlength="100" placeholder="e.g. Lower body strength" value="${esc(modal.type === "edit" ? w.name : "")}"></label>${workoutProgramFields(w, workoutDate)}<label>Date<input name="date" type="date" required value="${workoutDate}" ${assignedProgram ? `min="${assignedProgram.startDate}" max="${programEnd(assignedProgram)}"` : ""}></label><label>Workout notes <span class="optional">optional</span><textarea name="note" maxlength="500" placeholder="A focus, a reminder, a little motivation…">${esc(modal.type === "edit" ? w.note : "")}</textarea></label><div class="modal-footer">${modal.type === "edit" ? '<button type="button" class="text-button danger" data-action="delete-workout">Delete workout</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "edit" ? "Save changes" : "Create workout"} →</button></div></form>`}</section></div>`;
+  return `<div class="modal-backdrop"><section class="modal ${modal.type === "log" ? "log-modal" : ""}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="eyebrow">YOUR TRAINING JOURNAL</div><h2 id="modal-title">${modal.type === "log" ? esc(w.name) : modal.type === "exercise" ? (e ? "Edit exercise" : "Add an exercise") : modal.type === "edit" ? "Edit workout" : "Plan a workout"}</h2></div><button class="icon-button close" data-action="close" aria-label="Close dialog">×</button></div>${modal.type === "log" ? logForm(w) : modal.type === "exercise" ? `<form id="exercise-form"><label>Exercise name<input name="name" required maxlength="100" placeholder="e.g. Dumbbell bench press" value="${esc(e?.name || "")}"></label><div class="form-grid"><label>Sets<input name="sets" type="number" required min="1" max="30" value="${e?.sets || 3}"></label><label>Track by<select name="mode"><option value="reps" ${e?.mode !== "time" ? "selected" : ""}>Repetitions</option><option value="time" ${e?.mode === "time" ? "selected" : ""}>Time (seconds)</option></select></label><label>Target per set<input name="target" type="number" required min="1" max="10000" value="${e?.target || 10}"></label><label>Planned weight (${state.unit})<input name="weight" type="number" min="0" max="5000" step="0.01" value="${e?.weight || 0}"></label></div><label>Superset group <span class="optional">optional</span><input name="group" maxlength="12" placeholder="e.g. A" value="${esc(e?.group || "")}"><small>Use the same group for exercises you want to alternate.</small></label><div class="modal-footer">${e ? '<button type="button" class="text-button danger" data-action="delete-exercise">Remove exercise</button>' : "<span></span>"}<button class="button primary" type="submit">${e ? "Save changes" : "Add exercise"} →</button></div></form>` : `<form id="workout-form"><label>Workout name<input name="name" required maxlength="100" placeholder="e.g. Lower body strength" value="${esc(modal.type === "edit" ? w.name : "")}"></label>${workoutProgramFields(w, workoutDate)}<label>Date<input name="date" type="date" required value="${workoutDate}" ${assignedProgram ? `min="${assignedProgram.startDate}" max="${programEnd(assignedProgram)}"` : ""}></label><label>Workout notes <span class="optional">optional</span><textarea name="note" maxlength="500" placeholder="A focus, a reminder, a little motivation…">${esc(modal.type === "edit" ? w.note : "")}</textarea></label><div class="modal-footer">${modal.type === "edit" ? '<button type="button" class="text-button danger" data-action="delete-workout">Delete workout</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "edit" ? "Save changes" : "Create workout"} →</button></div></form>`}</section></div>`;
+}
+function previousPerformanceHeader(w, e) {
+  const history = previousExercisePerformance(state, w, e);
+  if (!history)
+    return '<p class="previous-performance empty-history">No completed history for this exercise yet.</p>';
+  return `<div class="previous-performance"><span>LAST TIME · ${esc(fmt(history.date, { month: "short", day: "numeric", year: "numeric" }))}</span><strong>${history.latest.weight} ${state.unit} × ${history.latest.actual} ${e.mode === "time" ? "sec" : "reps"}</strong><small>Last completed set (set ${history.latest.setNumber}) · ${esc(history.workoutName)}</small></div>`;
+}
+function previousSetLabel(w, e, index, field) {
+  const history = previousExercisePerformance(state, w, e);
+  if (!history) return "";
+  const set = history.sets.find((s) => s.setNumber === index + 1);
+  return `<small class="previous-set">Last: ${set ? `${field === "weight" ? set.weight : set.actual} ${field === "weight" ? state.unit : e.mode === "time" ? "sec" : "reps"}` : "—"}</small>`;
 }
 function logForm(w) {
-  return `<p class="log-intro">Enter weight (0 for bodyweight) and reps or seconds, then tick each completed set.</p><form id="log-form">${w.exercises.map((e) => `<div class="log-exercise"><h3>${esc(e.name)} ${e.group ? `<span class="superset-chip">Superset ${esc(e.group)}</span>` : ""}</h3><p>Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p><div class="log-head"><span>SET</span><span>WEIGHT (${state.unit})</span><span>${e.mode === "time" ? "TIME (SEC)" : "REPS"}</span><span>DONE</span></div>${e.logs.map((l, i) => `<div class="log-row ${l.done ? "set-done" : ""}"><strong>${i + 1}</strong><input aria-label="${esc(e.name)} set ${i + 1} weight" type="number" min="0" max="2000" step="0.25" placeholder="${e.weight}" value="${esc(l.weight)}" data-eid="${e.id}" data-set="${i}" data-field="weight"><input aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" type="number" min="0" max="10000" step="1" placeholder="${e.target}" value="${esc(l.actual)}" data-eid="${e.id}" data-set="${i}" data-field="actual"><input aria-label="${esc(e.name)} set ${i + 1} completed" type="checkbox" ${l.done ? "checked" : ""} data-eid="${e.id}" data-set="${i}" data-field="done"></div>`).join("")}</div>`).join("") || "<p>Add an exercise to your plan to start logging.</p>"}<div class="modal-footer"><span class="autosave">Changes save automatically</span><button type="button" class="button primary" data-action="close">Done logging ✓</button></div></form>`;
+  return `<p class="log-intro">Enter weight (0 for bodyweight) and reps or seconds, then tick each completed set.</p><form id="log-form">${w.exercises.map((e) => `<div class="log-exercise"><h3>${esc(e.name)} ${e.group ? `<span class="superset-chip">Superset ${esc(e.group)}</span>` : ""}</h3><p>Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p>${previousPerformanceHeader(w, e)}<div class="log-head"><span>SET</span><span>WEIGHT (${state.unit})</span><span>${e.mode === "time" ? "TIME (SEC)" : "REPS"}</span><span>DONE</span></div>${e.logs.map((l, i) => `<div class="log-row ${l.done ? "set-done" : ""}"><strong>${i + 1}</strong><div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} weight" type="number" min="0" max="5000" step="0.01" placeholder="${e.weight}" value="${esc(l.weight)}" data-eid="${e.id}" data-set="${i}" data-field="weight">${previousSetLabel(w, e, i, "weight")}</div><div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" type="number" min="0" max="10000" step="1" placeholder="${e.target}" value="${esc(l.actual)}" data-eid="${e.id}" data-set="${i}" data-field="actual">${previousSetLabel(w, e, i, "actual")}</div><input aria-label="${esc(e.name)} set ${i + 1} completed" type="checkbox" ${l.done ? "checked" : ""} data-eid="${e.id}" data-set="${i}" data-field="done"></div>`).join("")}</div>`).join("") || "<p>Add an exercise to your plan to start logging.</p>"}<div class="modal-footer"><span class="autosave">Changes save automatically</span><button type="button" class="button primary" data-action="close">Done logging ✓</button></div></form>`;
 }
 app.addEventListener("click", (event) => {
   const b = event.target.closest("button");
@@ -517,7 +539,7 @@ document.addEventListener("keydown", (e) => {
 const cloud = createCloud({
   getState: () => state,
   setState: (next) => {
-    state = next;
+    state = inPounds(next);
     modal = null;
     active = null;
     render();
@@ -531,7 +553,7 @@ const cloud = createCloud({
 const importer = createProgramImporter({
   getState: () => state,
   commit: (next, id) => {
-    state = next;
+    state = inPounds(next);
     selectedProgramId = id;
     selectedProgramWeek = 1;
     tab = "programs";

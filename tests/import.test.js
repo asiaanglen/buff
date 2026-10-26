@@ -56,3 +56,17 @@ test("XLSX archive preflight accepts the fixture and rejects invalid compressed 
   );
   assert.throws(() => validateXlsxArchive(new ArrayBuffer(30)), /valid .xlsx/);
 });
+
+test("CSV weights default to pounds and explicit kg columns convert before preview", () => {
+  const lbs = parseProgramRows(
+    csvRows("week,exercise,sets,reps,weight_lbs\n1,Squat,3,8,135"),
+    options,
+  );
+  assert.equal(lbs.workouts[0].exercises[0].weight, 135);
+  const kg = parseProgramRows(
+    csvRows("week,exercise,sets,reps,weight_kg\n1,Squat,3,8,40"),
+    options,
+  );
+  assert.equal(kg.workouts[0].exercises[0].weight, 88.18);
+  assert.equal(appendImportedProgram(initialState(), kg).unit, "lbs");
+});

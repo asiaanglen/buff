@@ -1,3 +1,4 @@
+import { inPounds } from "../shared/weights.js";
 import { validState } from "../shared/journal.js";
 import express from "express";
 import { DatabaseSync } from "node:sqlite";
@@ -182,7 +183,7 @@ export function createApp({
       .get(req.user.id);
     res.json(
       row
-        ? { revision: row.revision, state: JSON.parse(row.data) }
+        ? { revision: row.revision, state: inPounds(JSON.parse(row.data)) }
         : { revision: 0, state: null },
     );
   });

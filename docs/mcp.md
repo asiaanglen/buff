@@ -10,7 +10,7 @@ Buff implements remote MCP over **Streamable HTTP**, using the official Model Co
 2. Create a custom app named **Buff** with the MCP endpoint above and **OAuth** authentication. Discovery supports both dynamic client registration and Client ID Metadata Documents, so a compatible client does not need a manually created client ID or secret.
 3. Connect the app. Sign into your Buff account on the Buff site when prompted.
 4. Review the connecting app's name and callback hostname. Grant read access; also select **Propose workout changes** if you want the assistant to plan or log workouts.
-5. In a chat using the Buff app, ask for a program or workout. For example: “Show my programs”, “Plan a 10-week strength program with three workouts a week”, or “Log 8 reps at 40 kg for my first bench press set.”
+5. In a chat using the Buff app, ask for a program or workout. For example: “Show my programs”, “Plan a 10-week strength program with three workouts a week”, or “Log 8 reps at 90 lbs for my first bench press set.”
 
 The deployed server has passed live checks for OAuth consent, PKCE code exchange, MCP initialization and tools, staged changes, browser-session approval, token refresh and revocation. Adding it to your personal ChatGPT settings still requires your own action. Never enter your Cloudflare deployment token or Buff password into a chat or MCP configuration. The Buff sign-in page handles your login.
 
@@ -42,7 +42,7 @@ Read tools return data immediately. Write tools **only create proposals** and re
 | `log_sets`          | Propose actual weight, reps or seconds for specific sets.                 |
 | `copy_program_week` | Propose copying workouts to another week with fresh logs.                 |
 
-Weights are kilograms; 0 means bodyweight. `mode` is `reps` or `time` (seconds). Set numbers and program weeks are 1-based. A program workout's `day` is 1–7 relative to that program week's start, not necessarily Monday–Sunday. Use the IDs from read tools. The MCP server only accesses the account that granted OAuth permission.
+Weights are pounds (lbs); 0 means bodyweight. `mode` is `reps` or `time` (seconds). Set numbers and program weeks are 1-based. A program workout's `day` is 1–7 relative to that program week's start, not necessarily Monday–Sunday. Use the IDs from read tools. The MCP server only accesses the account that granted OAuth permission.
 
 ## Protocol and security
 

@@ -95,7 +95,7 @@ export async function approvalPage(request, env) {
     .run();
   return page(
     "Review workout changes",
-    `<p>Signed in as <strong>${esc(user.email)}</strong>.</p><h2>${esc(row.summary)}</h2><p>Proposed by <strong>${esc(row.client_name)}</strong>.</p><p>Your assistant proposed the following changes. They have not been applied.</p><pre>${esc(row.preview)}</pre><p class="badge">Expires ${new Date(row.expires).toISOString()}. If your journal changes first, this proposal cannot overwrite it.</p><form method="post"><input type="hidden" name="csrf" value="${csrf}"><button name="decision" value="approve">Approve changes</button><button class="secondary" name="decision" value="reject">Reject</button></form>`,
+    `<p>Signed in as <strong>${esc(user.email)}</strong>.</p><h2>${esc(row.summary)}</h2><p>Proposed by <strong>${esc(row.client_name)}</strong>.</p><p>Your assistant proposed the following changes. They have not been applied. Weights in this preview are in ${JSON.parse(row.proposal).unit === "kg" ? "kilograms (an older proposal; Buff will display converted pounds)" : "pounds (lbs)"}.</p><pre>${esc(row.preview)}</pre><p class="badge">Expires ${new Date(row.expires).toISOString()}. If your journal changes first, this proposal cannot overwrite it.</p><form method="post"><input type="hidden" name="csrf" value="${csrf}"><button name="decision" value="approve">Approve changes</button><button class="secondary" name="decision" value="reject">Reject</button></form>`,
   );
 }
 export async function connectionsPage(request, env) {

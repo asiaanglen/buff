@@ -119,3 +119,50 @@ test("browser sends a stretched credential, never the raw password, to the Worke
   expect(submitted.credentialVersion).toBe(authScheme);
   expect(submitted.password).toBe(await passwordProof(email, raw));
 });
+
+test("legacy cloud journals are read in pounds and saving them does not double-convert weights", async ({
+  request,
+  baseURL,
+}) => {
+  const email = `lbs-${Date.now()}@example.com`;
+  await request.post("/api/auth/signup", {
+    headers: { Origin: baseURL },
+    data: {
+      email,
+      password: await passwordProof(email, "pounds migration password"),
+      credentialVersion: authScheme,
+    },
+  });
+  const legacy = initialState();
+  legacy.unit = "kg";
+  legacy.workouts[0].exercises[0].weight = 40;
+  legacy.workouts[0].exercises[0].logs[0] = {
+    weight: "42.5",
+    actual: "8",
+    done: true,
+  };
+  expect(
+    (
+      await request.put("/api/state", {
+        headers: { Origin: baseURL },
+        data: { state: legacy, revision: 0 },
+      })
+    ).status(),
+  ).toBe(200);
+  const converted = await (await request.get("/api/state")).json();
+  expect(converted.revision).toBe(1);
+  expect(converted.state.unit).toBe("lbs");
+  expect(converted.state.workouts[0].exercises[0].weight).toBe(88.18);
+  expect(converted.state.workouts[0].exercises[0].logs[0].weight).toBe("93.7");
+  expect(
+    (
+      await request.put("/api/state", {
+        headers: { Origin: baseURL },
+        data: converted,
+      })
+    ).status(),
+  ).toBe(200);
+  const again = await (await request.get("/api/state")).json();
+  expect(again.revision).toBe(2);
+  expect(again.state.workouts[0].exercises[0].weight).toBe(88.18);
+});

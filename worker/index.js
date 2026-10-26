@@ -1,3 +1,4 @@
+import { inPounds } from "../shared/weights.js";
 import { handleOAuth } from "./oauth.js";
 import { identify, sessionToken, cookie } from "./session.js";
 import { validState } from "../shared/journal.js";
@@ -165,7 +166,7 @@ async function api(request, env) {
         .first();
       return json(
         row
-          ? { revision: row.revision, state: JSON.parse(row.data) }
+          ? { revision: row.revision, state: inPounds(JSON.parse(row.data)) }
           : { revision: 0, state: null },
       );
     }

@@ -8,6 +8,7 @@ export default defineConfig({
     "programs.spec.js",
     "mcp.spec.js",
     "import.spec.js",
+    "exercise-history.spec.js",
   ],
   workers: 1,
   use: {

@@ -11,7 +11,7 @@ export function validState(s) {
   if (
     !s ||
     s.version !== 1 ||
-    s.unit !== "kg" ||
+    !["kg", "lbs"].includes(s.unit) ||
     !Array.isArray(s.workouts) ||
     s.workouts.length > 5000
   )
@@ -73,7 +73,7 @@ export function validState(s) {
         e.sets > 30 ||
         !num(e.target, 10000) ||
         e.target < 1 ||
-        !num(e.weight, 2000) ||
+        !num(e.weight, s.unit === "lbs" ? 5000 : 2000) ||
         !Array.isArray(e.logs) ||
         e.logs.length !== e.sets
       )
@@ -83,7 +83,7 @@ export function validState(s) {
         (l) =>
           l &&
           typeof l.done === "boolean" &&
-          logNum(l.weight, 2000) &&
+          logNum(l.weight, s.unit === "lbs" ? 5000 : 2000) &&
           logNum(l.actual, 10000) &&
           (!l.done || (l.weight !== "" && l.actual !== "")),
       );

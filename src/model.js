@@ -1,3 +1,5 @@
+import { inPounds } from "../shared/weights.js";
+export { inPounds } from "../shared/weights.js";
 export const uid = () => crypto.randomUUID();
 export function weekStart(date = new Date()) {
   const d = new Date(date);
@@ -40,7 +42,7 @@ export function initialState() {
   const w = key(new Date());
   return {
     version: 1,
-    unit: "kg",
+    unit: "lbs",
     programs: [],
     workouts: [
       {
@@ -104,11 +106,12 @@ export function copyProgramWeek(state, programId, from, to) {
   return copies;
 }
 export function importGuest(current, guest) {
-  const merged = structuredClone(current);
+  const merged = inPounds(structuredClone(current));
+  const incoming = inPounds(guest);
   merged.programs ||= [];
   const map = new Map();
   let programs = 0;
-  for (const p of guest?.programs || []) {
+  for (const p of incoming?.programs || []) {
     const existing = merged.programs.find((x) => x.id === p.id);
     if (existing && JSON.stringify(existing) === JSON.stringify(p)) {
       map.set(p.id, p.id);
@@ -120,7 +123,7 @@ export function importGuest(current, guest) {
     programs++;
   }
   const ids = new Set(merged.workouts.map((w) => w.id));
-  const extras = (guest?.workouts || [])
+  const extras = (incoming?.workouts || [])
     .filter((w) => !ids.has(w.id))
     .map((w) => {
       const copy = structuredClone(w);
@@ -133,4 +136,55 @@ export function importGuest(current, guest) {
     });
   merged.workouts.push(...extras);
   return { state: merged, workouts: extras.length, programs };
+}
+
+// Use actual completed sets from the last matching session, across programs.
+// Names are case/whitespace insensitive; rep and time exercises stay separate.
+export function previousExercisePerformance(
+  state,
+  currentWorkout,
+  currentExercise,
+) {
+  const normalize = (name) => name.trim().replace(/\s+/g, " ").toLowerCase();
+  let found = null;
+  state.workouts.forEach((workout, order) => {
+    if (workout.id === currentWorkout.id || workout.date > currentWorkout.date)
+      return;
+    for (const e of workout.exercises) {
+      if (
+        e.mode !== currentExercise.mode ||
+        normalize(e.name) !== normalize(currentExercise.name)
+      )
+        continue;
+      const sets = e.logs.flatMap((l, index) =>
+        l.done &&
+        l.weight !== "" &&
+        l.actual !== "" &&
+        Number.isFinite(Number(l.weight)) &&
+        Number.isFinite(Number(l.actual))
+          ? [
+              {
+                setNumber: index + 1,
+                weight: Number(l.weight),
+                actual: Number(l.actual),
+              },
+            ]
+          : [],
+      );
+      if (!sets.length) continue;
+      if (
+        !found ||
+        workout.date > found.date ||
+        (workout.date === found.date && order >= found.order)
+      )
+        found = {
+          date: workout.date,
+          workoutName: workout.name,
+          sets,
+          latest: sets.at(-1),
+          order,
+        };
+    }
+  });
+  return found;
 }

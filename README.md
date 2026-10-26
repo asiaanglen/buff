@@ -53,6 +53,12 @@ Vite serves the frontend and proxies `/api` to the local Worker on port 8787. Wr
 
 The Worker can also serve the last built frontend directly, without Vite. When doing so, start `npx wrangler dev --port 8787` without the development-only `PUBLIC_ORIGIN` override.
 
+## Exercise history and weight units
+
+All weights are displayed and entered in **pounds (lbs)**, including program imports and MCP tools. Legacy journals labeled `kg` are converted on read (1 kg = 2.2046226218 lbs, rounded to two decimals) and saved as pounds on the next normal save. Existing planned weights and actual logs retain the same physical weight; reps, seconds, completion and exercise identities are unchanged. Unit markers prevent converting an already migrated journal again. Plain CSV `weight` or `weight_lbs` means pounds; an explicit `weight_kg` column is converted automatically.
+
+While logging an exercise, **Last time** shows the last completed set from the most recent matching previous workout, with its date and workout name. Each current set also shows its corresponding prior weight and reps/seconds below the inputs. Only completed actual sets are used, across programs; exercise names match ignoring case and extra spaces, with rep and time tracking kept separate. The current workout and workouts dated after it are excluded. Current inputs remain blank until you log them.
+
 ## CSV and Excel program uploads
 
 In **Programs**, choose **Import program** and upload a `.csv` or `.xlsx` file. Buff previews every workout and reports row errors before anything is saved. Choose the program name, start date, and duration; for Excel workbooks, select the sheet containing your program. Existing workouts are kept and imported logs start empty.
@@ -67,7 +73,7 @@ Download the [CSV template](public/buff-program-template.csv) from the upload di
 | `exercise`          | Required exercise name.                                                                                                                      |
 | `sets`              | Required whole number, 1–30.                                                                                                                 |
 | `reps` or `seconds` | Exactly one positive target per exercise. Leave the other empty.                                                                             |
-| `weight`            | Optional kilograms; blank means 0/bodyweight.                                                                                                |
+| `weight`            | Optional pounds (lbs); blank means 0/bodyweight.                                                                                             |
 | `superset`          | Optional shared label such as A.                                                                                                             |
 | `workout_notes`     | Optional notes for the workout.                                                                                                              |
 

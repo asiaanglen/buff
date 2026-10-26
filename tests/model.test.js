@@ -104,3 +104,109 @@ test("importing guest programs remaps colliding program IDs without changing exi
   assert.notEqual(imported.state.workouts[1].programId, "shared");
   assert.equal(validState(imported.state), true);
 });
+
+import { previousExercisePerformance } from "../src/model.js";
+test("exercise history uses the newest completed matching session across programs and preserves per-set results", () => {
+  const current = {
+    id: "current",
+    date: "2026-11-10",
+    exercises: [exercise("  BENCH   PRESS ", 3, 8)],
+  };
+  const older = exercise("Bench press", 3, 10);
+  older.logs[0] = { weight: "40", actual: "10", done: true };
+  const recent = exercise("bench press", 3, 8);
+  recent.logs[0] = { weight: "42.5", actual: "8", done: true };
+  recent.logs[2] = { weight: "40", actual: "7", done: true };
+  const state = {
+    workouts: [
+      { id: "old", date: "2026-11-01", name: "Old", exercises: [older] },
+      {
+        id: "recent",
+        date: "2026-11-08",
+        name: "Other program",
+        exercises: [recent],
+      },
+      current,
+      { id: "future", date: "2026-11-12", name: "Future", exercises: [older] },
+    ],
+  };
+  const history = previousExercisePerformance(
+    state,
+    current,
+    current.exercises[0],
+  );
+  assert.equal(history.date, "2026-11-08");
+  assert.deepEqual(history.latest, { setNumber: 3, weight: 40, actual: 7 });
+  assert.equal(history.sets[0].weight, 42.5);
+  assert.equal(
+    history.sets.find((s) => s.setNumber === 2),
+    undefined,
+  );
+  recent.logs.forEach((l) => (l.done = false));
+  assert.equal(
+    previousExercisePerformance(state, current, current.exercises[0]).date,
+    "2026-11-01",
+  );
+});
+test("exercise history keeps time and rep tracking separate and includes zero-weight completed sets", () => {
+  const current = {
+    id: "current",
+    date: "2026-11-10",
+    exercises: [exercise("Plank", 3, 45, "time")],
+  };
+  const prior = exercise("Plank", 3, 45, "time");
+  prior.logs[0] = { weight: "0", actual: "45", done: true };
+  const state = {
+    workouts: [
+      { id: "past", date: "2026-11-09", name: "Core", exercises: [prior] },
+      current,
+    ],
+  };
+  assert.equal(
+    previousExercisePerformance(state, current, current.exercises[0]).latest
+      .weight,
+    0,
+  );
+  assert.equal(
+    previousExercisePerformance(
+      state,
+      current,
+      exercise("Plank", 3, 10, "reps"),
+    ),
+    null,
+  );
+  assert.equal(
+    previousExercisePerformance(state, current, exercise("New exercise")),
+    null,
+  );
+});
+
+import { inPounds } from "../src/model.js";
+test("legacy kg journals convert planned and actual weights once while preserving reps, time and history", () => {
+  const legacy = initialState();
+  legacy.unit = "kg";
+  legacy.workouts[0].exercises[0].weight = 40;
+  legacy.workouts[0].exercises[0].logs[0] = {
+    weight: "42.5",
+    actual: "8",
+    done: true,
+  };
+  legacy.workouts[0].exercises[3].logs[0] = {
+    weight: "0",
+    actual: "45",
+    done: true,
+  };
+  const converted = inPounds(legacy);
+  assert.equal(converted.unit, "lbs");
+  assert.equal(converted.workouts[0].exercises[0].weight, 88.18);
+  assert.equal(converted.workouts[0].exercises[0].logs[0].weight, "93.7");
+  assert.equal(converted.workouts[0].exercises[0].logs[0].actual, "8");
+  assert.equal(converted.workouts[0].exercises[3].logs[0].weight, "0");
+  assert.equal(converted.workouts[0].exercises[3].logs[0].actual, "45");
+  assert.equal(converted.workouts[0].exercises[0].logs[1].weight, "");
+  assert.equal(converted.workouts[0].id, legacy.workouts[0].id);
+  assert.equal(legacy.unit, "kg");
+  assert.equal(legacy.workouts[0].exercises[0].weight, 40);
+  assert.equal(inPounds(converted), converted);
+  assert.equal(validState(converted), true);
+});

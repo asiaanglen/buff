@@ -1,4 +1,4 @@
-week,day,workout,exercise,sets,reps,seconds,weight,superset,workout_notes
+week,day,workout,exercise,sets,reps,seconds,weight_lbs,superset,workout_notes
 1,1,Upper body,Barbell bench press,4,8,,40,,Controlled reps
 1,1,Upper body,Dumbbell row,3,12,,16,A,
 1,1,Upper body,Shoulder press,3,10,,12,A,
