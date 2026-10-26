@@ -1,3 +1,5 @@
+import { handleOAuth } from "./oauth.js";
+import { identify, sessionToken, cookie } from "./session.js";
 import { validState } from "../shared/journal.js";
 import {
   authScheme,
@@ -18,27 +20,6 @@ const json = (body, status = 200, headers = {}) =>
     },
   });
 const failure = (error, status) => json({ error }, status);
-function sessionToken(request) {
-  return request.headers
-    .get("cookie")
-    ?.split(";")
-    .map((s) => s.trim())
-    .find((s) => s.startsWith("buff_session="))
-    ?.slice(13);
-}
-function cookie(request, token, clear = false) {
-  return `buff_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${clear ? 0 : 30 * 86400}${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;
-}
-async function identify(request, db) {
-  const token = sessionToken(request);
-  if (!token || !/^[a-f0-9]{64}$/.test(token)) return null;
-  return db
-    .prepare(
-      "SELECT users.id,users.email FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?",
-    )
-    .bind(await digest(token), Date.now())
-    .first();
-}
 async function createSession(request, db, user) {
   const token = randomHex();
   await db
@@ -214,12 +195,13 @@ async function api(request, env) {
   }
   return failure("Unknown API endpoint.", 404);
 }
-export default {
+const app = {
   async fetch(request, env) {
     if (new URL(request.url).pathname.startsWith("/api/")) {
       try {
         return await api(request, env);
       } catch (e) {
+        console.error("Buff API failure", e.name, e.message);
         return failure(
           e.status ? e.message : "The server could not complete this request.",
           e.status || 500,
@@ -227,5 +209,11 @@ export default {
       }
     }
     return env.ASSETS.fetch(request);
+  },
+};
+
+export default {
+  fetch(request, env, ctx) {
+    return handleOAuth(request, env, ctx, app);
   },
 };

@@ -6,6 +6,8 @@ export default defineConfig({
     "sync.spec.js",
     "worker-api.spec.js",
     "programs.spec.js",
+    "mcp.spec.js",
+    "import.spec.js",
   ],
   workers: 1,
   use: {

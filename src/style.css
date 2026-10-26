@@ -1427,3 +1427,75 @@ button:disabled {
 .program-weeks {
   position: relative;
 }
+.heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.import-modal {
+  width: 760px;
+}
+.import-preview-rows {
+  max-height: 280px;
+  overflow: auto;
+  border: 1px solid #ece6f5;
+  border-radius: 8px;
+  margin-top: 14px;
+}
+.import-preview-rows > div {
+  padding: 13px 16px;
+  border-bottom: 1px solid #eee9f5;
+}
+.import-preview-rows strong {
+  font-size: 12px;
+}
+.import-preview-rows small {
+  display: block;
+  font-size: 10px;
+  color: #a095aa;
+  margin: 4px 0;
+}
+.import-preview-rows p {
+  font-size: 11px;
+}
+.import-summary {
+  background: #f3effb;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.import-summary p {
+  margin-top: 7px;
+  font-size: 11px;
+}
+.import-errors {
+  background: #fff1eb;
+  color: #aa655e;
+  font-size: 12px;
+  padding: 15px;
+  border-radius: 8px;
+}
+.import-errors ul {
+  padding-left: 20px;
+  line-height: 1.9;
+}
+#import-root .modal-backdrop {
+  z-index: 20;
+}
+.import-modal input[type="file"] {
+  font-size: 12px;
+}
+.import-modal .field-help a {
+  color: var(--purple);
+}
+@media (max-width: 600px) {
+  .heading-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+  .heading-actions .button {
+    font-size: 11px;
+  }
+}

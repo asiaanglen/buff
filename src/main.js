@@ -1,3 +1,4 @@
+import { createProgramImporter } from "./import-ui.js";
 import { programsView, programForm } from "./programs.js";
 import { createCloud } from "./cloud.js";
 import "@fontsource-variable/dm-sans";
@@ -140,7 +141,7 @@ function render() {
   const total = weekly.reduce((n, w) => n + progress(w).total, 0);
   const done = weekly.reduce((n, w) => n + progress(w).done, 0);
   app.innerHTML = `<aside class="sidebar"><a class="brand" href="#" aria-label="Buff home"><span class="brand-icon">b.</span>buff<span class="brand-dot">.</span></a><div class="workspace-label">YOUR WORKSPACE</div><nav><button data-tab="programs" class="nav-item ${tab === "programs" ? "active" : ""}"><span>▤</span> Programs</button><button data-tab="planner" class="nav-item ${tab === "planner" ? "active" : ""}"><span>▦</span> Weekly planner</button><button data-tab="history" class="nav-item ${tab === "history" ? "active" : ""}"><span>◷</span> Workout history</button></nav><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">Y</span><div><strong>Your workspace</strong><small>Personal training journal</small></div></div></aside>
-<main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Workout history"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content"><div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div><button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div>
+<main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Workout history"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content"><div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div><div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div></div>
 ${storageError ? '<div class="notice">Device storage is unavailable or was reset. Your changes may not persist after closing this page.</div>' : ""}
 ${
   tab === "planner"
@@ -257,6 +258,10 @@ app.addEventListener("click", (event) => {
     selectedProgramId = null;
     modal = null;
     save();
+  }
+  if (a === "import-program") {
+    importer.open();
+    return;
   }
   if (a === "account") {
     cloud.open();
@@ -521,6 +526,17 @@ const cloud = createCloud({
   onStatus: (label) => {
     const el = document.querySelector("#sync-label");
     if (el) el.textContent = label;
+  },
+});
+const importer = createProgramImporter({
+  getState: () => state,
+  commit: (next, id) => {
+    state = next;
+    selectedProgramId = id;
+    selectedProgramWeek = 1;
+    tab = "programs";
+    save();
+    render();
   },
 });
 render();

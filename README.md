@@ -4,7 +4,7 @@ A responsive weekly workout planner with accounts, cross-device sync, supersets,
 
 ## Deployed app
 
-Buff is deployed at **https://buff.asiaanglen.workers.dev**. Cloudflare confirmed the deployment and public routing. Live checks verified account creation, saving a 10-week program, loading Week 10 and logged sets from a second session, stale-update protection, and sign-out. The temporary verification account was removed. The full browser workflow also passed against the local Workers/D1 runtime.
+Buff is deployed at **https://buff.asiaanglen.workers.dev**. Cloudflare confirmed the deployment and public routing. Live checks verified account creation, saving a 10-week program, loading Week 10 and logged sets from a second session, stale-update protection, and sign-out. The temporary verification account was removed. The full browser workflow also passed against the local Workers/D1 runtime. CSV/XLSX uploads and the authenticated MCP server are deployed, with live OAuth/MCP approval and revocation checks passing.
 
 ## Free hosting: Cloudflare Workers + D1
 
@@ -52,6 +52,32 @@ npm run dev -- --port 5173
 Vite serves the frontend and proxies `/api` to the local Worker on port 8787. Wrangler persists the local D1 database in ignored `.wrangler/state` storage. Preserve that directory if you want to retain local accounts and history. Both processes must restart in a new task. The local database and the remote D1 database are separate.
 
 The Worker can also serve the last built frontend directly, without Vite. When doing so, start `npx wrangler dev --port 8787` without the development-only `PUBLIC_ORIGIN` override.
+
+## CSV and Excel program uploads
+
+In **Programs**, choose **Import program** and upload a `.csv` or `.xlsx` file. Buff previews every workout and reports row errors before anything is saved. Choose the program name, start date, and duration; for Excel workbooks, select the sheet containing your program. Existing workouts are kept and imported logs start empty.
+
+Download the [CSV template](public/buff-program-template.csv) from the upload dialog; Excel can open it and save it as `.xlsx`. Use one exercise per row:
+
+| Column              | Meaning                                                                                                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `week`              | Program week number, starting at 1. Blank cells continue the prior week.                                                                     |
+| `day`               | Optional day 1–7 relative to the program week's start; weekday names are also accepted. Blank cells continue the prior day within that week. |
+| `workout`           | Optional workout name; rows with the same week/day/name form one workout.                                                                    |
+| `exercise`          | Required exercise name.                                                                                                                      |
+| `sets`              | Required whole number, 1–30.                                                                                                                 |
+| `reps` or `seconds` | Exactly one positive target per exercise. Leave the other empty.                                                                             |
+| `weight`            | Optional kilograms; blank means 0/bodyweight.                                                                                                |
+| `superset`          | Optional shared label such as A.                                                                                                             |
+| `workout_notes`     | Optional notes for the workout.                                                                                                              |
+
+Files are parsed locally in your browser. Only the resulting program and workouts sync to your account; the spreadsheet itself is not uploaded. Imports are limited to 5 MB, 2,000 exercise rows, 20 MB of expanded workbook content, and the existing 1 MB cloud journal limit. `.xls`, encrypted workbooks, macros, and arbitrary spreadsheet layouts are not supported; use the supplied columns. Invalid rows prevent the entire import, so no partial program is saved.
+
+## Manage Buff from an AI assistant
+
+The authenticated MCP endpoint is **https://buff.asiaanglen.workers.dev/mcp**. It supports reading programs/history, planning workouts, editing targets and logging sets. Write tools produce an exact preview with a link for your approval in Buff; they cannot directly apply changes. Read-only access is also available.
+
+See [MCP setup and tool reference](docs/mcp.md) to connect a custom app in ChatGPT using OAuth. Your personal ChatGPT app connection still requires you to add and authorize it. Disconnect clients under **Account → Manage connected AI apps**.
 
 ## Workout programs
 
