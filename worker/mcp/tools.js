@@ -1,3 +1,4 @@
+import { searchExercises } from "../../shared/exercises.js";
 import { inPounds } from "../../shared/weights.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
@@ -238,6 +239,19 @@ export async function mcpHandler(request, env, ctx) {
         "No workout data has changed. Open this link and approve in Buff to apply the exact preview.",
     };
   }
+  tool(
+    "search_exercises",
+    "Search Buff's built-in public exercise catalog by movement, alias, muscle group or equipment. Returns canonical names and whether to track reps or time; these can be used in exercise proposals. Custom names are also allowed.",
+    {
+      query: z.string().max(100).default(""),
+      category: z.string().max(50).default(""),
+      equipment: z.string().max(50).default(""),
+      limit: z.number().int().min(1).max(100).default(30),
+      offset: z.number().int().min(0).default(0),
+    },
+    true,
+    async (a) => searchExercises(a),
+  );
   tool(
     "list_programs",
     "List your workout programs, their durations and workout counts.",

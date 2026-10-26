@@ -2401,3 +2401,56 @@ button:disabled {
   flex-wrap: wrap;
   gap: 12px;
 }
+
+.exercise-library {
+  background: #f7f5fc;
+  border: 1px solid #e4ddf0;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+.exercise-library summary {
+  font-weight: 650;
+  cursor: pointer;
+}
+.exercise-library > p {
+  color: #686475;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+.exercise-search-results {
+  max-height: 230px;
+  overflow-y: auto;
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+.exercise-choice {
+  text-align: left;
+  border: 1px solid #e4ddf0;
+  border-radius: 8px;
+  background: white;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+.exercise-choice:hover,
+.exercise-choice:focus-visible {
+  background: #eee8fa;
+  border-color: #a58acb;
+}
+.exercise-choice strong,
+.exercise-choice small {
+  display: block;
+}
+.exercise-choice strong {
+  font-size: 13px;
+}
+.exercise-choice small,
+#exercise-search-status {
+  font-size: 11px;
+  color: #686475;
+  margin-top: 4px;
+}

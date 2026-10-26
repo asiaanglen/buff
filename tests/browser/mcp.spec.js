@@ -91,6 +91,16 @@ test("MCP OAuth discovery, SDK tools, browser approval, refresh and revocation w
   const { client, tokens, registration } = await connect(page, baseURL);
   try {
     const names = (await client.listTools()).tools.map((t) => t.name);
+    expect(names).toContain("search_exercises");
+    const catalogResult = await client.callTool({
+      name: "search_exercises",
+      arguments: { query: "RDL" },
+    });
+    const catalog = JSON.parse(catalogResult.content[0].text);
+    expect(catalog.exercises.some((e) => e.name === "Romanian Deadlift")).toBe(
+      true,
+    );
+
     expect(names).toContain("create_program");
     expect(names).toContain("log_sets");
     const proposal = await client.callTool({

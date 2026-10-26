@@ -14,6 +14,7 @@ export default defineConfig({
     "pwa.spec.js",
     "active-program.spec.js",
     "completion.spec.js",
+    "exercise-library.spec.js",
   ],
   workers: 1,
   use: {

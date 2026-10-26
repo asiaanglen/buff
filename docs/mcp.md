@@ -28,6 +28,7 @@ Read tools return data immediately. Write tools **only create proposals** and re
 
 | Tool                | Action                                                                    |
 | ------------------- | ------------------------------------------------------------------------- |
+| `search_exercises` | Search the shared exercise catalog by name, alias, muscle group or equipment. |
 | `list_programs`     | List programs and workout counts, with pagination.                        |
 | `get_program`       | Read a program or its workouts in a numbered week.                        |
 | `list_workouts`     | Read scheduled workouts or logged history, with date/program filters.     |

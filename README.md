@@ -151,3 +151,7 @@ Choose **Start program** in the program library or program detail to make it you
 ## Complete a workout
 
 In the workout log, check individual sets or use **Exercise complete** to check every set for one exercise. **Mark as complete** accepts every displayed weight and rep/time value and completes the whole workout at once; adjust the prefilled targets to your actual results first. Invalid or blank results prevent bulk completion without partially marking other sets. Existing results, including zero weights, are preserved. Completed workouts appear under **Completed workouts**, turn grey in the program, and advance the active program's next workout. Unchecking a set or exercise makes the workout unfinished again while retaining its recorded values.
+
+## Exercise library
+
+Buff includes a shared catalog of 153 common exercises in `shared/exercises.js`, with stable IDs, names, search aliases, muscle groups, equipment and rep/time modes. When adding an exercise, search the library (for example, “RDL” or “neutral grip pull up”), filter by group, and select a movement to fill its name and tracking mode. Sets, targets, weight and supersets remain editable; timed selections default to 45 seconds when switching from reps. You can also type any custom name. Matching custom names from your own workouts appear as private suggestions. Existing workout names and logs are preserved. The MCP read tool `search_exercises` uses the same catalog. The library ships with the app and needs no extra database or paid service.
