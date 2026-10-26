@@ -1,3 +1,4 @@
+import { authScheme, passwordProof } from "./credentials.js";
 // Same-origin sessions stay in HttpOnly cookies; workout caches are scoped to each account.
 export function createCloud({ getState, setState, canApply, onStatus }) {
   let user = null,
@@ -177,6 +178,11 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
     b.disabled = true;
     const data = Object.fromEntries(new FormData(form));
     try {
+      const session = await request("/auth/session");
+      if (session.authScheme === authScheme) {
+        data.password = await passwordProof(data.email, data.password);
+        data.credentialVersion = authScheme;
+      }
       const result = await request(`/auth/${root.dataset.mode}`, {
         method: "POST",
         body: JSON.stringify(data),
@@ -303,7 +309,7 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
   window.addEventListener("focus", sync);
   setInterval(() => {
     if (document.visibilityState === "visible") sync();
-  }, 10000);
+  }, 30000);
   return {
     save,
     open,

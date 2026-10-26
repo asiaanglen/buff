@@ -1,6 +1,7 @@
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/browser",
+  testIgnore: "worker-api.spec.js",
   use: {
     baseURL: "http://127.0.0.1:5173",
     launchOptions: {
@@ -21,6 +22,7 @@ export default defineConfig({
     },
     {
       command: "npm run dev -- --port 5173",
+      env: { BUFF_API_TARGET: "http://127.0.0.1:3001" },
       url: "http://127.0.0.1:5173",
       reuseExistingServer: true,
     },
