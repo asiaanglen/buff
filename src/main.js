@@ -238,7 +238,7 @@ function previousSetLabel(w, e, index, field) {
   return `<small class="previous-set">Last: ${set ? `${field === "weight" ? set.weight : set.actual} ${field === "weight" ? state.unit : e.mode === "time" ? "sec" : "reps"}` : "—"}</small>`;
 }
 function logForm(w) {
-  return `<p class="log-intro">Enter weight (0 for bodyweight) and reps or seconds, then tick each completed set.</p><form id="log-form">${w.exercises.map((e) => `<div class="log-exercise"><h3>${esc(e.name)} ${e.group ? `<span class="superset-chip">Superset ${esc(e.group)}</span>` : ""}</h3><p>Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p>${previousPerformanceHeader(w, e)}<div class="log-head"><span>SET</span><span>WEIGHT (${state.unit})</span><span>${e.mode === "time" ? "TIME (SEC)" : "REPS"}</span><span>DONE</span></div>${e.logs.map((l, i) => `<div class="log-row ${l.done ? "set-done" : ""}"><strong>${i + 1}</strong><div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} weight" type="number" min="0" max="5000" step="0.01" placeholder="${e.weight}" value="${esc(l.weight)}" data-eid="${e.id}" data-set="${i}" data-field="weight">${previousSetLabel(w, e, i, "weight")}</div><div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" type="number" min="0" max="10000" step="1" placeholder="${e.target}" value="${esc(l.actual)}" data-eid="${e.id}" data-set="${i}" data-field="actual">${previousSetLabel(w, e, i, "actual")}</div><input aria-label="${esc(e.name)} set ${i + 1} completed" type="checkbox" ${l.done ? "checked" : ""} data-eid="${e.id}" data-set="${i}" data-field="done"></div>`).join("")}</div>`).join("") || "<p>Add an exercise to your plan to start logging.</p>"}<div class="modal-footer"><span class="autosave">Changes save automatically</span><button type="button" class="button primary" data-action="close">Done logging ✓</button></div></form>`;
+  return `<p class="log-intro">Targets are prefilled. Adjust weight and reps or seconds as needed, then tick each completed set.</p><form id="log-form">${w.exercises.map((e) => `<div class="log-exercise"><h3>${esc(e.name)} ${e.group ? `<span class="superset-chip">Superset ${esc(e.group)}</span>` : ""}</h3><p>Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p>${previousPerformanceHeader(w, e)}<div class="log-head"><span>SET</span><span>WEIGHT (${state.unit})</span><span>${e.mode === "time" ? "TIME (SEC)" : "REPS"}</span><span>DONE</span></div>${e.logs.map((l, i) => `<div class="log-row ${l.done ? "set-done" : ""}"><strong>${i + 1}</strong><div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} weight" type="number" min="0" max="5000" step="0.01" placeholder="${e.weight}" value="${esc(l.weight === "" ? e.weight : l.weight)}" data-eid="${e.id}" data-set="${i}" data-field="weight">${previousSetLabel(w, e, i, "weight")}</div><div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" type="number" min="0" max="10000" step="1" placeholder="${e.target}" value="${esc(l.actual === "" ? e.target : l.actual)}" data-eid="${e.id}" data-set="${i}" data-field="actual">${previousSetLabel(w, e, i, "actual")}</div><input aria-label="${esc(e.name)} set ${i + 1} completed" type="checkbox" ${l.done ? "checked" : ""} data-eid="${e.id}" data-set="${i}" data-field="done"></div>`).join("")}</div>`).join("") || "<p>Add an exercise to your plan to start logging.</p>"}<div class="modal-footer"><span class="autosave">Changes save automatically</span><button type="button" class="button primary" data-action="close">Done logging ✓</button></div></form>`;
 }
 app.addEventListener("click", (event) => {
   const b = event.target.closest("button");
@@ -489,17 +489,24 @@ app.addEventListener("change", (event) => {
   const e = workout().exercises.find((e) => e.id === input.dataset.eid),
     log = e.logs[Number(input.dataset.set)];
   if (input.dataset.field === "done") {
-    if (input.checked && (log.actual === "" || log.weight === "")) {
-      input.checked = false;
-      app.querySelector(".log-intro").textContent =
-        "Enter both weight (0 for bodyweight) and reps or seconds before completing a set.";
-      input
-        .closest(".log-row")
-        .querySelector(
-          log.weight === "" ? '[data-field="weight"]' : '[data-field="actual"]',
-        )
-        .focus();
-      return;
+    if (input.checked) {
+      const row = input.closest(".log-row"),
+        weight = row.querySelector('[data-field="weight"]'),
+        actual = row.querySelector('[data-field="actual"]');
+      if (!weight.checkValidity() || !actual.checkValidity()) {
+        input.checked = false;
+        (!weight.checkValidity() ? weight : actual).reportValidity();
+        return;
+      }
+      if (weight.value === "" || actual.value === "") {
+        input.checked = false;
+        app.querySelector(".log-intro").textContent =
+          "Enter both weight (0 for bodyweight) and reps or seconds before completing a set.";
+        (weight.value === "" ? weight : actual).focus();
+        return;
+      }
+      log.weight = weight.value;
+      log.actual = actual.value;
     }
     log.done = input.checked;
     input.closest(".log-row").classList.toggle("set-done", input.checked);

@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { exercise, initialState, addDays, key } from "../../src/model.js";
-test("logger shows previous actual weights and reps per set without filling current logs", async ({
+test("logger shows previous actual weights and reps per set without marking prefilled targets completed", async ({
   page,
 }) => {
   const state = initialState(),
@@ -34,7 +34,7 @@ test("logger shows previous actual weights and reps per set without filling curr
   await expect(bench.locator(".log-row").first()).toContainText("Last: 9 reps");
   await expect(
     page.getByLabel("Barbell bench press set 1 weight", { exact: true }),
-  ).toHaveValue("");
+  ).toHaveValue("40");
   const plank = page
     .locator(".log-exercise")
     .filter({ has: page.getByRole("heading", { name: "Plank", exact: true }) });
@@ -73,14 +73,12 @@ test("existing device history is displayed in pounds after conversion without ch
   );
   await page.goto("/");
   await page.getByRole("button", { name: "Log workout" }).click();
-  const bench = page
-    .locator(".log-exercise")
-    .filter({
-      has: page.getByRole("heading", {
-        name: "Barbell bench press",
-        exact: true,
-      }),
-    });
+  const bench = page.locator(".log-exercise").filter({
+    has: page.getByRole("heading", {
+      name: "Barbell bench press",
+      exact: true,
+    }),
+  });
   await expect(bench.locator(".previous-performance")).toContainText(
     "88.18 lbs × 8 reps",
   );
