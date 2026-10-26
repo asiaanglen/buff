@@ -9,7 +9,7 @@ Buff implements remote MCP over **Streamable HTTP**, using the official Model Co
 1. Open ChatGPT's Apps settings and the controls for custom MCP apps / Developer mode. Availability depends on your plan and workspace settings.
 2. Create a custom app named **Buff** with the MCP endpoint above and **OAuth** authentication. Discovery supports both dynamic client registration and Client ID Metadata Documents, so a compatible client does not need a manually created client ID or secret.
 3. Connect the app. Sign into your Buff account on the Buff site when prompted.
-4. Review the connecting app's name and callback hostname. Grant read access; also select **Propose workout changes** if you want the assistant to plan or log workouts.
+4. Review the connecting app's name and callback hostname. Grant read access; also select **Propose workout changes** for planning/logging and **Edit individual exercises** to change exercises inside existing program workouts.
 5. In a chat using the Buff app, ask for a program or workout. For example: “Show my programs”, “Plan a 10-week strength program with three workouts a week”, or “Log 8 reps at 90 lbs for my first bench press set.”
 
 The deployed server has passed live checks for OAuth consent, PKCE code exchange, MCP initialization and tools, staged changes, browser-session approval, token refresh and revocation. Adding it to your personal ChatGPT settings still requires your own action. Never enter your Cloudflare deployment token or Buff password into a chat or MCP configuration. The Buff sign-in page handles your login.
@@ -47,7 +47,10 @@ Weights are pounds (lbs); 0 means bodyweight. `mode` is `reps` or `time` (second
 ## Protocol and security
 
 - OAuth 2.1 authorization code flow with PKCE S256, exact registered callback validation, resource/audience binding, scoped access, rotating refresh tokens, revocation, and server discovery.
-- Read scope: `buff:read`; proposal scope: `buff:write`; optional `offline_access`.
+- Read scope: `buff:read`; general proposal scope: `buff:write`; individual exercise additions/edits: `buff:exercises:write`; optional `offline_access`.
+- `update_exercise` and `add_exercises` require `buff:read` plus `buff:exercises:write`. General write permission does not imply this scope. An exercise-only grant can edit existing exercises without permission to create programs, reschedule workouts or log sets.
+- For an existing connection, reconnect/re-authorize Buff and select **Edit individual exercises**. Existing grants and refresh tokens are not silently expanded. Missing-scope tool responses request the exact scope through MCP authorization metadata.
+- `update_exercise` accepts optional `program_id` as a guard that the specified workout belongs to that program; `workout_id` and `exercise_id` identify the exact exercise to change. Changes remain staged until approved, and existing recorded sets cannot be discarded.
 - OAuth provider records use a KV-compatible D1 adapter supporting expiry, metadata and pagination. Tokens/codes are stored as the provider's hashes, and token-associated application props are encrypted by the provider. Deployment tokens are never used as MCP credentials.
 - Browser consent is bound to both the OAuth browser handle and the signed-in Buff session. Consent/approval pages reject framing, escape untrusted names/notes, and use CSRF checks. Approval endpoints do not accept MCP bearer authentication in place of a Buff browser session.
 - D1 serializes code/refresh exchanges with short-lived locks. Reusing an authorization code is rejected and revokes the affected grant, according to the OAuth provider's replay handling.

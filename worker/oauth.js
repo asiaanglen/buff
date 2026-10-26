@@ -36,7 +36,12 @@ export async function handleOAuth(request, env, ctx, app) {
     authorizeEndpoint: "/oauth/authorize",
     tokenEndpoint: "/oauth/token",
     clientRegistrationEndpoint: "/oauth/register",
-    scopesSupported: ["buff:read", "buff:write", "offline_access"],
+    scopesSupported: [
+      "buff:read",
+      "buff:write",
+      "buff:exercises:write",
+      "offline_access",
+    ],
     requiredScopes: ["buff:read"],
     resourceMetadata: {
       resource: origin + "/mcp",
@@ -213,7 +218,7 @@ async function consent(request, env) {
       .run();
     return page(
       "Connect an app to Buff",
-      `<p>Signed in as <strong>${esc(user.email)}</strong>.</p><h2>Allow ${esc(details.clientName)} to access Buff?</h2><p>${details.clientDomain ? `Published by <strong>${esc(details.clientDomain)}</strong>.` : "This app registered itself; its display name is not verified."}</p><p>Access will return to <strong>${esc(details.redirectHost)}</strong>.</p>${details.redirectIsLoopback ? '<p class="warning">This connects an app on your computer. Continue only if you started this connection.</p>' : ""}<form method="post"><input type="hidden" name="handle" value="${esc(consent.handle)}"><input type="hidden" name="scope" value="buff:read"><label><input type="checkbox" checked disabled> Read your workout programs and history</label><label><input type="checkbox" name="scope" value="buff:write" ${auth.scope.includes("buff:write") ? "checked" : ""}> Propose workout changes (each requires your approval in Buff)</label>${auth.scope.includes("offline_access") ? '<input type="hidden" name="scope" value="offline_access">' : ""}<p>Buff never shares your password. You can disconnect this app at any time.</p><button name="decision" value="approve">Connect app</button><button class="secondary" name="decision" value="deny">Cancel</button></form>`,
+      `<p>Signed in as <strong>${esc(user.email)}</strong>.</p><h2>Allow ${esc(details.clientName)} to access Buff?</h2><p>${details.clientDomain ? `Published by <strong>${esc(details.clientDomain)}</strong>.` : "This app registered itself; its display name is not verified."}</p><p>Access will return to <strong>${esc(details.redirectHost)}</strong>.</p>${details.redirectIsLoopback ? '<p class="warning">This connects an app on your computer. Continue only if you started this connection.</p>' : ""}<form method="post"><input type="hidden" name="handle" value="${esc(consent.handle)}"><input type="hidden" name="scope" value="buff:read"><label><input type="checkbox" checked disabled> Read your workout programs and history</label><label><input type="checkbox" name="scope" value="buff:write" ${auth.scope.includes("buff:write") ? "checked" : ""}> Propose workout changes (each requires your approval in Buff)</label><label><input type="checkbox" name="scope" value="buff:exercises:write" ${auth.scope.includes("buff:exercises:write") ? "checked" : ""}> Edit individual exercises in existing programs and workouts (each requires your approval in Buff)</label>${auth.scope.includes("offline_access") ? '<input type="hidden" name="scope" value="offline_access">' : ""}<p>Buff never shares your password. You can disconnect this app at any time.</p><button name="decision" value="approve">Connect app</button><button class="secondary" name="decision" value="deny">Cancel</button></form>`,
       consent.headers,
       200,
       auth.redirectUri,

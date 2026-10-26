@@ -3,7 +3,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { randomBytes, createHash } from "node:crypto";
 import { passwordProof, authScheme } from "../../src/credentials.js";
-async function connect(page, base, write = true) {
+async function connect(page, base, write = true, editExercises = write) {
   const email = `mcp-${Date.now()}-${randomBytes(3).toString("hex")}@example.com`;
   const signup = await page.request.post(base + "/api/auth/signup", {
     headers: { Origin: base },
@@ -31,7 +31,7 @@ async function connect(page, base, write = true) {
     client_id: registration.client_id,
     response_type: "code",
     redirect_uri: "http://127.0.0.1/callback",
-    scope: "buff:read buff:write offline_access",
+    scope: "buff:read buff:write buff:exercises:write offline_access",
     state: "test-state",
     code_challenge: challenge,
     code_challenge_method: "S256",
@@ -45,6 +45,8 @@ async function connect(page, base, write = true) {
     page.getByRole("heading", { name: "Connect an app to Buff" }),
   ).toBeVisible();
   if (!write) await page.getByLabel("Propose workout changes").uncheck();
+  if (!editExercises)
+    await page.getByLabel("Edit individual exercises").uncheck();
   await page.getByRole("button", { name: "Connect app", exact: true }).click();
   await page.waitForURL("http://127.0.0.1/callback**", { timeout: 5000 });
   const code = new URL(page.url()).searchParams.get("code");
@@ -85,6 +87,7 @@ test("MCP OAuth discovery, SDK tools, browser approval, refresh and revocation w
     await page.request.get("/.well-known/oauth-authorization-server")
   ).json();
   expect(metadata.code_challenge_methods_supported).toContain("S256");
+  expect(metadata.scopes_supported).toContain("buff:exercises:write");
   const { client, tokens, registration } = await connect(page, baseURL);
   try {
     const names = (await client.listTools()).tools.map((t) => t.name);
@@ -407,4 +410,159 @@ test("OAuth signs in through Buff and returns to consent in a fresh browser", as
     page.getByRole("heading", { name: "Connect an app to Buff" }),
   ).toBeVisible();
   await expect(page.getByText(email, { exact: true })).toBeVisible();
+});
+
+test("exercise-only permission edits one exercise in an existing program without granting general writes", async ({
+  page,
+  baseURL,
+}) => {
+  const { client } = await connect(page, baseURL, false, true);
+  try {
+    const programId = crypto.randomUUID(),
+      workoutId = crypto.randomUUID(),
+      exerciseId = crypto.randomUUID();
+    const state = {
+      version: 1,
+      unit: "lbs",
+      programs: [
+        {
+          id: programId,
+          name: "Existing build",
+          startDate: "2026-11-02",
+          weeks: 10,
+          note: "",
+        },
+      ],
+      workouts: [
+        {
+          id: workoutId,
+          programId,
+          date: "2026-11-02",
+          name: "Upper",
+          note: "Keep this workout",
+          exercises: [
+            {
+              id: exerciseId,
+              name: "Bench",
+              sets: 2,
+              target: 8,
+              mode: "reps",
+              weight: 90,
+              group: "",
+              logs: [
+                { weight: "90", actual: "8", done: true },
+                { weight: "", actual: "", done: false },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    expect(
+      (
+        await page.request.put("/api/state", {
+          headers: { Origin: baseURL },
+          data: { state, revision: 0 },
+        })
+      ).status(),
+    ).toBe(200);
+    const tools = (await client.listTools()).tools;
+    const edit = tools.find((t) => t.name === "update_exercise");
+    expect(edit._meta.securitySchemes[0].scopes).toEqual([
+      "buff:read",
+      "buff:exercises:write",
+    ]);
+    const denied = await client.callTool({
+      name: "create_program",
+      arguments: {
+        name: "No general write access",
+        start_date: "2026-11-02",
+        weeks: 4,
+      },
+    });
+    expect(denied.isError).toBe(true);
+    expect(denied._meta["mcp/www_authenticate"][0]).toContain("buff:write");
+    const wrong = await client.callTool({
+      name: "update_exercise",
+      arguments: {
+        program_id: "wrong-program",
+        workout_id: workoutId,
+        exercise_id: exerciseId,
+        target: 10,
+      },
+    });
+    expect(wrong.isError).toBe(true);
+    expect(wrong.content[0].text).toContain("does not belong");
+    const proposed = await client.callTool({
+      name: "update_exercise",
+      arguments: {
+        program_id: programId,
+        workout_id: workoutId,
+        exercise_id: exerciseId,
+        name: "Barbell bench press",
+        sets: 3,
+        target: 10,
+        weight: 95,
+        superset: "A",
+      },
+    });
+    expect(proposed.isError).not.toBe(true);
+    expect(proposed.structuredContent.status).toBe("pending_approval");
+    expect(
+      (await (await page.request.get("/api/state")).json()).state.workouts[0]
+        .exercises[0].target,
+    ).toBe(8);
+    await page.goto(proposed.structuredContent.approvalUrl);
+    await page.getByRole("button", { name: "Approve changes" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Change applied" }),
+    ).toBeVisible();
+    const saved = (await (await page.request.get("/api/state")).json()).state;
+    expect(saved.programs).toEqual(state.programs);
+    expect(saved.workouts[0].note).toBe("Keep this workout");
+    expect(saved.workouts[0].exercises[0]).toMatchObject({
+      id: exerciseId,
+      name: "Barbell bench press",
+      sets: 3,
+      target: 10,
+      weight: 95,
+      group: "A",
+    });
+    expect(saved.workouts[0].exercises[0].logs[0]).toEqual({
+      weight: "90",
+      actual: "8",
+      done: true,
+    });
+  } finally {
+    await client.close();
+  }
+});
+test("existing broad-write grants need new consent before editing individual exercises", async ({
+  page,
+  baseURL,
+}) => {
+  const { client } = await connect(page, baseURL, true, false);
+  try {
+    const denied = await client.callTool({
+      name: "update_exercise",
+      arguments: { workout_id: "any", exercise_id: "any", target: 10 },
+    });
+    expect(denied.isError).toBe(true);
+    expect(denied._meta["mcp/www_authenticate"][0]).toContain(
+      "buff:exercises:write",
+    );
+    const add = await client.callTool({
+      name: "add_exercises",
+      arguments: {
+        workout_id: "any",
+        exercises: [{ name: "Row", sets: 3, target: 10 }],
+      },
+    });
+    expect(add.isError).toBe(true);
+    expect(add._meta["mcp/www_authenticate"][0]).toContain(
+      "buff:exercises:write",
+    );
+  } finally {
+    await client.close();
+  }
 });
