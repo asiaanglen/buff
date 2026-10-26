@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: buff
+    runtime: node
+    plan: starter
+    numInstances: 1
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24.19.0
+      - key: DATABASE_PATH
+        value: /var/data/buff.sqlite
+    disk:
+      name: buff-data
+      mountPath: /var/data
+      sizeGB: 1
