@@ -140,13 +140,13 @@ export function importGuest(current, guest) {
 
 // Use actual completed sets from the last matching session, across programs.
 // Names are case/whitespace insensitive; rep and time exercises stay separate.
-export function previousExercisePerformance(
+export function exercisePerformanceHistory(
   state,
   currentWorkout,
   currentExercise,
 ) {
   const normalize = (name) => name.trim().replace(/\s+/g, " ").toLowerCase();
-  let found = null;
+  const sessions = [];
   state.workouts.forEach((workout, order) => {
     if (workout.id === currentWorkout.id || workout.date > currentWorkout.date)
       return;
@@ -172,19 +172,28 @@ export function previousExercisePerformance(
           : [],
       );
       if (!sets.length) continue;
-      if (
-        !found ||
-        workout.date > found.date ||
-        (workout.date === found.date && order >= found.order)
-      )
-        found = {
-          date: workout.date,
-          workoutName: workout.name,
-          sets,
-          latest: sets.at(-1),
-          order,
-        };
+      sessions.push({
+        date: workout.date,
+        workoutName: workout.name,
+        sets,
+        latest: sets.at(-1),
+        note: e.note || "",
+        order,
+      });
     }
   });
-  return found;
+  return sessions.sort(
+    (a, b) => b.date.localeCompare(a.date) || b.order - a.order,
+  );
+}
+
+export function previousExercisePerformance(
+  state,
+  currentWorkout,
+  currentExercise,
+) {
+  return (
+    exercisePerformanceHistory(state, currentWorkout, currentExercise)[0] ||
+    null
+  );
 }

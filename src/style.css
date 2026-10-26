@@ -2454,3 +2454,97 @@ button:disabled {
   color: #686475;
   margin-top: 4px;
 }
+
+.exercise-library-item {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+.exercise-library-item .exercise-choice {
+  flex: 1;
+  min-width: 0;
+}
+.exercise-guide-button {
+  border: 0;
+  background: transparent;
+  color: #7153ba;
+  font: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+  padding: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.exercise-guide-dialog {
+  border: 0;
+  border-radius: 20px;
+  padding: 28px;
+  width: min(540px, calc(100% - 40px));
+  max-height: 85dvh;
+  overflow: auto;
+  color: #30283f;
+}
+.exercise-guide-dialog::backdrop {
+  background: #26233399;
+}
+.exercise-guide-dialog h2 {
+  margin: 12px 0;
+}
+.exercise-guide-dialog h3 {
+  margin: 22px 0 12px;
+}
+.exercise-guide-dialog p,
+.exercise-guide-dialog li {
+  line-height: 1.65;
+  font-size: 14px;
+}
+.exercise-guide-dialog li {
+  margin-bottom: 14px;
+  padding-left: 4px;
+}
+.exercise-guide-dialog ol {
+  padding-left: 24px;
+}
+.exercise-guide-dialog .button {
+  margin-top: 16px;
+}
+.workout-history {
+  padding: 16px;
+  background: #f5f2fa;
+  border: 1px solid #e3daef;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+.workout-history summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.workout-history p,
+.workout-history li {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.exercise-history article {
+  padding: 12px 0;
+  border-bottom: 1px solid #e3daef;
+}
+.exercise-history h3 {
+  font-size: 15px;
+  margin: 18px 0 4px;
+}
+.exercise-history article > strong {
+  font-size: 12px;
+}
+.exercise-history ul {
+  padding-left: 20px;
+}
+.exercise-history-note {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.exercise-notes {
+  margin-top: 20px;
+}
+.exercise-notes textarea {
+  min-height: 72px;
+}

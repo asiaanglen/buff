@@ -210,3 +210,33 @@ test("legacy kg journals convert planned and actual weights once while preservin
   assert.equal(inPounds(converted), converted);
   assert.equal(validState(converted), true);
 });
+
+test("exercise history retains session notes and rejects invalid note lengths", async () => {
+  const {
+    initialState,
+    exercisePerformanceHistory,
+    previousExercisePerformance,
+  } = await import("../src/model.js");
+  const { validState } = await import("../shared/journal.js");
+  const state = initialState();
+  const past = state.workouts[0];
+  const current = structuredClone(past);
+  current.id = "later-session";
+  state.workouts.push(current);
+  past.exercises[0].logs[0] = { weight: "95", actual: "8", done: true };
+  past.exercises[0].note = "Keep heels down.";
+  assert.equal(validState(state), true);
+  const sessions = exercisePerformanceHistory(
+    state,
+    current,
+    current.exercises[0],
+  );
+  assert.equal(sessions.length, 1);
+  assert.equal(sessions[0].note, "Keep heels down.");
+  assert.equal(
+    previousExercisePerformance(state, current, current.exercises[0]).note,
+    "Keep heels down.",
+  );
+  past.exercises[0].note = "x".repeat(1001);
+  assert.equal(validState(state), false);
+});

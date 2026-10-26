@@ -15,6 +15,7 @@ export default defineConfig({
     "active-program.spec.js",
     "completion.spec.js",
     "exercise-library.spec.js",
+    "guides-notes.spec.js",
   ],
   workers: 1,
   use: {

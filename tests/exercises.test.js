@@ -56,3 +56,20 @@ test("exercise catalog supports filtered paging and distinguishes rep and time t
     "reps",
   );
 });
+
+test("every library movement has a usable guide and exact alias matching keeps variations separate", async () => {
+  const { exerciseCatalog, exerciseByName } =
+    await import("../shared/exercises.js");
+  assert.equal(exerciseCatalog.length, 153);
+  for (const exercise of exerciseCatalog) {
+    assert.equal(exercise.instructions.steps.length, 3, exercise.name);
+    assert.ok(
+      exercise.instructions.steps.every((step) => step.trim().length > 15),
+      exercise.name,
+    );
+    assert.ok(exercise.instructions.cues.length > 0, exercise.name);
+  }
+  assert.equal(exerciseByName("barbell back squat").name, "Back Squat");
+  assert.equal(exerciseByName("RDL").name, "Romanian Deadlift");
+  assert.equal(exerciseByName("squat"), undefined);
+});

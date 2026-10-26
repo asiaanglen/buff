@@ -155,3 +155,9 @@ In the workout log, check individual sets or use **Exercise complete** to check 
 ## Exercise library
 
 Buff includes a shared catalog of 153 common exercises in `shared/exercises.js`, with stable IDs, names, search aliases, muscle groups, equipment and rep/time modes. When adding an exercise, search the library (for example, “RDL” or “neutral grip pull up”), filter by group, and select a movement to fill its name and tracking mode. Sets, targets, weight and supersets remain editable; timed selections default to 45 seconds when switching from reps. You can also type any custom name. Matching custom names from your own workouts appear as private suggestions. Existing workout names and logs are preserved. The MCP read tool `search_exercises` uses the same catalog. The library ships with the app and needs no extra database or paid service.
+
+## Exercise guides, history and notes
+
+Every built-in exercise has **How to** instructions with setup, movement steps and a form cue. Open guides from library results, workout plans or the workout log. Guides match exact exercise names and known aliases; custom movements without a matching guide do not receive unrelated instructions. Closing a guide returns to the current screen without resetting form entries.
+
+The workout log includes an expandable **Workout history** section directly beneath its heading. It shows up to 30 prior matching sessions per exercise, newest first, with recorded weight in lbs, reps or seconds, date, workout name and notes. Current and future-dated sessions are excluded, and rep/time histories stay separate. **Notes for [exercise]** saves up to 1,000 characters with that exercise's session and syncs with the account journal. Editing the exercise plan preserves its notes; copied program weeks start with clean logs and no session notes. The shared catalog and MCP search results include the movement instructions.

@@ -1,3 +1,4 @@
+import { exerciseInstructions } from "./exercise-instructions.js";
 // Shared public catalog. Workout logs remain private to each account.
 export const exerciseCatalog = [
   {
@@ -1224,7 +1225,10 @@ export const exerciseCatalog = [
     mode: "time",
     aliases: [],
   },
-];
+].map((exercise) => ({
+  ...exercise,
+  instructions: exerciseInstructions[exercise.id],
+}));
 
 const normalized = (value) =>
   String(value)
@@ -1254,4 +1258,12 @@ export function searchExercises({
     exercises: matches.slice(offset, offset + limit),
     total: matches.length,
   };
+}
+
+// Exact normalized names/aliases only: never show a guide for the wrong variation.
+export function exerciseByName(name) {
+  const query = normalized(name);
+  return exerciseCatalog.find((e) =>
+    [e.name, ...e.aliases].some((value) => normalized(value) === query),
+  );
 }

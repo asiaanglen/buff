@@ -73,6 +73,7 @@ export function validState(s) {
         !text(e.name, 100) ||
         !e.name.trim() ||
         !text(e.group, 12) ||
+        (e.note !== undefined && !text(e.note, 1000)) ||
         !["time", "reps"].includes(e.mode) ||
         !Number.isInteger(e.sets) ||
         e.sets < 1 ||
