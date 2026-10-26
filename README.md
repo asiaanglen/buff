@@ -147,3 +147,7 @@ The manifest includes standard, maskable, and Apple home-screen icons. The servi
 ## Start a program
 
 Choose **Start program** in the program library or program detail to make it your active program. Your signed-in **Home** page features the earliest unfinished workout in scheduled order, regardless of the current calendar week. Completing every set greys out that workout and promotes the next one after closing the log. Completed logs stay available, and undoing a completed set makes the workout unfinished again. Starting another program changes the focus without resetting any logs. The active choice is stored in your account journal and syncs across devices.
+
+## Complete a workout
+
+In the workout log, check individual sets or use **Exercise complete** to check every set for one exercise. **Mark as complete** accepts every displayed weight and rep/time value and completes the whole workout at once; adjust the prefilled targets to your actual results first. Invalid or blank results prevent bulk completion without partially marking other sets. Existing results, including zero weights, are preserved. Completed workouts appear under **Completed workouts**, turn grey in the program, and advance the active program's next workout. Unchecking a set or exercise makes the workout unfinished again while retaining its recorded values.

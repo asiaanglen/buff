@@ -13,6 +13,7 @@ export default defineConfig({
     "landing.spec.js",
     "pwa.spec.js",
     "active-program.spec.js",
+    "completion.spec.js",
   ],
   workers: 1,
   use: {

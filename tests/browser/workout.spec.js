@@ -38,8 +38,12 @@ test("plans workouts with supersets, logs reps and time, and persists after relo
   await page.getByLabel("Wall sit set 1 completed", { exact: true }).check();
   await page.getByRole("button", { name: "Done logging" }).click();
   await expect(card).toContainText("2 sets completed");
+  await card.getByRole("button", { name: "Continue logging" }).click();
+  await page
+    .getByRole("button", { name: "Mark as complete", exact: true })
+    .click();
   await page.reload();
-  await page.getByRole("button", { name: "Workout history" }).click();
+  await page.getByRole("button", { name: "Completed workouts" }).click();
   await page
     .locator(".history-card")
     .filter({ hasText: "Leg day" })
