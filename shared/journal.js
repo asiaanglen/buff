@@ -1,3 +1,4 @@
+import { programError, programWeek, validDate } from "./programs.js";
 export function validState(s) {
   const text = (v, n) => typeof v === "string" && v.length <= n;
   const num = (v, max) =>
@@ -15,6 +16,24 @@ export function validState(s) {
     s.workouts.length > 5000
   )
     return false;
+  if (
+    s.programs !== undefined &&
+    (!Array.isArray(s.programs) || s.programs.length > 500)
+  )
+    return false;
+  const programs = new Map();
+  for (const p of s.programs || []) {
+    if (
+      !p ||
+      !text(p.id, 100) ||
+      !p.id ||
+      programs.has(p.id) ||
+      !text(p.note, 500) ||
+      programError(p)
+    )
+      return false;
+    programs.set(p.id, p);
+  }
   const ids = new Set();
   return s.workouts.every((w) => {
     if (
@@ -24,11 +43,20 @@ export function validState(s) {
       !text(w.name, 100) ||
       !w.name.trim() ||
       !text(w.note, 500) ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(w.date) ||
+      !validDate(w.date) ||
       !Array.isArray(w.exercises) ||
       w.exercises.length > 200
     )
       return false;
+    if (
+      w.programId !== undefined &&
+      w.programId !== null &&
+      w.programId !== ""
+    ) {
+      const p = programs.get(w.programId);
+      if (!p || programWeek(p, w.date) < 1 || programWeek(p, w.date) > p.weeks)
+        return false;
+    }
     ids.add(w.id);
     const eids = new Set();
     return w.exercises.every((e) => {

@@ -1211,3 +1211,219 @@ button:disabled {
     margin-left: 3px;
   }
 }
+.program-library {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 20px;
+}
+.program-empty {
+  grid-column: 1/-1;
+}
+.program-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 26px;
+  display: flex;
+  align-items: start;
+  flex-direction: column;
+}
+.program-card-icon {
+  width: 42px;
+  height: 42px;
+  background: #f0ecfb;
+  color: var(--purple);
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  font-size: 25px;
+  margin-bottom: 20px;
+}
+.program-card .tag {
+  font-size: 9px;
+}
+.program-card h2 {
+  font-size: 20px;
+  margin: 5px 0 9px;
+  overflow-wrap: anywhere;
+}
+.program-note {
+  margin-top: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.program-meta {
+  display: flex;
+  gap: 17px;
+  margin: 22px 0;
+  font-size: 11px;
+  color: #a095af;
+}
+.program-card .button {
+  margin-top: auto;
+}
+.program-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.program-description {
+  background: #f0ecf9;
+  padding: 17px;
+  border-radius: 9px;
+  margin-bottom: 24px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.program-weeks {
+  display: flex;
+  overflow-x: auto;
+  gap: 9px;
+  padding: 0 0 12px;
+  max-width: 100%;
+  margin-bottom: 22px;
+}
+.week-chip {
+  border: 1px solid #e6dfef;
+  border-radius: 9px;
+  background: white;
+  padding: 15px 19px;
+  min-width: 100px;
+  text-align: left;
+  flex-shrink: 0;
+}
+.week-chip strong {
+  display: block;
+  font-size: 12px;
+}
+.week-chip small {
+  display: block;
+  font-size: 10px;
+  color: #aa9db8;
+  margin-top: 7px;
+}
+.week-chip.selected {
+  background: #f1ecfc;
+  border-color: #a18ad8;
+  color: #7a60be;
+}
+.program-week-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+.program-week-heading h2 {
+  font-size: 23px;
+}
+.program-week-heading h2 span {
+  font:
+    400 11px "DM Sans Variable",
+    sans-serif;
+  color: #a398ae;
+  margin-left: 15px;
+}
+.program-week-heading p {
+  margin-top: 8px;
+  font-size: 11px;
+}
+.program-week-controls {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.program-week-controls select {
+  background: white;
+  border: 1px solid #e5deed;
+  border-radius: 7px;
+  padding: 11px;
+  font: inherit;
+  font-size: 12px;
+  color: #78658f;
+}
+.program-workout-date {
+  color: #9688a5;
+  font-size: 11px;
+  margin: 24px 0 11px;
+}
+.field-help {
+  font-size: 11px;
+  margin: 0 0 22px;
+  line-height: 1.7;
+}
+.form-error {
+  color: #b4556a;
+  font-size: 12px;
+  margin: 10px 0;
+  line-height: 1.6;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.program-detail,
+.program-library {
+  min-width: 0;
+}
+.page-heading h1 {
+  overflow-wrap: anywhere;
+}
+.page-heading > div {
+  min-width: 0;
+}
+@media (max-width: 1100px) {
+  .program-week-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+}
+@media (max-width: 600px) {
+  .sidebar {
+    flex-wrap: wrap;
+  }
+  .sidebar nav {
+    width: 100%;
+    margin: 6px 0 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .nav-item {
+    justify-content: center;
+    font-size: 10px;
+  }
+  .program-card {
+    padding: 22px;
+  }
+  .program-week-heading h2 span {
+    display: block;
+    margin: 7px 0 0;
+  }
+  .program-week-controls {
+    width: 100%;
+    gap: 7px;
+  }
+  .program-week-controls .button {
+    font-size: 10px;
+    padding: 12px;
+  }
+  .program-week-controls select {
+    font-size: 11px;
+    max-width: 125px;
+  }
+  .program-library {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .week-chip {
+    min-width: 94px;
+    padding: 13px 16px;
+  }
+}
+.program-weeks {
+  position: relative;
+}

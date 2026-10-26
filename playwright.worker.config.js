@@ -1,7 +1,12 @@
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/browser",
-  testMatch: ["workout.spec.js", "sync.spec.js", "worker-api.spec.js"],
+  testMatch: [
+    "workout.spec.js",
+    "sync.spec.js",
+    "worker-api.spec.js",
+    "programs.spec.js",
+  ],
   workers: 1,
   use: {
     baseURL: "http://127.0.0.1:8788",

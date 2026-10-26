@@ -1,3 +1,4 @@
+import { importGuest } from "./model.js";
 import { authScheme, passwordProof } from "./credentials.js";
 // Same-origin sessions stay in HttpOnly cookies; workout caches are scoped to each account.
 export function createCloud({ getState, setState, canApply, onStatus }) {
@@ -252,20 +253,18 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
         try {
           guest = JSON.parse(localStorage.getItem("buff-v1"));
         } catch {}
-        const current = structuredClone(getState());
-        const ids = new Set(current.workouts.map((w) => w.id));
-        const extras = (guest?.workouts || []).filter((w) => !ids.has(w.id));
-        if (extras.length) {
-          current.workouts.push(...extras);
-          setState(current);
+        const imported = importGuest(getState(), guest);
+        if (imported.workouts || imported.programs) {
+          setState(imported.state);
           save();
           await sync();
         }
         open(
           "signin",
-          `${extras.length} guest workouts imported. Existing workout IDs were kept unchanged.`,
+          `${imported.workouts} guest workouts and ${imported.programs} programs imported. Existing workouts were kept unchanged.`,
         );
       }
+
       if (action === "signout") {
         await busy;
         await request("/auth/signout", { method: "POST", body: "{}" });

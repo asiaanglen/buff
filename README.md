@@ -4,7 +4,7 @@ A responsive weekly workout planner with accounts, cross-device sync, supersets,
 
 ## Deployed app
 
-Buff is deployed at **https://buff.asiaanglen.workers.dev**. Cloudflare confirmed the deployment and enabled public routing. This environment’s egress policy currently blocks requests to that new hostname, so live sign-in/sync verification is pending a network settings update. The Workers/D1 workflow passed its local runtime tests.
+Buff is deployed at **https://buff.asiaanglen.workers.dev**. Cloudflare confirmed the deployment and public routing. Live checks verified account creation, saving a 10-week program, loading Week 10 and logged sets from a second session, stale-update protection, and sign-out. The temporary verification account was removed. The full browser workflow also passed against the local Workers/D1 runtime.
 
 ## Free hosting: Cloudflare Workers + D1
 
@@ -52,6 +52,16 @@ npm run dev -- --port 5173
 Vite serves the frontend and proxies `/api` to the local Worker on port 8787. Wrangler persists the local D1 database in ignored `.wrangler/state` storage. Preserve that directory if you want to retain local accounts and history. Both processes must restart in a new task. The local database and the remote D1 database are separate.
 
 The Worker can also serve the last built frontend directly, without Vite. When doing so, start `npx wrangler dev --port 8787` without the development-only `PUBLIC_ORIGIN` override.
+
+## Workout programs
+
+Open **Programs → Create program** to choose a name, start date, and any whole-week duration from 1 to 5,200 weeks. Each program has numbered weeks starting on its chosen start date, with its own workout list and completion counts. Create multiple programs with different dates or lengths; they can overlap.
+
+Select **Week 1**, **Week 2**, and so on, or use the week dropdown for longer programs. **Add workout** automatically assigns the workout to that program and week. Choose the workout date within that week. Existing workouts can be assigned through **Edit plan → Program**, and program workouts also appear on their scheduled dates in the weekly planner.
+
+**Copy week** copies the exercise plans, targets, set counts and supersets into another week. The source logs stay intact, and copied workouts start with empty logs. Existing destination workouts are retained. Changing a program’s dates or length cannot orphan assigned workouts: expand the range or move those workouts first. Deleting a program keeps its workouts and logged history in the weekly planner.
+
+Programs and their workout assignments sync with your account. Existing journals without programs remain compatible; no database migration or reset is needed. Guest-workout import includes program definitions and safely remaps conflicting program IDs.
 
 ## Sync and storage
 
