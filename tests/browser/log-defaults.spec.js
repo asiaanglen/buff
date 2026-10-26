@@ -1,3 +1,4 @@
+import { openExercise } from "./exercise-navigation.js";
 import { test, expect } from "./auth-fixture.js";
 import { initialState } from "../../src/model.js";
 test("target defaults can be accepted without editing and do not complete sets on open", async ({
@@ -9,7 +10,7 @@ test("target defaults can be accepted without editing and do not complete sets o
     state,
   );
   await page.goto("/app");
-  await page.getByRole("button", { name: "Log workout" }).click();
+  await page.getByRole("button", { name: "Start workout" }).click();
   await expect(
     page.getByLabel("Barbell bench press set 1 weight", { exact: true }),
   ).toHaveValue("40");
@@ -30,6 +31,7 @@ test("target defaults can be accepted without editing and do not complete sets o
   await page
     .getByLabel("Barbell bench press set 1 completed", { exact: true })
     .check();
+  await openExercise(page, "Plank");
   await page.getByLabel("Plank set 1 completed", { exact: true }).check();
   await page.getByRole("button", { name: "Collapse workout" }).click();
   await expect(page.locator(".workout-card")).toContainText("2 sets completed");
@@ -64,7 +66,7 @@ test("existing results and zero values are preserved; clearing a default prevent
     state,
   );
   await page.goto("/app");
-  await page.getByRole("button", { name: "Continue logging" }).click();
+  await page.getByRole("button", { name: "Resume workout" }).click();
   await expect(
     page.getByLabel("Barbell bench press set 1 weight", { exact: true }),
   ).toHaveValue("0");

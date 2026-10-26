@@ -54,7 +54,7 @@ test("creates and edits multiple supersets without losing logs or notes; logs sh
   await expect(card.locator(".superset-label")).toHaveCount(2);
   await expect(page.locator("#sync-label")).toContainText("Synced");
   await page.reload();
-  await card.getByRole("button", { name: "Continue logging" }).click();
+  await card.getByRole("button", { name: "Resume workout" }).click();
   await expect(page.getByRole("button", { name: "Done logging" })).toHaveCount(
     0,
   );

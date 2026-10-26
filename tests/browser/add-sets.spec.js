@@ -82,18 +82,14 @@ test("completing one expanded workout never completes another expanded workout",
     ).ok(),
   ).toBeTruthy();
   await page.goto("/");
-  const first = page
-    .locator(".workout-card")
-    .filter({
-      has: page.getByRole("heading", { name: "First workout", exact: true }),
-    });
-  const second = page
-    .locator(".workout-card")
-    .filter({
-      has: page.getByRole("heading", { name: "Second workout", exact: true }),
-    });
-  await first.getByRole("button", { name: "Log workout" }).click();
-  await second.getByRole("button", { name: "Log workout" }).click();
+  const first = page.locator(".workout-card").filter({
+    has: page.getByRole("heading", { name: "First workout", exact: true }),
+  });
+  const second = page.locator(".workout-card").filter({
+    has: page.getByRole("heading", { name: "Second workout", exact: true }),
+  });
+  await first.getByRole("button", { name: "Start workout" }).click();
+  await second.getByRole("button", { name: "Start workout" }).click();
   await page.getByLabel("Row set 1 weight", { exact: true }).fill("40");
   await first
     .getByRole("button", { name: "Mark as complete", exact: true })

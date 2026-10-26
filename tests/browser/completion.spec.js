@@ -1,3 +1,4 @@
+import { openExercise } from "./exercise-navigation.js";
 import { navigateTo } from "./navigation.js";
 import { test, expect } from "./auth-fixture.js";
 import { exercise } from "../../src/model.js";
@@ -40,7 +41,7 @@ test("set checkoff and bulk completion preserve actual results, exclude partial 
   ).toBeTruthy();
   await page.goto("/");
   const next = page.getByRole("region", { name: "Next workout" });
-  await next.getByRole("button", { name: "Log workout" }).click();
+  await next.getByRole("button", { name: "Start workout" }).click();
   await page.getByLabel("Squat set 1 weight", { exact: true }).fill("0");
   await page.getByLabel("Squat set 1 reps", { exact: true }).fill("6");
   await page.getByLabel("Squat set 1 completed", { exact: true }).check();
@@ -55,7 +56,8 @@ test("set checkoff and bulk completion preserve actual results, exclude partial 
   await navigateTo(page, "history");
   await expect(page.locator(".history-card")).toHaveCount(0);
   await navigateTo(page, "home");
-  await next.getByRole("button", { name: "Continue logging" }).click();
+  await next.getByRole("button", { name: "Resume workout" }).click();
+  await openExercise(page, "Plank");
   await page.getByLabel("Plank set 1 seconds", { exact: true }).fill("");
   await page
     .getByRole("button", { name: "Mark as complete", exact: true })

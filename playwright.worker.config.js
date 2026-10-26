@@ -23,6 +23,7 @@ export default defineConfig({
     "add-sets.spec.js",
     "loading.spec.js",
     "mobile-navigation.spec.js",
+    "single-exercise.spec.js",
   ],
   workers: 1,
   use: {

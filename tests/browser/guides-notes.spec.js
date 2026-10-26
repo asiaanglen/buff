@@ -78,7 +78,7 @@ test("guides open from the library, plan and workout log without losing edits; n
     "plank",
   );
   await page.getByRole("button", { name: "Close dialog" }).click();
-  await card.getByRole("button", { name: "Log workout" }).click();
+  await card.getByRole("button", { name: "Start workout" }).click();
   await page.locator(".workout-history summary").click();
   await expect(page.locator(".workout-history")).toContainText(
     "100 lbs × 7 reps",
@@ -117,7 +117,7 @@ test("guides open from the library, plan and workout log without losing edits; n
   await next.goto(baseURL);
   await next.getByRole("button", { name: "Next week", exact: true }).click();
   await next.locator(`[data-day="${future.date}"]`).click();
-  await next.getByRole("button", { name: "Log workout" }).click();
+  await next.getByRole("button", { name: "Start workout" }).click();
   await next.locator(".workout-history summary").click();
   await expect(next.locator(".workout-history")).toContainText(
     "105 lbs × 8 reps",

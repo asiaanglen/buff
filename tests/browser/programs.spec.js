@@ -40,7 +40,7 @@ test("plans a custom program, logs a workout, copies a week and safely deletes o
   await page
     .getByRole("button", { name: "Add exercise →", exact: true })
     .click();
-  await page.getByRole("button", { name: "Log workout" }).click();
+  await page.getByRole("button", { name: "Start workout" }).click();
   await page.getByLabel("Bench press set 1 weight", { exact: true }).fill("40");
   await page.getByLabel("Bench press set 1 reps", { exact: true }).fill("8");
   await page.getByLabel("Bench press set 1 completed", { exact: true }).check();
@@ -183,7 +183,7 @@ test("assigning an existing logged workout to a program preserves its identity, 
   const original = await page.evaluate(() => ({
     date: document.querySelector("[data-day].selected").dataset.day,
   }));
-  await page.getByRole("button", { name: "Log workout" }).click();
+  await page.getByRole("button", { name: "Start workout" }).click();
   await page
     .getByLabel("Barbell bench press set 1 weight", { exact: true })
     .fill("40");

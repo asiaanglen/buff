@@ -1,3 +1,4 @@
+import { openExercise } from "./exercise-navigation.js";
 import { navigateTo } from "./navigation.js";
 import { test, expect } from "./auth-fixture.js";
 test("plans workouts with supersets, logs reps and time, and persists after reload", async ({
@@ -30,16 +31,17 @@ test("plans workouts with supersets, logs reps and time, and persists after relo
   await add("Squat", "reps", "8");
   await add("Wall sit", "time", "45");
   await expect(card.locator(".superset-label")).toHaveCount(1);
-  await card.getByRole("button", { name: "Log workout" }).click();
+  await card.getByRole("button", { name: "Start workout" }).click();
   await page.getByLabel("Squat set 1 weight", { exact: true }).fill("50");
   await page.getByLabel("Squat set 1 reps", { exact: true }).fill("8");
   await page.getByLabel("Squat set 1 completed", { exact: true }).check();
+  await openExercise(page, "Wall sit");
   await page.getByLabel("Wall sit set 1 weight", { exact: true }).fill("0");
   await page.getByLabel("Wall sit set 1 seconds", { exact: true }).fill("40");
   await page.getByLabel("Wall sit set 1 completed", { exact: true }).check();
   await page.getByRole("button", { name: "Collapse workout" }).click();
   await expect(card).toContainText("2 sets completed");
-  await card.getByRole("button", { name: "Continue logging" }).click();
+  await card.getByRole("button", { name: "Resume workout" }).click();
   await page
     .getByRole("button", { name: "Mark as complete", exact: true })
     .click();
@@ -98,8 +100,9 @@ test("mobile layout fits the screen and allows timed set logging", async ({
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.getByRole("button", { name: "Log workout" }).click();
+  await page.getByRole("button", { name: "Start workout" }).click();
   await expect(page.locator(".inline-workout-log")).toBeVisible();
+  await openExercise(page, "Plank");
   await page.getByLabel("Plank set 1 weight", { exact: true }).fill("0");
   await page.getByLabel("Plank set 1 seconds", { exact: true }).fill("45");
   await page.getByLabel("Plank set 1 completed", { exact: true }).check();

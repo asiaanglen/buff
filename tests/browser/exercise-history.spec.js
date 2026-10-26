@@ -18,7 +18,7 @@ test("logger shows previous actual weights and reps per set without marking pref
     state,
   );
   await page.goto("/app");
-  await page.getByRole("button", { name: "Log workout" }).click();
+  await page.getByRole("button", { name: "Start workout" }).click();
   const bench = page.locator(".log-exercise").filter({
     has: page.getByRole("heading", {
       name: "Barbell bench press",
@@ -72,7 +72,7 @@ test("existing device history is displayed in pounds after conversion without ch
     state,
   );
   await page.goto("/app");
-  await page.getByRole("button", { name: "Log workout" }).click();
+  await page.getByRole("button", { name: "Start workout" }).click();
   const bench = page.locator(".log-exercise").filter({
     has: page.getByRole("heading", {
       name: "Barbell bench press",

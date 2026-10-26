@@ -171,7 +171,7 @@ Use **Supersets** at the bottom of a workout card to group two or more existing 
 
 On phones, exercise previews use larger cards instead of a compressed table, navigation and actions have larger tap targets, and log inputs use 16px text. Swipe the weekly schedule horizontally to see other days. The install badge hides while using forms or logging so it does not cover controls.
 
-Tap an exercise name to expand its sets and results directly within the workout card. Each exercise folds independently; **Log workout** expands the workout's exercise fields and **Collapse workout** folds them. No separate workout logging screen or **Done logging** button is shown. Guides and session notes remain available in the expanded exercise. Workout history and the same inline logger also work from Completed workouts.
+Tap an exercise name to expand its sets and results directly within the workout card. Only one exercise is expanded within a workout; opening another automatically folds the previous one without clearing its values. **Start workout** opens the first exercise's fields and **Collapse workout** folds them. No separate workout logging screen or **Done logging** button is shown. Guides and session notes remain available in the expanded exercise. Workout history and the same inline logger also work from Completed workouts.
 
 Choose **Swap exercise** to open the library and select a replacement or enter a custom movement. The replacement keeps the planned sets, targets, weight and superset membership unless you adjust them; selecting a different tracking mode supplies a suitable initial target. Existing logged results cannot be reassigned to another movement: swapping is disabled for that exercise once results are entered, while other unlogged exercises remain swappable. Normal exercise dropdowns do not show the library. Adding an exercise still supports library search, and ordinary plan editing shows the selected movement's guide without opening the library.
 
@@ -186,3 +186,6 @@ On phones, use the **Go to** dropdown at the top to switch between Home, Program
 
 
 MCP-created exercises now store an optional `libraryId` when a catalog name or alias matches. MCP exercise inputs also accept `library_id` from `search_exercises` for explicit selection; invalid IDs and conflicting known names are rejected before approval. Recognized timed exercises use timed tracking when no mode is supplied. The Edit exercise dialog shows the selected library entry with its guide and a Swap exercise control, including for older text-only exercises that match a catalog name. Custom movements remain supported. Cable Kickback (glutes, low cable with ankle strap) and Split Squat (both feet on the floor) are included with instructions and plural search aliases.
+
+
+Workout actions now say **Start workout** (or **Resume workout** after results have been entered). Exercise accordions use exclusive groups plus a JavaScript fallback to keep only one exercise expanded per workout. Set values and notes remain in place when an exercise folds, and any hidden invalid field is opened if bulk completion needs it corrected.
