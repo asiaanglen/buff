@@ -91,3 +91,35 @@ test("exercise library searches aliases and variations, supports timed exercises
     ),
   ).toBe(true);
 });
+
+test("typing directly into Exercise name opens matching library results, including when editing", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const card = page.locator(".workout-card").first();
+  await card.getByRole("button", { name: "Add exercise" }).click();
+  await page.getByLabel("Exercise name", { exact: true }).fill("front squat");
+  await page
+    .getByRole("button", {
+      name: "Front Squat Legs · Barbell · Reps",
+      exact: true,
+    })
+    .click();
+  await expect(page.getByLabel("Exercise name", { exact: true })).toHaveValue(
+    "Front Squat",
+  );
+  await page
+    .getByRole("button", { name: "Add exercise", exact: false })
+    .last()
+    .click();
+  await card
+    .getByRole("button", { name: "Edit Front Squat", exact: true })
+    .click();
+  await page.getByLabel("Exercise name", { exact: true }).fill("back squat");
+  await expect(
+    page.getByRole("button", {
+      name: "Back Squat Legs · Barbell · Reps",
+      exact: true,
+    }),
+  ).toBeVisible();
+});
