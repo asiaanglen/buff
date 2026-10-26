@@ -31,7 +31,7 @@ test("target defaults can be accepted without editing and do not complete sets o
     .getByLabel("Barbell bench press set 1 completed", { exact: true })
     .check();
   await page.getByLabel("Plank set 1 completed", { exact: true }).check();
-  await page.getByRole("button", { name: "Done logging" }).click();
+  await page.getByRole("button", { name: "Collapse workout" }).click();
   await expect(page.locator(".workout-card")).toContainText("2 sets completed");
   const saved = await page.evaluate(() => window.readTestJournal());
   expect(saved.workouts[0].exercises[0].logs[0]).toEqual({

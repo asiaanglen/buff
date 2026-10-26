@@ -1,3 +1,5 @@
+import { connectAiView, copyAiEndpoint } from "./connect-ai.js";
+import { supersetDialog, saveSuperset, sortSupersets } from "./supersets.js";
 import {
   exerciseLibrary,
   renderExerciseResults,
@@ -59,6 +61,8 @@ let week = weekStart(),
   selectedProgramId = null,
   selectedProgramWeek = 1;
 const app = document.querySelector("#app");
+const loggingWorkouts = new Set();
+const openExerciseIds = new Map();
 const esc = (s) =>
   String(s ?? "").replace(
     /[&<>"']/g,
@@ -150,25 +154,29 @@ function render() {
       Math.min(selectedProgramWeek, program().weeks),
     );
   const pageTitle =
-    tab === "home"
-      ? "Your next good workout."
-      : tab === "programs"
-        ? program()
-          ? program().name
-          : "Your next chapter."
-        : tab === "planner"
-          ? "Your week, in motion."
-          : "Completed workouts";
+    tab === "ai"
+      ? "Connect to AI"
+      : tab === "home"
+        ? "Your next good workout."
+        : tab === "programs"
+          ? program()
+            ? program().name
+            : "Your next chapter."
+          : tab === "planner"
+            ? "Your week, in motion."
+            : "Completed workouts";
   const pageDescription =
-    tab === "home"
-      ? "Your program. One workout at a time."
-      : tab === "programs"
-        ? program()
-          ? `${program().weeks} weeks · ${dateLabel(program().startDate)} – ${dateLabel(programEnd(program()))}`
-          : "Create a program. Build it week by week. Make it your own."
-        : tab === "planner"
-          ? "A little planning. A little consistency. A stronger you."
-          : "The workouts you’ve finished, with every logged set saved.";
+    tab === "ai"
+      ? "Bring your workouts into Claude or ChatGPT, with you in control."
+      : tab === "home"
+        ? "Your program. One workout at a time."
+        : tab === "programs"
+          ? program()
+            ? `${program().weeks} weeks · ${dateLabel(program().startDate)} – ${dateLabel(programEnd(program()))}`
+            : "Create a program. Build it week by week. Make it your own."
+          : tab === "planner"
+            ? "A little planning. A little consistency. A stronger you."
+            : "The workouts you’ve finished, with every logged set saved.";
 
   const weekly = state.workouts.filter(
     (w) => w.date >= week && w.date <= addDays(week, 6),
@@ -179,8 +187,8 @@ function render() {
   }).length;
   const total = weekly.reduce((n, w) => n + progress(w).total, 0);
   const done = weekly.reduce((n, w) => n + progress(w).done, 0);
-  app.innerHTML = `<aside class="sidebar"><a class="brand" href="/" aria-label="Buff home"><span class="brand-icon">b.</span>buff<span class="brand-dot">.</span></a><div class="workspace-label">YOUR WORKSPACE</div><nav><button data-tab="home" class="nav-item ${tab === "home" ? "active" : ""}"><span>⌂</span> Home</button><button data-tab="programs" class="nav-item ${tab === "programs" ? "active" : ""}"><span>▤</span> Programs</button><button data-tab="planner" class="nav-item ${tab === "planner" ? "active" : ""}"><span>▦</span> Weekly planner</button><button data-tab="history" class="nav-item ${tab === "history" ? "active" : ""}"><span>◷</span> Completed workouts</button></nav><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">Y</span><div><strong>Your workspace</strong><small>Personal training journal</small></div></div></aside>
-<main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "home" ? "Home" : tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Completed workouts"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content"><div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div><div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div></div>
+  app.innerHTML = `<aside class="sidebar"><a class="brand" href="/" aria-label="Buff home"><span class="brand-icon">b.</span>buff<span class="brand-dot">.</span></a><div class="workspace-label">YOUR WORKSPACE</div><nav><button data-tab="home" class="nav-item ${tab === "home" ? "active" : ""}"><span>⌂</span> Home</button><button data-tab="programs" class="nav-item ${tab === "programs" ? "active" : ""}"><span>▤</span> Programs</button><button data-tab="planner" class="nav-item ${tab === "planner" ? "active" : ""}"><span>▦</span> Weekly planner</button><button data-tab="history" class="nav-item ${tab === "history" ? "active" : ""}"><span>◷</span> Completed workouts</button><button data-tab="ai" class="nav-item ${tab === "ai" ? "active" : ""}"><span>✧</span> Connect to AI</button></nav><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">Y</span><div><strong>Your workspace</strong><small>Personal training journal</small></div></div></aside>
+<main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "ai" ? "Connect to AI" : tab === "home" ? "Home" : tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Completed workouts"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content"><div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div>${tab === "ai" ? "" : `<div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div>`}</div>
 ${storageError ? '<div class="notice">Device storage is unavailable or was reset. Your changes may not persist after closing this page.</div>' : ""}
 ${
   tab === "planner"
@@ -210,37 +218,66 @@ ${
           dateLabel,
         })
       : tab === "home"
-        ? homeView({ state, workoutCard, esc, dateLabel })
-        : history()
+        ? homeView({
+            state,
+            workoutCard,
+            esc,
+            dateLabel,
+            workoutLog: (w) => (loggingWorkouts.has(w.id) ? logForm(w) : ""),
+            isLogging: (id) => loggingWorkouts.has(id),
+          })
+        : tab === "ai"
+          ? connectAiView(esc)
+          : history()
 }
 <footer><span class="footer-logo">b.</span> Progress isn’t always loud. Sometimes it’s just showing up. <span>YOU’VE GOT THIS</span></footer></div></main>${modal ? dialog() : ""}`;
   renderExerciseResults(app, state, esc);
+  if (window.matchMedia("(max-width: 600px)").matches) {
+    const days = app.querySelector(".days");
+    const day = days?.querySelector(".selected");
+    if (day)
+      days.scrollLeft =
+        day.offsetLeft -
+        days.offsetLeft -
+        (days.clientWidth - day.clientWidth) / 2;
+  }
   const strip = app.querySelector(".program-weeks"),
     chip = strip?.querySelector(".selected");
   if (chip)
     strip.scrollLeft =
       chip.offsetLeft - (strip.clientWidth - chip.clientWidth) / 2;
 }
+function swapButton(w, e) {
+  const recorded = e.logs.some(
+    (log) => log.done || log.weight !== "" || log.actual !== "",
+  );
+  return `<button type="button" class="text-button swap-exercise" data-action="swap-exercise" data-id="${w.id}" data-eid="${e.id}" aria-label="Swap exercise: ${esc(e.name)}" ${recorded ? 'disabled title="This exercise has recorded results; add a replacement to preserve its history."' : ""}>Swap exercise</button>`;
+}
 function workoutCard(w) {
   const p = progress(w);
+  const logging = loggingWorkouts.has(w.id);
   let lastGroup = null;
-  return `<article class="workout-card ${isWorkoutComplete(w) ? "workout-complete" : ""}"><div class="workout-heading"><div class="workout-symbol">${upArrow}</div><div class="workout-title"><div class="tag">${p.total && p.done === p.total ? "COMPLETED" : programSummary(w) ? esc(programSummary(w)) : "STRENGTH & CONDITIONING"}</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises <span>·</span> ${p.total} sets <span>·</span> ${p.done} sets completed</p></div><div class="workout-actions"><button class="button subtle" data-action="edit-workout" data-id="${w.id}">Edit plan</button><button class="button primary" data-action="log" data-id="${w.id}">${p.done ? "Continue logging" : "Log workout"} <span>→</span></button></div></div>${w.note ? `<p class="workout-note">${esc(w.note)}</p>` : ""}<div class="exercise-table"><div class="exercise-table-head"><span>EXERCISE</span><span>SETS</span><span>TARGET</span><span>WEIGHT</span><span></span></div>${w.exercises
-    .map((e, i) => {
-      const newGroup = e.group && e.group !== lastGroup;
-      lastGroup = e.group;
-      return `${newGroup ? `<div class="superset-label"><span>⇄</span> SUPERSET ${esc(e.group)} <small>Alternate these exercises</small></div>` : ""}<div class="exercise-row ${e.group ? "grouped" : ""}"><div class="exercise-name"><span class="exercise-number">${String(i + 1).padStart(2, "0")}</span><div><strong>${esc(e.name)}</strong><small>${e.mode === "time" ? "Time-based" : "Rep-based"}${e.group ? ` · Superset ${esc(e.group)}` : ""}</small>${exerciseGuideButton(e.name, esc)}</div></div><span class="sets-pill">${e.sets} sets</span><span>${e.target} ${e.mode === "time" ? "sec" : "reps"}</span><span>${e.weight ? `${e.weight} ${state.unit}` : "Bodyweight"}</span><button class="icon-button" aria-label="Edit ${esc(e.name)}" data-action="edit-exercise" data-id="${w.id}" data-eid="${e.id}">•••</button></div>`;
-    })
-    .join(
-      "",
-    )}</div><div class="workout-bottom"><button class="text-button" data-action="add-exercise" data-id="${w.id}">+ Add exercise</button><span><i class="small-dot"></i> ${p.done}/${p.total} sets logged</span></div></article>`;
+  return `<article class="workout-card ${isWorkoutComplete(w) ? "workout-complete" : ""}"><div class="workout-heading"><div class="workout-symbol">${upArrow}</div><div class="workout-title"><div class="tag">${p.total && p.done === p.total ? "COMPLETED" : programSummary(w) ? esc(programSummary(w)) : "STRENGTH & CONDITIONING"}</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises <span>·</span> ${p.total} sets <span>·</span> ${p.done} sets completed</p></div><div class="workout-actions"><button class="button subtle" data-action="edit-workout" data-id="${w.id}">Edit plan</button><button class="button primary" data-action="log" data-id="${w.id}">${logging ? "Collapse workout" : p.done ? "Continue logging" : "Log workout"} <span>→</span></button></div></div>${w.note ? `<p class="workout-note">${esc(w.note)}</p>` : ""}${
+    logging
+      ? logForm(w)
+      : `<div class="exercise-table"><div class="exercise-table-head"><span>EXERCISE</span><span>SETS</span><span>TARGET</span><span>WEIGHT</span><span></span></div>${w.exercises
+          .map((e, i) => {
+            const newGroup = e.group && e.group !== lastGroup;
+            lastGroup = e.group;
+            return `${newGroup ? `<div class="superset-label"><span>⇄</span> SUPERSET ${esc(e.group)} <small>Alternate these exercises</small></div>` : ""}<div class="exercise-row ${e.group ? "grouped" : ""}"><div class="exercise-name"><span class="exercise-number">${String(i + 1).padStart(2, "0")}</span><div><button type="button" class="exercise-toggle" data-action="expand-exercise" data-id="${w.id}" data-eid="${e.id}" aria-expanded="false"><strong>${esc(e.name)}</strong><span aria-hidden="true">⌄</span></button><small>${e.mode === "time" ? "Time-based" : "Rep-based"}${e.group ? ` · Superset ${esc(e.group)}` : ""}</small>${exerciseGuideButton(e.name, esc)}${swapButton(w, e)}</div></div><span class="sets-pill">${e.sets} sets</span><span>${e.target} ${e.mode === "time" ? "sec" : "reps"}</span><span>${e.weight ? `${e.weight} ${state.unit}` : "Bodyweight"}</span><button class="icon-button" aria-label="Edit ${esc(e.name)}" data-action="edit-exercise" data-id="${w.id}" data-eid="${e.id}">•••</button></div>`;
+          })
+          .join("")}</div>`
+  }<div class="workout-bottom"><button class="text-button" data-action="add-exercise" data-id="${w.id}">+ Add exercise</button><button class="text-button" data-action="supersets" data-id="${w.id}">⇄ Supersets</button><span><i class="small-dot"></i> ${p.done}/${p.total} sets logged</span></div></article>`;
 }
 function history() {
   const ws = state.workouts
-    .filter(isWorkoutComplete)
+    .filter((w) => isWorkoutComplete(w) || loggingWorkouts.has(w.id))
     .sort((a, b) => b.date.localeCompare(a.date));
-  return `<section class="history-list">${ws.map((w) => `<article class="history-card"><div><span class="tag">${dateLabel(w.date)} · ${fmt(w.date, { year: "numeric" })}${programSummary(w) ? ` · ${esc(programSummary(w))}` : ""}</span><h2>${esc(w.name)}</h2><p>${progress(w).done} of ${progress(w).total} sets logged</p></div><button class="button primary" data-action="log" data-id="${w.id}">View log →</button></article>`).join("") || '<div class="empty"><span>↑</span><h3>Your next finish starts with a set.</h3><p>Complete a workout to see it here.</p></div>'}</section>`;
+  return `<section class="history-list">${ws.map((w) => `<article class="history-card"><div><span class="tag">${dateLabel(w.date)} · ${fmt(w.date, { year: "numeric" })}${programSummary(w) ? ` · ${esc(programSummary(w))}` : ""}</span><h2>${esc(w.name)}</h2><p>${progress(w).done} of ${progress(w).total} sets logged</p></div><button class="button primary" data-action="log" data-id="${w.id}">${loggingWorkouts.has(w.id) ? "Collapse workout" : "View log →"}</button>${loggingWorkouts.has(w.id) ? logForm(w) : ""}</article>`).join("") || '<div class="empty"><span>↑</span><h3>Your next finish starts with a set.</h3><p>Complete a workout to see it here.</p></div>'}</section>`;
 }
 function dialog() {
+  if (modal.type === "supersets")
+    return supersetDialog(workout(), modal.group || "", esc);
   if (["new-program", "edit-program", "copy-week"].includes(modal.type))
     return programDialog();
   const w = workout(),
@@ -255,7 +292,7 @@ function dialog() {
           ? selectedProgramId
           : null),
   );
-  return `<div class="modal-backdrop"><section class="modal ${modal.type === "log" ? "log-modal" : ""}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="eyebrow">YOUR TRAINING JOURNAL</div><h2 id="modal-title">${modal.type === "log" ? esc(w.name) : modal.type === "exercise" ? (e ? "Edit exercise" : "Add an exercise") : modal.type === "edit" ? "Edit workout" : "Plan a workout"}</h2></div><button class="icon-button close" data-action="close" aria-label="Close dialog">×</button></div>${modal.type === "log" ? logForm(w) : modal.type === "exercise" ? `<form id="exercise-form"><label>Exercise name<input name="name" required maxlength="100" placeholder="Search exercises or enter your own" autocomplete="off" value="${esc(e?.name || "")}"></label>${exerciseLibrary(esc)}<div class="form-grid"><label>Sets<input name="sets" type="number" required min="1" max="30" value="${e?.sets || 3}"></label><label>Track by<select name="mode"><option value="reps" ${e?.mode !== "time" ? "selected" : ""}>Repetitions</option><option value="time" ${e?.mode === "time" ? "selected" : ""}>Time (seconds)</option></select></label><label>Target per set<input name="target" type="number" required min="1" max="10000" value="${e?.target || 10}"></label><label>Planned weight (${state.unit})<input name="weight" type="number" min="0" max="5000" step="0.01" value="${e?.weight || 0}"></label></div><label>Superset group <span class="optional">optional</span><input name="group" maxlength="12" placeholder="e.g. A" value="${esc(e?.group || "")}"><small>Use the same group for exercises you want to alternate.</small></label><div class="modal-footer">${e ? '<button type="button" class="text-button danger" data-action="delete-exercise">Remove exercise</button>' : "<span></span>"}<button class="button primary" type="submit">${e ? "Save changes" : "Add exercise"} →</button></div></form>` : `<form id="workout-form"><label>Workout name<input name="name" required maxlength="100" placeholder="e.g. Lower body strength" value="${esc(modal.type === "edit" ? w.name : "")}"></label>${workoutProgramFields(w, workoutDate)}<label>Date<input name="date" type="date" required value="${workoutDate}" ${assignedProgram ? `min="${assignedProgram.startDate}" max="${programEnd(assignedProgram)}"` : ""}></label><label>Workout notes <span class="optional">optional</span><textarea name="note" maxlength="500" placeholder="A focus, a reminder, a little motivation…">${esc(modal.type === "edit" ? w.note : "")}</textarea></label><div class="modal-footer">${modal.type === "edit" ? '<button type="button" class="text-button danger" data-action="delete-workout">Delete workout</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "edit" ? "Save changes" : "Create workout"} →</button></div></form>`}</section></div>`;
+  return `<div class="modal-backdrop"><section class="modal ${modal.type === "log" ? "log-modal" : ""}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="eyebrow">YOUR TRAINING JOURNAL</div><h2 id="modal-title">${modal.type === "log" ? esc(w.name) : modal.type === "swap" ? "Swap exercise" : modal.type === "exercise" ? (e ? "Edit exercise" : "Add an exercise") : modal.type === "edit" ? "Edit workout" : "Plan a workout"}</h2></div><button class="icon-button close" data-action="close" aria-label="Close dialog">×</button></div>${modal.type === "log" ? logForm(w) : ["exercise", "swap"].includes(modal.type) ? `<form id="exercise-form">${modal.type === "swap" ? '<p class="exercise-swap-message" role="status">Choose a replacement from the library or enter a custom exercise. Sets, targets and superset membership are kept; adjust them if needed.</p>' : ""}<label>Exercise name<input name="name" required maxlength="100" placeholder="Search exercises or enter your own" autocomplete="off" value="${esc(e?.name || "")}"></label>${modal.type === "swap" || !e ? exerciseLibrary(esc) : exerciseGuideButton(e.name, esc)}<div class="form-grid"><label>Sets<input name="sets" type="number" required min="1" max="30" value="${e?.sets || 3}"></label><label>Track by<select name="mode"><option value="reps" ${e?.mode !== "time" ? "selected" : ""}>Repetitions</option><option value="time" ${e?.mode === "time" ? "selected" : ""}>Time (seconds)</option></select></label><label>Target per set<input name="target" type="number" required min="1" max="10000" value="${e?.target || 10}"></label><label>Planned weight (${state.unit})<input name="weight" type="number" min="0" max="5000" step="0.01" value="${e?.weight || 0}"></label></div><label>Superset group <span class="optional">optional</span><input name="group" maxlength="12" placeholder="e.g. A" value="${esc(e?.group || "")}"><small>Use the same group for exercises you want to alternate.</small></label><div class="modal-footer">${e ? '<button type="button" class="text-button danger" data-action="delete-exercise">Remove exercise</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "swap" ? "Swap exercise" : e ? "Save changes" : "Add exercise"} →</button></div></form>` : `<form id="workout-form"><label>Workout name<input name="name" required maxlength="100" placeholder="e.g. Lower body strength" value="${esc(modal.type === "edit" ? w.name : "")}"></label>${workoutProgramFields(w, workoutDate)}<label>Date<input name="date" type="date" required value="${workoutDate}" ${assignedProgram ? `min="${assignedProgram.startDate}" max="${programEnd(assignedProgram)}"` : ""}></label><label>Workout notes <span class="optional">optional</span><textarea name="note" maxlength="500" placeholder="A focus, a reminder, a little motivation…">${esc(modal.type === "edit" ? w.note : "")}</textarea></label><div class="modal-footer">${modal.type === "edit" ? '<button type="button" class="text-button danger" data-action="delete-workout">Delete workout</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "edit" ? "Save changes" : "Create workout"} →</button></div></form>`}</section></div>`;
 }
 function previousPerformanceHeader(w, e) {
   const history = previousExercisePerformance(state, w, e);
@@ -278,14 +315,21 @@ function workoutHistory(w) {
     .join("")}</details>`;
 }
 function logForm(w) {
-  return `${workoutHistory(w)}<p class="log-intro">Targets are prefilled. Adjust your results, then check off sets or whole exercises as you go. Mark as complete accepts all displayed results and finishes the workout.</p><form id="log-form">${w.exercises.map((e) => `<div class="log-exercise"><label class="exercise-completion"><input type="checkbox" data-complete-exercise="${esc(e.id)}" aria-label="${esc(e.name)} exercise completed" ${e.logs.every((l) => l.done) ? "checked" : ""}> Exercise complete</label><h3>${esc(e.name)} ${e.group ? `<span class="superset-chip">Superset ${esc(e.group)}</span>` : ""}</h3>${exerciseGuideButton(e.name, esc)}<p>Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p>${previousPerformanceHeader(w, e)}<div class="log-head"><span>SET</span><span>WEIGHT (${state.unit})</span><span>${e.mode === "time" ? "TIME (SEC)" : "REPS"}</span><span>DONE</span></div>${e.logs.map((l, i) => `<div class="log-row ${l.done ? "set-done" : ""}"><strong>${i + 1}</strong><div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} weight" type="number" min="0" max="5000" step="0.01" placeholder="${e.weight}" value="${esc(l.weight === "" ? e.weight : l.weight)}" data-eid="${e.id}" data-set="${i}" data-field="weight">${previousSetLabel(w, e, i, "weight")}</div><div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" type="number" min="0" max="10000" step="1" placeholder="${e.target}" value="${esc(l.actual === "" ? e.target : l.actual)}" data-eid="${e.id}" data-set="${i}" data-field="actual">${previousSetLabel(w, e, i, "actual")}</div><input aria-label="${esc(e.name)} set ${i + 1} completed" type="checkbox" ${l.done ? "checked" : ""} data-eid="${e.id}" data-set="${i}" data-field="done"></div>`).join("")}<label class="exercise-notes">Notes for ${esc(e.name)}<textarea data-exercise-note="${esc(e.id)}" maxlength="1000" placeholder="How it felt, technique reminders, or changes for next time…">${esc(e.note || "")}</textarea></label></div>`).join("") || "<p>Add an exercise to your plan to start logging.</p>"}<div class="modal-footer"><span class="autosave">Changes save automatically</span><button type="button" class="button subtle" data-action="close">Done logging ✓</button>${w.exercises.length && !isWorkoutComplete(w) ? '<button type="button" class="button primary" data-action="complete-workout">Mark as complete</button>' : ""}</div></form>`;
+  return `<section class="inline-workout-log" data-workout-id="${esc(w.id)}">${workoutHistory(w)}<p class="log-intro">Targets are prefilled. Adjust your results, then check off each set as you go. Use + Add set for extra sets. Mark as complete accepts all displayed results and finishes the workout.</p><form class="log-form">${w.exercises.map((e, i) => `${e.group && (i === 0 || w.exercises[i - 1].group !== e.group) ? `<div class="log-superset-heading"><strong>Superset ${esc(e.group)}</strong><p>Alternate these exercises, one set each, then repeat for your remaining sets.</p></div>` : ""}<details class="log-exercise exercise-accordion" data-exercise-id="${esc(e.id)}" ${(openExerciseIds.get(w.id) || new Set()).has(e.id) ? "open" : ""}><summary><h3>${esc(e.name)} ${e.group ? `<span class="superset-chip">Superset ${esc(e.group)}</span>` : ""}</h3><span class="exercise-expand-label">Sets &amp; results</span></summary>${swapButton(w, e)}${exerciseGuideButton(e.name, esc)}<p>Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p>${previousPerformanceHeader(w, e)}<div class="log-head"><span>SET</span><span>WEIGHT (${state.unit})</span><span>${e.mode === "time" ? "TIME (SEC)" : "REPS"}</span><span>DONE</span></div>${e.logs.map((l, i) => `<div class="log-row ${l.done ? "set-done" : ""}"><strong>${i + 1}</strong><div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} weight" type="number" min="0" max="5000" step="0.01" placeholder="${e.weight}" value="${esc(l.weight === "" ? e.weight : l.weight)}" data-eid="${e.id}" data-set="${i}" data-field="weight">${previousSetLabel(w, e, i, "weight")}</div><div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" type="number" min="0" max="10000" step="1" placeholder="${e.target}" value="${esc(l.actual === "" ? e.target : l.actual)}" data-eid="${e.id}" data-set="${i}" data-field="actual">${previousSetLabel(w, e, i, "actual")}</div><input aria-label="${esc(e.name)} set ${i + 1} completed" type="checkbox" ${l.done ? "checked" : ""} data-eid="${e.id}" data-set="${i}" data-field="done"></div>`).join("")}<button type="button" class="text-button add-set" data-action="add-set" data-id="${w.id}" data-eid="${e.id}" aria-label="Add set to ${esc(e.name)}" ${e.sets >= 30 ? "disabled" : ""}>+ Add set</button>${e.sets >= 30 ? '<p class="field-help">Maximum of 30 sets per exercise.</p>' : ""}<label class="exercise-notes">Notes for ${esc(e.name)}<textarea aria-label="Notes for ${esc(e.name)}" data-exercise-note="${esc(e.id)}" maxlength="1000" placeholder="How it felt, technique reminders, or changes for next time…">${esc(e.note || "")}</textarea></label></details>`).join("") || "<p>Add an exercise to your plan to start logging.</p>"}<div class="modal-footer"><span class="autosave">Changes save automatically</span>${w.exercises.length && !isWorkoutComplete(w) ? `<button type="button" class="button primary" data-action="complete-workout" data-id="${w.id}">Mark as complete</button>` : ""}</div></form></section>`;
 }
 // Read and validate every affected input before changing any saved set.
+function logRoot() {
+  return (
+    [...app.querySelectorAll(".inline-workout-log")].find(
+      (root) => root.dataset.workoutId === active,
+    ) || app
+  );
+}
 function completeExercises(exercises, done = true) {
   const updates = [];
   for (const e of exercises) {
     for (let i = 0; i < e.logs.length; i++) {
-      const row = [...app.querySelectorAll(".log-row")].find((row) => {
+      const row = [...logRoot().querySelectorAll(".log-row")].find((row) => {
         const field = row.querySelector('[data-field="weight"]');
         return field.dataset.eid === e.id && Number(field.dataset.set) === i;
       });
@@ -294,7 +338,7 @@ function completeExercises(exercises, done = true) {
       if (done) {
         for (const field of [weight, actual]) {
           if (!field.checkValidity() || field.value === "") {
-            app.querySelector(".log-intro").textContent =
+            logRoot().querySelector(".log-intro").textContent =
               "Enter both weight (0 for bodyweight) and reps or seconds for every set before completing.";
             field.reportValidity();
             field.focus();
@@ -323,6 +367,7 @@ app.addEventListener("click", (event) => {
   const b = event.target.closest("button");
   if (!b) return;
   if (b.dataset.tab) {
+    loggingWorkouts.clear();
     tab = b.dataset.tab;
     render();
     return;
@@ -336,6 +381,10 @@ app.addEventListener("click", (event) => {
   if (!a) return;
   if (a === "landing-signin" || a === "landing-signup") {
     cloud.open(a === "landing-signup" ? "signup" : "signin");
+    return;
+  }
+  if (a === "copy-mcp") {
+    copyAiEndpoint(app);
     return;
   }
   if (a === "exercise-guide") {
@@ -414,14 +463,46 @@ app.addEventListener("click", (event) => {
     modal = { type: "new" };
   }
   if (a === "edit-workout") modal = { type: "edit" };
-  if (a === "log") modal = { type: "log" };
+  if (a === "log") {
+    if (loggingWorkouts.has(active)) loggingWorkouts.delete(active);
+    else {
+      loggingWorkouts.add(active);
+      openExerciseIds.set(
+        active,
+        new Set(workout().exercises.map((e) => e.id)),
+      );
+    }
+  }
+  if (a === "expand-exercise") {
+    loggingWorkouts.add(active);
+    openExerciseIds.set(active, new Set([b.dataset.eid]));
+  }
+  if (a === "add-set") {
+    const e = workout().exercises.find((e) => e.id === b.dataset.eid);
+    if (e.sets < 30) {
+      e.sets += 1;
+      e.logs.push({ weight: "", actual: "", done: false });
+      openExerciseIds.get(active)?.add(e.id);
+      save();
+    }
+  }
   if (a === "complete-workout") {
     if (!completeExercises(workout().exercises)) return;
     modal = null;
+    loggingWorkouts.clear();
     if (tab !== "home") tab = "history";
+  }
+  if (a === "supersets") modal = { type: "supersets", group: "" };
+  if (a === "remove-superset") {
+    for (const e of workout().exercises)
+      if (e.group === modal.group) e.group = "";
+    sortSupersets(workout());
+    modal = null;
+    save();
   }
   if (a === "add-exercise") modal = { type: "exercise" };
   if (a === "edit-exercise") modal = { type: "exercise", eid: b.dataset.eid };
+  if (a === "swap-exercise") modal = { type: "swap", eid: b.dataset.eid };
   if (a === "close") modal = null;
   if (
     a === "delete-workout" &&
@@ -447,6 +528,22 @@ app.addEventListener("submit", (event) => {
   const form = event.target;
   if (!form.reportValidity()) return;
   const data = Object.fromEntries(new FormData(form));
+  if (form.id === "superset-form") {
+    try {
+      saveSuperset(
+        workout(),
+        modal.group || "",
+        data.group,
+        new FormData(form).getAll("exercise"),
+      );
+      modal = null;
+      save();
+      render();
+    } catch (error) {
+      form.querySelector(".form-error").textContent = error.message;
+    }
+    return;
+  }
   if (form.id === "program-form") {
     if (modal.type !== "edit-program" && state.programs.length >= 500) {
       form.querySelector(".form-error").textContent =
@@ -523,6 +620,14 @@ app.addEventListener("submit", (event) => {
     if (!data.name.trim()) return;
     const w = workout(),
       old = w.exercises.find((e) => e.id === modal.eid);
+    if (
+      modal.type === "swap" &&
+      old.logs.some((log) => log.done || log.weight !== "" || log.actual !== "")
+    ) {
+      form.querySelector(".exercise-swap-message").textContent =
+        "This exercise has recorded results. Add a new exercise to keep those results with the original movement.";
+      return;
+    }
     const e = exercise(
       data.name.trim(),
       Number(data.sets),
@@ -552,8 +657,22 @@ app.addEventListener("submit", (event) => {
   save();
   render();
 });
+app.addEventListener(
+  "toggle",
+  (event) => {
+    const details = event.target;
+    if (!details.matches(".exercise-accordion")) return;
+    const id = details.closest(".inline-workout-log").dataset.workoutId;
+    if (!openExerciseIds.has(id)) openExerciseIds.set(id, new Set());
+    if (details.open) openExerciseIds.get(id).add(details.dataset.exerciseId);
+    else openExerciseIds.get(id).delete(details.dataset.exerciseId);
+  },
+  true,
+);
 app.addEventListener("input", (event) => {
   const input = event.target;
+  if (input.closest(".inline-workout-log"))
+    active = input.closest(".inline-workout-log").dataset.workoutId;
   if (input.dataset.exerciseNote) {
     if (!input.checkValidity()) {
       input.reportValidity();
@@ -573,6 +692,7 @@ app.addEventListener("input", (event) => {
     event.target.form?.id === "exercise-form"
   ) {
     const library = app.querySelector(".exercise-library");
+    if (!library) return;
     library.open = true;
     app.querySelector("#exercise-search").value = event.target.value;
     app.querySelector("#exercise-category").value = "";
@@ -581,16 +701,15 @@ app.addEventListener("input", (event) => {
 });
 app.addEventListener("change", (event) => {
   const input = event.target;
-  if (input.id === "exercise-category") {
-    renderExerciseResults(app, state, esc);
+  if (input.closest(".inline-workout-log"))
+    active = input.closest(".inline-workout-log").dataset.workoutId;
+  if (input.id === "superset-picker") {
+    modal.group = input.value;
+    render();
     return;
   }
-  if (input.dataset.completeExercise) {
-    const exercise = workout().exercises.find(
-      (e) => e.id === input.dataset.completeExercise,
-    );
-    if (completeExercises([exercise], input.checked)) render();
-    else input.checked = exercise.logs.every((l) => l.done);
+  if (input.id === "exercise-category") {
+    renderExerciseResults(app, state, esc);
     return;
   }
   if (input.id === "program-week-picker") {
@@ -656,7 +775,7 @@ app.addEventListener("change", (event) => {
       }
       if (weight.value === "" || actual.value === "") {
         input.checked = false;
-        app.querySelector(".log-intro").textContent =
+        logRoot().querySelector(".log-intro").textContent =
           "Enter both weight (0 for bodyweight) and reps or seconds before completing a set.";
         (weight.value === "" ? weight : actual).focus();
         return;
@@ -675,10 +794,14 @@ app.addEventListener("change", (event) => {
         false;
     }
   }
-  const checkbox = [...app.querySelectorAll("[data-complete-exercise]")].find(
-    (input) => input.dataset.completeExercise === e.id,
-  );
-  if (checkbox) checkbox.checked = e.logs.every((l) => l.done);
+  for (const button of logRoot().querySelectorAll(
+    '[data-action="swap-exercise"]',
+  )) {
+    if (button.dataset.eid === e.id)
+      button.disabled = e.logs.some(
+        (log) => log.done || log.weight !== "" || log.actual !== "",
+      );
+  }
   save();
 });
 document.addEventListener("keydown", (e) => {
@@ -708,11 +831,13 @@ const cloud = createCloud({
   getState: () => state,
   setState: (next) => {
     state = inPounds(next);
+    loggingWorkouts.clear();
+    openExerciseIds.clear();
     modal = null;
     active = null;
     render();
   },
-  canApply: () => !modal,
+  canApply: () => !modal && !app.querySelector(".inline-workout-log"),
   onStatus: (label) => {
     const el = document.querySelector("#sync-label");
     if (el) el.textContent = label;

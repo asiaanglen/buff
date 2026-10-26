@@ -91,7 +91,7 @@ test("guides open from the library, plan and workout log without losing edits; n
     .getByLabel("Notes for Back Squat", { exact: true })
     .fill("Strong today.\nUse the same stance next time.");
   await page
-    .locator(".log-modal")
+    .locator(".inline-workout-log")
     .getByRole("button", { name: "How to: Back Squat", exact: true })
     .click();
   await expect(page.locator("#exercise-guide")).toBeVisible();

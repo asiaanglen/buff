@@ -92,7 +92,7 @@ test("exercise library searches aliases and variations, supports timed exercises
   ).toBe(true);
 });
 
-test("typing directly into Exercise name opens matching library results, including when editing", async ({
+test("typing directly into Exercise name opens matching library results, including when swapping", async ({
   page,
 }) => {
   await page.goto("/");
@@ -113,7 +113,7 @@ test("typing directly into Exercise name opens matching library results, includi
     .last()
     .click();
   await card
-    .getByRole("button", { name: "Edit Front Squat", exact: true })
+    .getByRole("button", { name: "Swap exercise: Front Squat", exact: true })
     .click();
   await page.getByLabel("Exercise name", { exact: true }).fill("back squat");
   await expect(

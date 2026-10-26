@@ -43,7 +43,7 @@ test("plans a custom program, logs a workout, copies a week and safely deletes o
   await page.getByLabel("Bench press set 1 weight", { exact: true }).fill("40");
   await page.getByLabel("Bench press set 1 reps", { exact: true }).fill("8");
   await page.getByLabel("Bench press set 1 completed", { exact: true }).check();
-  await page.getByRole("button", { name: "Done logging" }).click();
+  await page.getByRole("button", { name: "Collapse workout" }).click();
   await expect(page.locator(".workout-card")).toContainText("1 sets completed");
   await page.getByRole("button", { name: "Copy week", exact: true }).click();
   await page.getByLabel("Destination week").selectOption("2");
@@ -194,7 +194,7 @@ test("assigning an existing logged workout to a program preserves its identity, 
   await page
     .getByLabel("Barbell bench press set 1 completed", { exact: true })
     .check();
-  await page.getByRole("button", { name: "Done logging" }).click();
+  await page.getByRole("button", { name: "Collapse workout" }).click();
   const id = await page
     .locator('[data-action="edit-workout"]')
     .getAttribute("data-id");

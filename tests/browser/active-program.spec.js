@@ -68,7 +68,7 @@ test("started programs persist and advance after completed sets, including undo 
   ).toBeVisible();
   await next.getByRole("button", { name: "Log workout" }).click();
   await page.getByLabel("Squat set 1 completed").check();
-  await page.getByRole("button", { name: "Done logging" }).click();
+  await page.getByRole("button", { name: "Collapse workout" }).click();
   await expect(
     next.getByRole("heading", { name: "Second session" }),
   ).toBeVisible();
@@ -78,14 +78,14 @@ test("started programs persist and advance after completed sets, including undo 
   await expect(first).toHaveClass(/workout-complete/);
   await first.getByRole("button", { name: "View log" }).click();
   await page.getByLabel("Squat set 1 completed").uncheck();
-  await page.getByRole("button", { name: "Done logging" }).click();
+  await page.getByRole("button", { name: "Collapse workout" }).click();
   await expect(
     next.getByRole("heading", { name: "First session" }),
   ).toBeVisible();
   for (let i = 0; i < 2; i++) {
     await next.getByRole("button", { name: "Log workout" }).click();
     await page.getByLabel("Squat set 1 completed").check();
-    await page.getByRole("button", { name: "Done logging" }).click();
+    await page.getByRole("button", { name: "Collapse workout" }).click();
   }
   await expect(
     next.getByText("Every workout completed. Well done!"),

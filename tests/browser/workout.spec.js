@@ -36,7 +36,7 @@ test("plans workouts with supersets, logs reps and time, and persists after relo
   await page.getByLabel("Wall sit set 1 weight", { exact: true }).fill("0");
   await page.getByLabel("Wall sit set 1 seconds", { exact: true }).fill("40");
   await page.getByLabel("Wall sit set 1 completed", { exact: true }).check();
-  await page.getByRole("button", { name: "Done logging" }).click();
+  await page.getByRole("button", { name: "Collapse workout" }).click();
   await expect(card).toContainText("2 sets completed");
   await card.getByRole("button", { name: "Continue logging" }).click();
   await page
@@ -98,11 +98,11 @@ test("mobile layout fits the screen and allows timed set logging", async ({
     ),
   ).toBe(true);
   await page.getByRole("button", { name: "Log workout" }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.locator(".inline-workout-log")).toBeVisible();
   await page.getByLabel("Plank set 1 weight", { exact: true }).fill("0");
   await page.getByLabel("Plank set 1 seconds", { exact: true }).fill("45");
   await page.getByLabel("Plank set 1 completed", { exact: true }).check();
-  await page.getByRole("button", { name: "Done logging" }).click();
+  await page.getByRole("button", { name: "Collapse workout" }).click();
   await expect(page.locator(".workout-card")).toContainText("1 sets completed");
   await page.screenshot({ path: "/tmp/buff-mobile.png", fullPage: true });
 });

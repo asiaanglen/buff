@@ -16,6 +16,11 @@ export default defineConfig({
     "completion.spec.js",
     "exercise-library.spec.js",
     "guides-notes.spec.js",
+    "supersets.spec.js",
+    "mobile-ui.spec.js",
+    "inline-swap.spec.js",
+    "connect-ai.spec.js",
+    "add-sets.spec.js",
   ],
   workers: 1,
   use: {

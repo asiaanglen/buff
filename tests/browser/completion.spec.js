@@ -1,6 +1,6 @@
 import { test, expect } from "./auth-fixture.js";
 import { exercise } from "../../src/model.js";
-test("exercise checkoff and bulk completion preserve actual results, exclude partial workouts and advance the active program", async ({
+test("set checkoff and bulk completion preserve actual results, exclude partial workouts and advance the active program", async ({
   page,
   baseURL,
 }) => {
@@ -42,14 +42,15 @@ test("exercise checkoff and bulk completion preserve actual results, exclude par
   await next.getByRole("button", { name: "Log workout" }).click();
   await page.getByLabel("Squat set 1 weight", { exact: true }).fill("0");
   await page.getByLabel("Squat set 1 reps", { exact: true }).fill("6");
-  await page.getByLabel("Squat exercise completed", { exact: true }).check();
+  await page.getByLabel("Squat set 1 completed", { exact: true }).check();
+  await page.getByLabel("Squat set 2 completed", { exact: true }).check();
   await expect(
     page.getByLabel("Squat set 1 completed", { exact: true }),
   ).toBeChecked();
   await expect(
     page.getByLabel("Squat set 2 completed", { exact: true }),
   ).toBeChecked();
-  await page.getByRole("button", { name: "Done logging" }).click();
+  await page.getByRole("button", { name: "Collapse workout" }).click();
   await page.getByRole("button", { name: "Completed workouts" }).click();
   await expect(page.locator(".history-card")).toHaveCount(0);
   await page.locator('[data-tab="home"]').click();
@@ -58,7 +59,7 @@ test("exercise checkoff and bulk completion preserve actual results, exclude par
   await page
     .getByRole("button", { name: "Mark as complete", exact: true })
     .click();
-  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.locator(".inline-workout-log")).toBeVisible();
   expect(
     (await page.evaluate(() => window.readTestJournal())).workouts[0]
       .exercises[1].logs[0].done,
@@ -98,10 +99,10 @@ test("exercise checkoff and bulk completion preserve actual results, exclude par
   await page.reload();
   await page.getByRole("button", { name: "Completed workouts" }).click();
   await page.getByRole("button", { name: "View log" }).click();
-  await page.getByLabel("Squat exercise completed", { exact: true }).uncheck();
+  await page.getByLabel("Squat set 1 completed", { exact: true }).uncheck();
   await expect(
     page.getByLabel("Squat set 1 weight", { exact: true }),
   ).toHaveValue("0");
-  await page.getByRole("button", { name: "Done logging" }).click();
+  await page.getByRole("button", { name: "Collapse workout" }).click();
   await expect(page.locator(".history-card")).toHaveCount(0);
 });

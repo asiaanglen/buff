@@ -150,7 +150,7 @@ Choose **Start program** in the program library or program detail to make it you
 
 ## Complete a workout
 
-In the workout log, check individual sets or use **Exercise complete** to check every set for one exercise. **Mark as complete** accepts every displayed weight and rep/time value and completes the whole workout at once; adjust the prefilled targets to your actual results first. Invalid or blank results prevent bulk completion without partially marking other sets. Existing results, including zero weights, are preserved. Completed workouts appear under **Completed workouts**, turn grey in the program, and advance the active program's next workout. Unchecking a set or exercise makes the workout unfinished again while retaining its recorded values.
+In the workout log, check individual sets as you complete them. Use **+ Add set** within an expanded exercise to append another set with empty actual results and prefilled targets (up to 30 sets per exercise). **Mark as complete** accepts every displayed weight and rep/time value and completes the whole workout at once; adjust the prefilled targets to your actual results first. Invalid or blank results prevent bulk completion without partially marking other sets. Existing results, including zero weights, are preserved. Completed workouts appear under **Completed workouts**, turn grey in the program, and advance the active program's next workout. Unchecking a set makes the workout unfinished again while retaining its recorded values.
 
 ## Exercise library
 
@@ -161,3 +161,21 @@ Buff includes a shared catalog of 153 common exercises in `shared/exercises.js`,
 Every built-in exercise has **How to** instructions with setup, movement steps and a form cue. Open guides from library results, workout plans or the workout log. Guides match exact exercise names and known aliases; custom movements without a matching guide do not receive unrelated instructions. Closing a guide returns to the current screen without resetting form entries.
 
 The workout log includes an expandable **Workout history** section directly beneath its heading. It shows up to 30 prior matching sessions per exercise, newest first, with recorded weight in lbs, reps or seconds, date, workout name and notes. Current and future-dated sessions are excluded, and rep/time histories stay separate. **Notes for [exercise]** saves up to 1,000 characters with that exercise's session and syncs with the account journal. Editing the exercise plan preserves its notes; copied program weeks start with clean logs and no session notes. The shared catalog and MCP search results include the movement instructions.
+
+## Manage supersets
+
+Use **Supersets** at the bottom of a workout card to group two or more existing exercises. Create multiple named groups, choose an existing group to edit its members or name, or remove a group while keeping its exercises. Exercises in another group are disabled until you remove or edit that group. Group changes preserve all recorded sets and exercise notes and sync with the account. The log shows a heading for each superset with an alternating-set reminder. The **Done logging** button has been removed: results save automatically; use **Collapse workout** to fold its fields or **Mark as complete** to finish the workout.
+
+
+## Phone-friendly inline logging and swaps
+
+On phones, exercise previews use larger cards instead of a compressed table, navigation and actions have larger tap targets, and log inputs use 16px text. Swipe the weekly schedule horizontally to see other days. The install badge hides while using forms or logging so it does not cover controls.
+
+Tap an exercise name to expand its sets and results directly within the workout card. Each exercise folds independently; **Log workout** expands the workout's exercise fields and **Collapse workout** folds them. No separate workout logging screen or **Done logging** button is shown. Guides and session notes remain available in the expanded exercise. Workout history and the same inline logger also work from Completed workouts.
+
+Choose **Swap exercise** to open the library and select a replacement or enter a custom movement. The replacement keeps the planned sets, targets, weight and superset membership unless you adjust them; selecting a different tracking mode supplies a suitable initial target. Existing logged results cannot be reassigned to another movement: swapping is disabled for that exercise once results are entered, while other unlogged exercises remain swappable. Normal exercise dropdowns do not show the library. Adding an exercise still supports library search, and ordinary plan editing shows the selected movement's guide without opening the library.
+
+
+## Connect to AI
+
+The signed-in **Connect to AI** tab provides separate step-by-step setup guides for Claude and ChatGPT, a copyable MCP endpoint derived from the current host, permission descriptions, example prompts, troubleshooting, provider help links and a link to manage connected apps. Users authorize their own accounts through Buff OAuth; the page does not automatically connect external AI accounts. Custom app/connector availability and exact menus depend on the AI service’s plan and workspace settings.
