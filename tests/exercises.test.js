@@ -60,7 +60,7 @@ test("exercise catalog supports filtered paging and distinguishes rep and time t
 test("every library movement has a usable guide and exact alias matching keeps variations separate", async () => {
   const { exerciseCatalog, exerciseByName } =
     await import("../shared/exercises.js");
-  assert.equal(exerciseCatalog.length, 153);
+  assert.equal(exerciseCatalog.length, 155);
   for (const exercise of exerciseCatalog) {
     assert.equal(exercise.instructions.steps.length, 3, exercise.name);
     assert.ok(
@@ -72,4 +72,25 @@ test("every library movement has a usable guide and exact alias matching keeps v
   assert.equal(exerciseByName("barbell back squat").name, "Back Squat");
   assert.equal(exerciseByName("RDL").name, "Romanian Deadlift");
   assert.equal(exerciseByName("squat"), undefined);
+});
+
+test("cable kickbacks and split squats have their own searchable library entries and instructions", async () => {
+  const { exerciseByName } = await import("../shared/exercises.js");
+  assert.equal(exerciseByName("Cable Kickbacks").id, "cable-kickback");
+  assert.equal(
+    searchExercises({ query: "split squats" }).exercises[0].id,
+    "split-squat",
+  );
+  assert.match(
+    exerciseByName("Cable Kickback").instructions.steps[0],
+    /ankle strap/,
+  );
+  assert.match(
+    exerciseByName("Split Squat").instructions.steps[0],
+    /both feet on the floor/,
+  );
+  assert.notEqual(
+    exerciseByName("Split Squat").id,
+    exerciseByName("Bulgarian Split Squat").id,
+  );
 });

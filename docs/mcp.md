@@ -63,3 +63,6 @@ Discovery endpoints are `/.well-known/oauth-protected-resource/mcp` and `/.well-
 Use `npm run test:worker` for real local Worker/D1 browser and SDK tests. MCP is supported by the Workers backend, not the retained legacy Node server. Local Vite proxies MCP, OAuth, consent, and approval routes to the Worker; `PUBLIC_ORIGIN` is the frontend origin when a proxy is used. For a direct Worker-only preview, omit that override and use the Worker origin consistently.
 
 Migrations are additive. Apply `npm run db:migrate:remote` before redeployment, then `npm run deploy`. Never reset the existing database. The tests use isolated temporary databases and registered test clients.
+
+
+Exercise inputs in program/workout creation and additions accept optional `library_id` from `search_exercises`. Known names and aliases also link automatically and store `libraryId` on the exercise. A supplied ID must exist and cannot contradict another recognized exercise name. Keep using the workout-specific exercise `id` for logging and updates; the library ID identifies the movement, not a user's exercise instance.

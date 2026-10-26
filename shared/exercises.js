@@ -1225,6 +1225,26 @@ export const exerciseCatalog = [
     mode: "time",
     aliases: [],
   },
+  {
+    id: "cable-kickback",
+    name: "Cable Kickback",
+    category: "Legs",
+    equipment: "Cable",
+    mode: "reps",
+    aliases: [
+      "Cable Kickbacks",
+      "Cable Glute Kickback",
+      "Cable Glute Kickbacks",
+    ],
+  },
+  {
+    id: "split-squat",
+    name: "Split Squat",
+    category: "Legs",
+    equipment: "Bodyweight",
+    mode: "reps",
+    aliases: ["Split Squats", "Stationary Lunge"],
+  },
 ].map((exercise) => ({
   ...exercise,
   instructions: exerciseInstructions[exercise.id],
@@ -1236,6 +1256,14 @@ const normalized = (value) =>
     .normalize("NFKD")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+const exercisesByName = new Map(
+  exerciseCatalog.flatMap((exercise) =>
+    [exercise.name, ...exercise.aliases].map((name) => [
+      normalized(name),
+      exercise,
+    ]),
+  ),
+);
 export function searchExercises({
   query = "",
   category = "",
@@ -1262,8 +1290,5 @@ export function searchExercises({
 
 // Exact normalized names/aliases only: never show a guide for the wrong variation.
 export function exerciseByName(name) {
-  const query = normalized(name);
-  return exerciseCatalog.find((e) =>
-    [e.name, ...e.aliases].some((value) => normalized(value) === query),
-  );
+  return exercisesByName.get(normalized(name));
 }

@@ -1,3 +1,4 @@
+import { navigateTo } from "./navigation.js";
 import { test, expect } from "./auth-fixture.js";
 test("Connect to AI explains both services and copies the correct connector URL on phones", async ({
   page,
@@ -7,9 +8,7 @@ test("Connect to AI explains both services and copies the correct connector URL 
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await page
-    .getByRole("button", { name: "Connect to AI", exact: false })
-    .click();
+  await navigateTo(page, "ai");
   await expect(
     page.getByRole("heading", { name: "Connect to AI", exact: true }),
   ).toBeVisible();

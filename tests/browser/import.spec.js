@@ -1,8 +1,9 @@
+import { navigateTo } from "./navigation.js";
 import { test, expect } from "./auth-fixture.js";
 import { fileURLToPath } from "node:url";
 async function open(page) {
   await page.goto("/app");
-  await page.getByRole("button", { name: "Programs", exact: false }).click();
+  await navigateTo(page, "programs");
   await page
     .getByRole("button", { name: "Import program", exact: false })
     .click();
@@ -35,7 +36,7 @@ test("CSV program preview imports weeks, exercises and supersets without removin
   const saved = await page.evaluate(() => window.readTestJournal());
   expect(saved.workouts).toHaveLength(3);
   await page.reload();
-  await page.getByRole("button", { name: "Programs", exact: false }).click();
+  await navigateTo(page, "programs");
   await expect(page.locator(".program-card")).toContainText("My program");
 });
 test("Excel upload supports choosing a workbook sheet and previews before committing", async ({

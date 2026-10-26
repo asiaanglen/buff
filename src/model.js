@@ -1,3 +1,4 @@
+import { exerciseByName } from "../shared/exercises.js";
 import { inPounds } from "../shared/weights.js";
 export { inPounds } from "../shared/weights.js";
 export const uid = () => crypto.randomUUID();
@@ -25,6 +26,7 @@ export function exercise(
 ) {
   return {
     id: uid(),
+    ...(exerciseByName(name) ? { libraryId: exerciseByName(name).id } : {}),
     name,
     sets,
     target,
@@ -145,7 +147,8 @@ export function exercisePerformanceHistory(
   currentWorkout,
   currentExercise,
 ) {
-  const normalize = (name) => name.trim().replace(/\s+/g, " ").toLowerCase();
+  const normalize = (name) =>
+    exerciseByName(name)?.id || name.trim().replace(/\s+/g, " ").toLowerCase();
   const sessions = [];
   state.workouts.forEach((workout, order) => {
     if (workout.id === currentWorkout.id || workout.date > currentWorkout.date)

@@ -1,6 +1,7 @@
+import { navigateTo } from "./navigation.js";
 import { test, expect } from "./auth-fixture.js";
 async function createProgram(page, name, weeks) {
-  await page.getByRole("button", { name: "Programs", exact: false }).click();
+  await navigateTo(page, "programs");
   await page
     .getByRole("button", { name: "Create program", exact: false })
     .first()
@@ -66,7 +67,7 @@ test("plans a custom program, logs a workout, copies a week and safely deletes o
   );
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.reload();
-  await page.getByRole("button", { name: "Programs", exact: false }).click();
+  await navigateTo(page, "programs");
   await page.getByRole("button", { name: "Open program" }).click();
   await expect(page.locator(".program-weeks")).toContainText("Week 4");
   await page.getByRole("button", { name: "Edit program", exact: true }).click();
@@ -74,9 +75,7 @@ test("plans a custom program, logs a workout, copies a week and safely deletes o
   await page
     .getByRole("button", { name: "Delete program", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Weekly planner", exact: false })
-    .click();
+  await navigateTo(page, "planner");
   const data = await page.evaluate(() => window.readTestJournal());
   expect(data.programs).toHaveLength(0);
   expect(data.workouts.filter((w) => w.name === "Upper strength")).toHaveLength(
@@ -164,7 +163,7 @@ test("programs and their workouts sync across two separate devices", async ({
     }
     await b.goto("/app");
     await auth(b, false);
-    await b.getByRole("button", { name: "Programs", exact: false }).click();
+    await navigateTo(b, "programs");
     await expect(b.locator(".program-card")).toContainText("Synced program");
     await b.getByRole("button", { name: "Open program" }).click();
     await b.getByLabel("Go to program week").selectOption("10");
@@ -204,9 +203,7 @@ test("assigning an existing logged workout to a program preserves its identity, 
   await page
     .getByRole("button", { name: "Save program →", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Weekly planner", exact: false })
-    .click();
+  await navigateTo(page, "planner");
   await page.getByRole("button", { name: "Edit plan", exact: true }).click();
   await page
     .locator('select[name="programId"]')
@@ -215,7 +212,7 @@ test("assigning an existing logged workout to a program preserves its identity, 
     original.date,
   );
   await page.getByRole("button", { name: "Save changes" }).click();
-  await page.getByRole("button", { name: "Programs", exact: false }).click();
+  await navigateTo(page, "programs");
   await expect(page.locator(".workout-card")).toContainText("1 sets completed");
   const saved = await page.evaluate(() => window.readTestJournal());
   expect(saved.workouts).toHaveLength(1);

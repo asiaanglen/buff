@@ -1,3 +1,4 @@
+import { navigateTo } from "./navigation.js";
 import { test, expect } from "./auth-fixture.js";
 test("plans workouts with supersets, logs reps and time, and persists after reload", async ({
   page,
@@ -43,7 +44,7 @@ test("plans workouts with supersets, logs reps and time, and persists after relo
     .getByRole("button", { name: "Mark as complete", exact: true })
     .click();
   await page.reload();
-  await page.getByRole("button", { name: "Completed workouts" }).click();
+  await navigateTo(page, "history");
   await page
     .locator(".history-card")
     .filter({ hasText: "Leg day" })

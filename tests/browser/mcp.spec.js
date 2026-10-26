@@ -115,7 +115,13 @@ test("MCP OAuth discovery, SDK tools, browser approval, refresh and revocation w
             week: 1,
             day: 1,
             exercises: [
-              { name: "Bench press", sets: 3, target: 8, weight: 40 },
+              {
+                name: "Bench press",
+                library_id: "barbell-bench-press",
+                sets: 3,
+                target: 8,
+                weight: 40,
+              },
             ],
           },
         ],
@@ -128,7 +134,7 @@ test("MCP OAuth discovery, SDK tools, browser approval, refresh and revocation w
       (await (await page.request.get("/api/state")).json()).state,
     ).toBeNull();
     await page.goto(pending.approvalUrl);
-    await expect(page.locator("pre")).toContainText("Bench press");
+    await expect(page.locator("pre")).toContainText("Barbell Bench Press");
     await page.getByRole("button", { name: "Approve changes" }).click();
     await expect(
       page.getByRole("heading", { name: "Change applied" }),
@@ -150,6 +156,7 @@ test("MCP OAuth discovery, SDK tools, browser approval, refresh and revocation w
     });
     const workout = detail.structuredContent.workouts[0],
       bench = workout.exercises[0];
+    expect(bench.libraryId).toBe("barbell-bench-press");
     const log = await client.callTool({
       name: "log_sets",
       arguments: {

@@ -22,6 +22,7 @@ export default defineConfig({
     "connect-ai.spec.js",
     "add-sets.spec.js",
     "loading.spec.js",
+    "mobile-navigation.spec.js",
   ],
   workers: 1,
   use: {

@@ -123,3 +123,50 @@ test("typing directly into Exercise name opens matching library results, includi
     }),
   ).toBeVisible();
 });
+
+test("cable kickbacks and split squats can be selected with their guides and stable library links", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const card = page.locator(".workout-card").first();
+  for (const [query, name, equipment, id, cue] of [
+    [
+      "cable kickbacks",
+      "Cable Kickback",
+      "Cable",
+      "cable-kickback",
+      "ankle strap",
+    ],
+    [
+      "split squats",
+      "Split Squat",
+      "Bodyweight",
+      "split-squat",
+      "both feet on the floor",
+    ],
+  ]) {
+    await card
+      .getByRole("button", { name: "Add exercise", exact: false })
+      .click();
+    await page.getByLabel("Search exercises", { exact: true }).fill(query);
+    await page
+      .getByRole("button", { name: `How to: ${name}`, exact: true })
+      .click();
+    await expect(page.locator("#exercise-guide")).toContainText(cue);
+    await page.keyboard.press("Escape");
+    await page
+      .getByRole("button", {
+        name: `${name} Legs · ${equipment} · Reps`,
+        exact: true,
+      })
+      .click();
+    await page
+      .getByRole("button", { name: "Add exercise →", exact: true })
+      .click();
+    expect(
+      (
+        await page.evaluate(() => window.readTestJournal())
+      ).workouts[0].exercises.find((e) => e.name === name).libraryId,
+    ).toBe(id);
+  }
+});

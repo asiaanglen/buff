@@ -1,4 +1,8 @@
-import { searchExercises } from "../../shared/exercises.js";
+import {
+  searchExercises,
+  exerciseByName,
+  exerciseCatalog,
+} from "../../shared/exercises.js";
 import { inPounds } from "../../shared/weights.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
@@ -21,9 +25,14 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 const exerciseSchema = z
   .object({
     name,
+    library_id: id
+      .optional()
+      .describe(
+        "Optional stable exercise ID returned by search_exercises. Recognized names and aliases link automatically.",
+      ),
     sets: z.number().int().min(1).max(30),
     target: z.number().int().min(1).max(10000),
-    mode: z.enum(["reps", "time"]).default("reps"),
+    mode: z.enum(["reps", "time"]).optional(),
     weight: weight.default(0),
     superset: z.string().max(12).default(""),
   })
@@ -45,11 +54,23 @@ const find = (rows, id, label) => {
   return row;
 };
 function newExercise(e) {
+  const byName = exerciseByName(e.name);
+  const selected = e.library_id
+    ? exerciseCatalog.find((item) => item.id === e.library_id)
+    : byName;
+  if (e.library_id && !selected)
+    throw Error(
+      "Exercise library ID was not found. Use search_exercises to choose a valid ID.",
+    );
+  if (e.library_id && byName && byName.id !== selected.id)
+    throw Error(
+      "The exercise name and library ID refer to different movements.",
+    );
   return exercise(
-    e.name,
+    e.library_id ? selected.name : e.name,
     e.sets,
     e.target,
-    e.mode,
+    e.mode || selected?.mode || "reps",
     e.weight,
     e.superset.trim().toUpperCase(),
   );
@@ -543,6 +564,11 @@ export async function mcpHandler(request, env, ctx) {
         }
         for (const key of ["name", "target", "mode", "weight"])
           if (a[key] !== undefined) e[key] = a[key];
+        if (a.name !== undefined) {
+          const match = exerciseByName(e.name);
+          if (match) e.libraryId = match.id;
+          else delete e.libraryId;
+        }
         if (a.superset !== undefined) e.group = a.superset.trim().toUpperCase();
         groupExercises(w.exercises);
         return `Update “${e.name}” in “${w.name}”.`;

@@ -1,3 +1,4 @@
+import { exercise, key } from "../../src/model.js";
 import { test, expect } from "./auth-fixture.js";
 test("exercise dropdown logs in place and opens the library only for swapping, retaining instructions", async ({
   page,
@@ -85,4 +86,70 @@ test("exercise dropdown logs in place and opens the library only for swapping, r
     path: "/tmp/buff-inline-workout-mobile.png",
     fullPage: false,
   });
+});
+
+test("older text-only program exercises are recognized and can be swapped from the edit dialog", async ({
+  page,
+  baseURL,
+}) => {
+  const entry = exercise("Back Squat", 4, 8, "reps", 115);
+  delete entry.libraryId;
+  const state = {
+    version: 1,
+    unit: "lbs",
+    programs: [],
+    workouts: [
+      {
+        id: "legacy-mcp",
+        name: "MCP leg day",
+        date: key(new Date()),
+        note: "",
+        exercises: [entry],
+      },
+    ],
+  };
+  expect(
+    (
+      await page.request.put("/api/state", {
+        headers: { Origin: baseURL },
+        data: { state, revision: 0 },
+      })
+    ).ok(),
+  ).toBeTruthy();
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Edit Back Squat", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.locator(".selected-exercise-card")).toContainText(
+    "EXERCISE LIBRARY",
+  );
+  await expect(
+    dialog.getByRole("button", { name: "How to: Back Squat", exact: true }),
+  ).toBeVisible();
+  await expect(dialog.locator(".exercise-library")).toHaveCount(0);
+  await dialog
+    .getByRole("button", { name: "Swap exercise: Back Squat", exact: true })
+    .click();
+  await page
+    .getByLabel("Search exercises", { exact: true })
+    .fill("front squat");
+  await page
+    .getByRole("button", {
+      name: "Front Squat Legs · Barbell · Reps",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByRole("button", { name: "Swap exercise →", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", {
+      name: "Swap exercise: Front Squat",
+      exact: true,
+    }),
+  ).toBeVisible();
+  const saved = await page.evaluate(() => window.readTestJournal());
+  expect(saved.workouts[0].exercises[0].libraryId).toBe("front-squat");
+  expect(saved.workouts[0].exercises[0].sets).toBe(4);
 });

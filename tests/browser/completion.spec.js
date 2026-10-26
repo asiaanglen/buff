@@ -1,3 +1,4 @@
+import { navigateTo } from "./navigation.js";
 import { test, expect } from "./auth-fixture.js";
 import { exercise } from "../../src/model.js";
 test("set checkoff and bulk completion preserve actual results, exclude partial workouts and advance the active program", async ({
@@ -51,9 +52,9 @@ test("set checkoff and bulk completion preserve actual results, exclude partial 
     page.getByLabel("Squat set 2 completed", { exact: true }),
   ).toBeChecked();
   await page.getByRole("button", { name: "Collapse workout" }).click();
-  await page.getByRole("button", { name: "Completed workouts" }).click();
+  await navigateTo(page, "history");
   await expect(page.locator(".history-card")).toHaveCount(0);
-  await page.locator('[data-tab="home"]').click();
+  await navigateTo(page, "home");
   await next.getByRole("button", { name: "Continue logging" }).click();
   await page.getByLabel("Plank set 1 seconds", { exact: true }).fill("");
   await page
@@ -91,13 +92,13 @@ test("set checkoff and bulk completion preserve actual results, exclude partial 
     actual: "40",
     done: true,
   });
-  await page.getByRole("button", { name: "Completed workouts" }).click();
+  await navigateTo(page, "history");
   await expect(
     page.locator(".history-card").getByRole("heading", { name: "Session one" }),
   ).toBeVisible();
   await expect(page.locator(".history-card")).toHaveCount(1);
   await page.reload();
-  await page.getByRole("button", { name: "Completed workouts" }).click();
+  await navigateTo(page, "history");
   await page.getByRole("button", { name: "View log" }).click();
   await page.getByLabel("Squat set 1 completed", { exact: true }).uncheck();
   await expect(

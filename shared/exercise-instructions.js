@@ -1436,4 +1436,24 @@ export const exerciseInstructions = {
       "Use a manageable rhythm and keep your trunk steady rather than repeatedly arching your back.",
     ],
   },
+  "cable-kickback": {
+    steps: [
+      "Attach an ankle strap to a low cable, secure it around one ankle, and face the machine while holding a stable support. Keep your standing knee softly bent.",
+      "Brace your trunk and extend the working leg behind you from the hip, keeping the knee slightly bent and your pelvis facing forward.",
+      "Bring the leg forward slowly without letting the weight stack slam. Complete the planned reps, then switch legs.",
+    ],
+    cues: [
+      "Move only as far as you can keep your pelvis steady. Squeeze your glute rather than arching your lower back or swinging the leg.",
+    ],
+  },
+  "split-squat": {
+    steps: [
+      "Stand in a staggered stance with both feet on the floor, feet about hip-width apart side to side. Lift the rear heel and use support for balance if needed.",
+      "Bend both knees to lower the rear knee toward the floor while keeping the front foot flat and your torso controlled.",
+      "Push through the front foot to rise without stepping your feet together. Finish the planned reps, then switch sides.",
+    ],
+    cues: [
+      "Keep your front knee tracking with your toes and both feet in the same position throughout the set. Start with bodyweight before adding resistance.",
+    ],
+  },
 };
