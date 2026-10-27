@@ -363,7 +363,7 @@ function exerciseLog(w, e, index) {
     </summary>
     <div class="exercise-log-body">
       ${entry ? `<ul class="exercise-inline-instructions" aria-label="${esc(e.name)} instructions">${(entry.instructions.quickSteps || entry.instructions.steps).map((step) => `<li>${esc(step)}</li>`).join("")}</ul>` : ""}
-      <div class="exercise-guide-link">${exerciseGuideButton(e.name, esc)}<button type="button" class="text-button" data-action="edit-exercise" data-id="${w.id}" data-eid="${e.id}" aria-label="Edit ${esc(e.name)}">Edit exercise</button></div>
+      <div class="exercise-guide-link"><button type="button" class="text-button" data-action="edit-exercise" data-id="${w.id}" data-eid="${e.id}" aria-label="Edit ${esc(e.name)}">Edit exercise</button></div>
       <p class="log-target-description">Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p>
       <label class="exercise-notes"><span class="visually-hidden">Notes for ${esc(e.name)}</span><textarea aria-label="Notes for ${esc(e.name)}" data-exercise-note="${esc(e.id)}" maxlength="1000" rows="1" placeholder="Add note…">${esc(e.note || "")}</textarea></label>
       ${previousPerformanceHeader(w, e)}

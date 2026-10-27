@@ -59,13 +59,12 @@ test("guides open from the library, plan and workout log without losing edits; n
   await card
     .getByRole("button", { name: "Start workout", exact: false })
     .click();
-  await card
-    .getByRole("button", { name: "How to: Back Squat", exact: true })
-    .click();
-  await expect(page.locator("#exercise-guide")).toContainText(
-    "Set a bar on your upper back",
-  );
-  await page.keyboard.press("Escape");
+  await expect(
+    card.getByRole("list", { name: "Back Squat instructions", exact: true }),
+  ).toBeVisible();
+  await expect(
+    card.getByRole("button", { name: "How to: Back Squat", exact: true }),
+  ).toHaveCount(0);
   await card
     .getByRole("button", { name: "Collapse workout", exact: false })
     .click();
@@ -97,12 +96,9 @@ test("guides open from the library, plan and workout log without losing edits; n
   await page
     .getByLabel("Notes for Back Squat", { exact: true })
     .fill("Strong today.\nUse the same stance next time.");
-  await page
-    .locator(".inline-workout-log")
-    .getByRole("button", { name: "How to: Back Squat", exact: true })
-    .click();
-  await expect(page.locator("#exercise-guide")).toBeVisible();
-  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("list", { name: "Back Squat instructions", exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByLabel("Back Squat set 1 weight", { exact: true }),
   ).toHaveValue("105");

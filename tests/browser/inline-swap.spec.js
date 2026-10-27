@@ -22,11 +22,18 @@ test("exercise dropdown logs in place and opens the library only for swapping, r
     page.getByLabel("Barbell bench press set 1 weight", { exact: true }),
   ).toBeVisible();
   await expect(page.locator(".exercise-library")).toHaveCount(0);
-  await accordion
-    .getByRole("button", { name: "How to: Barbell Bench Press", exact: true })
-    .click();
-  await expect(page.locator("#exercise-guide")).toBeVisible();
-  await page.keyboard.press("Escape");
+  await expect(
+    accordion.getByRole("list", {
+      name: "Barbell bench press instructions",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    accordion.getByRole("button", {
+      name: "How to: Barbell Bench Press",
+      exact: true,
+    }),
+  ).toHaveCount(0);
   await accordion
     .getByRole("button", {
       name: "Swap exercise: Barbell bench press",
