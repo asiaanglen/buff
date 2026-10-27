@@ -1,3 +1,4 @@
+import { sharingApi } from "./sharing.js";
 import { handleGoogle, googleConfigured } from "./google.js";
 import { inPounds } from "../shared/weights.js";
 import { handleOAuth } from "./oauth.js";
@@ -84,6 +85,7 @@ async function api(request, env) {
       (env.PUBLIC_ORIGIN || new URL(request.url).origin)
   )
     return failure("Request origin is not allowed.", 403);
+  if (path.startsWith("/api/program-shares")) return sharingApi(request, env);
   if (path === "/api/auth/providers" && method === "GET") {
     const enabled = googleConfigured(env),
       user = enabled ? await identify(request, db) : null;

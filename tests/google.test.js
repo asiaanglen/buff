@@ -259,3 +259,16 @@ test("Google return destinations cannot leave Buff, and changed linking sessions
     env.DB.raw.close();
   }
 });
+
+test("Google sign-in returns directly to an invitation URL without dropping its token", async () => {
+  const env = setup();
+  const target = "/?invite=" + "a".repeat(64);
+  const f = await flow(env, { returnTo: target });
+  const response = await handleGoogle(
+    new Request(f.callback, { headers: { Cookie: f.stateCookie } }),
+    env,
+    f.deps,
+  );
+  assert.equal(response.status, 303);
+  assert.equal(response.headers.get("Location"), origin + target);
+});

@@ -109,3 +109,68 @@ test("set checkoff and bulk completion preserve actual results, exclude partial 
   await page.getByRole("button", { name: "Collapse workout" }).click();
   await expect(page.locator(".history-card")).toHaveCount(0);
 });
+
+test("completed program workouts collapse, stay grey after reload, and retain editable logs", async ({
+  page,
+  baseURL,
+}) => {
+  const program = {
+    id: "compact",
+    name: "Compact program",
+    weeks: 4,
+    startDate: "2026-10-26",
+    note: "",
+  };
+  const workouts = ["Checkoff session", "Bulk session"].map((name, i) => ({
+    id: `compact-${i}`,
+    name,
+    date: "2026-10-26",
+    programId: program.id,
+    note: "Private workout reminder",
+    exercises: [exercise("Back Squat", 1, 5, "reps", 135)],
+  }));
+  const response = await page.request.put("/api/state", {
+    headers: { Origin: baseURL },
+    data: {
+      revision: 0,
+      state: { version: 1, unit: "lbs", programs: [program], workouts },
+    },
+  });
+  expect(response.ok()).toBeTruthy();
+  await page.goto("/");
+  await navigateTo(page, "programs");
+  await page.getByRole("button", { name: /Open program/ }).click();
+  const first = page
+    .locator(".workout-card")
+    .filter({ hasText: "Checkoff session" });
+  await first.getByRole("button", { name: "Start workout" }).click();
+  await first.getByLabel("Back Squat set 1 completed", { exact: true }).click();
+  await expect(first).toHaveClass(/workout-minimized/);
+  await expect(
+    first.locator(".exercise-preview, .inline-workout-log, .workout-note"),
+  ).toHaveCount(0);
+  await expect(first).toHaveCSS("background-color", "rgb(238, 239, 241)");
+  const second = page
+    .locator(".workout-card")
+    .filter({ hasText: "Bulk session" });
+  await second.getByRole("button", { name: "Start workout" }).click();
+  await second
+    .getByRole("button", { name: "Mark as complete", exact: true })
+    .click();
+  await expect(page.locator(".workout-minimized")).toHaveCount(2);
+  await expect(page.locator("#sync-label")).toContainText("Synced");
+  await page.reload();
+  await navigateTo(page, "programs");
+  await page.getByRole("button", { name: /Open program/ }).click();
+  await expect(page.locator(".workout-minimized")).toHaveCount(2);
+  await first.getByRole("button", { name: "View log", exact: true }).click();
+  await expect(
+    first.getByLabel("Back Squat set 1 weight", { exact: true }),
+  ).toHaveValue("135");
+  await first
+    .getByLabel("Back Squat set 1 completed", { exact: true })
+    .uncheck();
+  await first.getByRole("button", { name: "Collapse workout" }).click();
+  await expect(first).not.toHaveClass(/workout-complete/);
+  await expect(first.locator(".exercise-preview")).toBeVisible();
+});

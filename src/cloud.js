@@ -1,7 +1,14 @@
+import { pendingInvitation } from "./invite-token.js";
 import { importGuest } from "./model.js";
 import { authScheme, passwordProof } from "./credentials.js";
 // Same-origin sessions stay in HttpOnly cookies; workout caches are scoped to each account.
-export function createCloud({ getState, setState, canApply, onStatus }) {
+export function createCloud({
+  getState,
+  setState,
+  canApply,
+  onStatus,
+  onAuthenticated,
+}) {
   let user = null,
     revision = 0,
     dirty = false,
@@ -192,7 +199,14 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
       return googleLinked
         ? '<p class="google-connected">✓ Google is connected to your account.</p>'
         : '<button class="button subtle google-button" data-cloud="link-google">Connect Google to this account</button>';
-    const target = returnTo || (location.pathname === "/app" ? "/app" : "/");
+    const invite = pendingInvitation();
+    const target =
+      returnTo ||
+      (invite
+        ? "/?invite=" + invite
+        : location.pathname === "/app"
+          ? "/app"
+          : "/");
     return `<a class="google-button" href="/api/auth/google/start?return_to=${encodeURIComponent(target)}"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M43.6 24.5c0-1.5-.1-2.9-.4-4.3H24v8.2h11a9.4 9.4 0 0 1-4.1 6.2V40h6.7c3.9-3.6 6-8.9 6-15.5Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9L31 34c-1.8 1.2-4.1 1.9-7 1.9-5.3 0-9.8-3.6-11.4-8.4H5.7V33A20.4 20.4 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.5a12.3 12.3 0 0 1 0-7v-5.6H5.7a20 20 0 0 0 0 18.2l6.9-5.6Z"/><path fill="#EA4335" d="M24 12.1c3 0 5.6 1 7.7 3l5.8-5.8A19.5 19.5 0 0 0 24 4 20.4 20.4 0 0 0 5.7 15l6.9 5.5c1.6-4.8 6.1-8.4 11.4-8.4Z"/></svg>Continue with Google</a><div class="auth-divider">or use email</div>`;
   }
   async function refreshProviders() {
@@ -234,6 +248,10 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
       await loadAccount(result.user);
       if (returnTo) {
         location.assign(returnTo);
+        return;
+      }
+      if (onAuthenticated && (await onAuthenticated())) {
+        root.innerHTML = "";
         return;
       }
       open();
@@ -369,6 +387,18 @@ export function createCloud({ getState, setState, canApply, onStatus }) {
   return {
     save,
     open,
+    async flush() {
+      clearTimeout(timer);
+      await sync();
+      if (dirty && !conflict) await sync();
+      if (!user || dirty || conflict || status !== "Synced")
+        throw Error(
+          "Your changes need to sync before sharing or adding this program. Resolve any sync conflict and try again.",
+        );
+    },
+    async refresh() {
+      if (user) await loadAccount(user);
+    },
     isSignedIn: () => Boolean(user),
     label: () => (user ? `${status} · ${user.email}` : status),
     async start() {

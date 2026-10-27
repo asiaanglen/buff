@@ -3607,3 +3607,131 @@ body:has(.boot-screen) .pwa-help {
     width: 100%;
   }
 }
+
+.invitation-banner {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 24px;
+  background: #f1ebfc;
+  border: 1px solid #d6c6ed;
+  border-radius: 18px;
+}
+.invitation-banner h2 {
+  font-size: 25px;
+  margin: 12px 0;
+}
+.invitation-banner p {
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 12px 0;
+}
+.invitation-actions,
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+.invitation-success {
+  margin-bottom: 20px;
+}
+.program-share-dialog {
+  border: 0;
+  border-radius: 20px;
+  padding: 28px;
+  width: min(520px, calc(100% - 24px));
+  max-height: 90dvh;
+  overflow: auto;
+  color: #30283f;
+}
+.program-share-dialog::backdrop {
+  background: #29203380;
+}
+.program-share-dialog h2 {
+  font-size: 25px;
+}
+.program-share-dialog p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 14px 0;
+}
+.program-share-dialog label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 16px 0 8px;
+}
+.program-share-dialog input,
+.program-share-dialog textarea {
+  width: 100%;
+  border: 1px solid #dcd2e8;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 8px;
+  font: inherit;
+  font-size: 16px;
+  background: #faf8fd;
+  color: #30283f;
+}
+.program-share-dialog textarea {
+  line-height: 1.6;
+  resize: vertical;
+}
+.program-share-dialog .share-privacy,
+.program-share-dialog .share-help {
+  color: #776b81;
+  font-size: 13px;
+}
+.program-share-dialog [hidden] {
+  display: none;
+}
+.share-manage {
+  margin-top: 20px;
+  font-size: 13px;
+}
+.share-manage summary {
+  cursor: pointer;
+}
+.share-links > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  padding-top: 10px;
+}
+body:has(#program-share-dialog[open]) .pwa-help {
+  display: none;
+}
+@media (max-width: 600px) {
+  .invitation-banner {
+    margin: 16px;
+    padding: 20px;
+  }
+  .program-share-dialog {
+    padding: 24px 18px;
+  }
+  .program-share-dialog input {
+    min-height: 48px;
+  }
+  .program-share-dialog .button {
+    min-height: 44px;
+  }
+  .program-card > .text-button {
+    margin-top: 12px;
+  }
+}
+
+.invitation-banner h2,
+.program-share-dialog strong {
+  overflow-wrap: anywhere;
+}
+
+.workout-minimized .workout-heading {
+  margin-bottom: 0;
+}
+.workout-minimized .workout-actions {
+  margin-left: auto;
+}
+.workout-minimized .tag {
+  color: #72757d;
+}

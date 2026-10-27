@@ -1,3 +1,5 @@
+import { createSharing, sharingRequest, invitationBanner } from "./sharing.js";
+import { pendingInvitation, clearInvitation } from "./invite-token.js";
 import { alignProgram } from "../shared/programs.js";
 import {
   programAlignmentDialog,
@@ -70,6 +72,70 @@ let week = weekStart(),
 const app = document.querySelector("#app");
 const loggingWorkouts = new Set();
 const openExerciseIds = new Map();
+let inviteToken = pendingInvitation();
+let inviteInfo = null;
+let inviteError = "";
+let inviteBusy = false;
+let inviteSuccess = "";
+let inviteImport = null;
+function renderInvitation() {
+  return invitationBanner({
+    info: inviteInfo,
+    error: inviteError,
+    busy: inviteBusy,
+    signedIn: cloud.isSignedIn(),
+    esc,
+  });
+}
+async function loadInvitation() {
+  if (!inviteToken) return;
+  try {
+    inviteInfo = await sharingRequest("/" + inviteToken);
+    inviteError = "";
+  } catch (error) {
+    inviteError = error.message;
+  }
+}
+async function processInvitation() {
+  if (!inviteToken || !cloud.isSignedIn()) return false;
+  if (inviteImport) return inviteImport;
+  inviteImport = (async () => {
+    inviteBusy = true;
+    render();
+    try {
+      if (!inviteInfo) await loadInvitation();
+      if (!inviteInfo)
+        throw Error(inviteError || "This invitation could not be loaded.");
+      await cloud.flush();
+      const result = await sharingRequest("/" + inviteToken + "/accept", {
+        method: "POST",
+        body: JSON.stringify({ startDate: key(new Date()) }),
+      });
+      await cloud.refresh();
+      selectedProgramId = result.programId;
+      selectedProgramWeek = 1;
+      tab = "programs";
+      inviteSuccess = result.alreadyImported
+        ? "This program is already in your Programs."
+        : `${inviteInfo.programName} was added to your Programs. Make it your own!`;
+      inviteToken = null;
+      inviteInfo = null;
+      inviteError = "";
+      clearInvitation();
+    } catch (error) {
+      inviteError = error.message;
+    } finally {
+      inviteBusy = false;
+      render();
+    }
+    return true;
+  })();
+  try {
+    return await inviteImport;
+  } finally {
+    inviteImport = null;
+  }
+}
 const esc = (s) =>
   String(s ?? "").replace(
     /[&<>"']/g,
@@ -150,12 +216,17 @@ function render() {
   const signedIn = cloud.isSignedIn();
   if (signedIn !== lastRenderSignedIn) {
     window.scrollTo(0, 0);
-    tab = signedIn && state.activeProgramId ? "home" : "planner";
+    tab =
+      signedIn && inviteSuccess
+        ? "programs"
+        : signedIn && state.activeProgramId
+          ? "home"
+          : "planner";
   }
   lastRenderSignedIn = signedIn;
   if (!cloud.isSignedIn()) {
     document.title = "Buff — Your next chapter starts with a plan.";
-    app.innerHTML = landingPage();
+    app.innerHTML = (inviteToken ? renderInvitation() : "") + landingPage();
     return;
   }
   document.title = "Buff — Your week. Your progress.";
@@ -216,6 +287,7 @@ function render() {
       "",
     )}</select></div><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">Y</span><div><strong>Your workspace</strong><small>Personal training journal</small></div></div></aside>
 <main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "ai" ? "Connect to AI" : tab === "home" ? "Home" : tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Completed workouts"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content"><div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div>${tab === "ai" ? "" : `<div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div>`}</div>
+${inviteToken ? renderInvitation() : ""}${inviteSuccess ? `<div class="notice invitation-success" role="status">${esc(inviteSuccess)}</div>` : ""}
 ${storageError ? '<div class="notice">Device storage is unavailable or was reset. Your changes may not persist after closing this page.</div>' : ""}
 ${
   tab === "planner"
@@ -288,6 +360,9 @@ function swapButton(w, e) {
 function workoutCard(w) {
   const p = progress(w);
   const logging = loggingWorkouts.has(w.id);
+  if (isWorkoutComplete(w) && !logging) {
+    return `<article class="workout-card workout-complete workout-minimized"><div class="workout-heading"><div class="workout-title"><div class="tag">COMPLETED</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises · ${p.done} sets completed</p></div><div class="workout-actions"><button class="button subtle" data-action="log" data-id="${w.id}">View log</button></div></div></article>`;
+  }
   let lastGroup = null;
   return `<article class="workout-card ${isWorkoutComplete(w) ? "workout-complete" : ""}"><div class="workout-heading"><div class="workout-symbol">${upArrow}</div><div class="workout-title"><div class="tag">${p.total && p.done === p.total ? "COMPLETED" : programSummary(w) ? esc(programSummary(w)) : "STRENGTH & CONDITIONING"}</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises <span>·</span> ${p.total} sets <span>·</span> ${p.done} sets completed</p></div><div class="workout-actions"><button class="button subtle" data-action="edit-workout" data-id="${w.id}">Edit plan</button><button class="button primary" data-action="log" data-id="${w.id}">${logging ? "Collapse workout" : p.done ? "Resume workout" : "Start workout"} <span>→</span></button></div></div>${w.note ? `<p class="workout-note">${esc(w.note)}</p>` : ""}${
     logging
@@ -455,6 +530,25 @@ app.addEventListener("click", (event) => {
     cloud.open(a === "landing-signup" ? "signup" : "signin");
     return;
   }
+  if (a === "share-program") {
+    sharing.open(b.dataset.program);
+    return;
+  }
+  if (a === "dismiss-invitation") {
+    inviteToken = null;
+    inviteInfo = null;
+    inviteError = "";
+    clearInvitation();
+    render();
+    return;
+  }
+  if (a === "retry-invitation") {
+    loadInvitation().then(async () => {
+      if (cloud.isSignedIn()) await processInvitation();
+      else render();
+    });
+    return;
+  }
   if (a === "retry-start") {
     startApp();
     return;
@@ -593,7 +687,7 @@ app.addEventListener("click", (event) => {
     if (!completeExercises(workout().exercises)) return;
     modal = null;
     loggingWorkouts.clear();
-    if (tab !== "home") tab = "history";
+    if (tab !== "home" && tab !== "programs") tab = "history";
   }
   if (a === "supersets") modal = { type: "supersets", group: "" };
   if (a === "remove-superset") {
@@ -946,6 +1040,17 @@ app.addEventListener("change", (event) => {
       );
   }
   save();
+  if (
+    input.dataset.field === "done" &&
+    input.checked &&
+    workout().programId &&
+    tab === "programs" &&
+    isWorkoutComplete(workout())
+  ) {
+    loggingWorkouts.delete(active);
+    openExerciseIds.delete(active);
+    render();
+  }
 });
 document.addEventListener("keydown", (e) => {
   if (document.querySelector("#exercise-guide[open]")) return;
@@ -980,11 +1085,21 @@ const cloud = createCloud({
     active = null;
     render();
   },
-  canApply: () => !modal && !app.querySelector(".inline-workout-log"),
+  canApply: () =>
+    !modal &&
+    !app.querySelector(".inline-workout-log") &&
+    !document.querySelector("#program-share-dialog[open]"),
+  onAuthenticated: processInvitation,
   onStatus: (label) => {
     const el = document.querySelector("#sync-label");
     if (el) el.textContent = label;
   },
+});
+const sharing = createSharing({
+  getState: () => state,
+  save,
+  flush: () => cloud.flush(),
+  esc,
 });
 const importer = createProgramImporter({
   getState: () => state,
@@ -1001,7 +1116,8 @@ async function startApp() {
   initializing = true;
   startupError = false;
   render();
-  const result = await cloud.start();
+  const [result] = await Promise.all([cloud.start(), loadInvitation()]);
+  if (result.ok && cloud.isSignedIn() && inviteToken) await processInvitation();
   initializing = false;
   startupError = !result.ok;
   render();

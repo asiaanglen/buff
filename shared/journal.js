@@ -27,6 +27,7 @@ export function validState(s) {
     !text(s.activeProgramId, 100)
   )
     return false;
+  if (s.displayName !== undefined && !text(s.displayName, 80)) return false;
   const programs = new Map();
   for (const p of s.programs || []) {
     if (

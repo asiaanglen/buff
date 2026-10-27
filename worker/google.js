@@ -67,7 +67,10 @@ export function safeGoogleReturn(value, origin) {
 function finish(request, target, error, cookie) {
   const origin = new URL(request.url).origin;
   let destination;
-  if (target === "/" || target === "/app")
+  if (
+    new URL(target, origin).pathname === "/" ||
+    new URL(target, origin).pathname === "/app"
+  )
     destination = new URL(target, origin);
   else
     destination = new URL(

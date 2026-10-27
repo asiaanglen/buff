@@ -202,3 +202,18 @@ Before **Start workout**, the exercise list is a read-only preview with no per-e
 Weekly planner remains available. **Start program** opens a Week 1 start-date chooser with This Monday / Next Monday shortcuts and a first-week date preview. Confirming activates the program and shifts all its workout dates by the same number of days, preserving numbered weeks, relative days, exercise IDs, notes, supersets and targets. No duplicate workouts are created; unrelated workouts are unchanged. The Home page links directly to the program's next workout in Weekly planner. **Align with planner** is also available from Home and program detail to adjust an unlogged program later.
 
 Programs with actual set results retain their start date so alignment cannot silently move recorded history. Their existing schedule can still be opened in Weekly planner, where upcoming workouts can be rescheduled individually within the program's date range. Invalid dates or a rejected shift leave the whole journal unchanged.
+
+## Share a program with a friend
+
+Choose **Share program** in Programs, program detail, or the active program on Home. Enter the name to put in your invitation and create a link. **Text a friend** opens the phone's messaging composer with:
+
+> Hey there! [your name] invited you to get buff with them! Try their workout program here
+> [invitation link]
+
+Choose the recipient from your phone's contacts in Messages and send it. Supported phones also offer the native **Share…** sheet; **Copy invitation** works for any messaging app. Buff does not upload contacts, send texts automatically, or use a paid SMS service.
+
+The link opens a public Buff invitation with sign-up/sign-in actions. After authentication, the recipient automatically gets their own copy in **Programs**. Google sign-in carries the invitation through its return URL when Google auth is configured. The plan snapshot includes program/workout plan notes, exercises, sets, targets, weights in lbs and supersets; it excludes logged results and exercise session notes. The recipient gets fresh IDs and empty logs, with the program's relative schedule starting on their local current date. They can choose a different date when starting/alignment. Existing recipient programs, history and active-program choice remain intact.
+
+Links remain available until disabled by their owner under **Manage invitation links** in the sharing dialog. Disabling stops future joins but does not delete copies already added. Revisiting or accepting a link concurrently adds it only once per account. The browser retains pending invitations for up to seven days to carry sign-in across redirects. Workout data is stored in D1 tables added by migration `0004_program_shares.sql`, using conditional journal revisions and an atomic import receipt to prevent duplicates or overwritten edits. Program sharing currently requires the Cloudflare Workers/D1 deployment.
+
+Completed workouts in a program collapse into a grey summary card. Completing the last set or choosing **Mark as complete** in Programs keeps you in the program; **View log** reopens the saved results for review or correction.
