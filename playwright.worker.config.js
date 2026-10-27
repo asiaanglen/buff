@@ -25,6 +25,7 @@ export default defineConfig({
     "mobile-navigation.spec.js",
     "single-exercise.spec.js",
     "workout-layout.spec.js",
+    "program-alignment.spec.js",
   ],
   workers: 1,
   use: {

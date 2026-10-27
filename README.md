@@ -196,3 +196,9 @@ Expanded phone workouts use a light, uncluttered panel with a large rep/time tar
 
 
 Before **Start workout**, the exercise list is a read-only preview with no per-exercise logging, swap, guide or edit buttons. **Edit plan** provides the exercise management controls, including adding exercises and managing supersets. Once started, the light workout editor opens the first exercise and keeps only one exercise expanded at a time. The former **Log sets** controls have been removed.
+
+## Align a program with Weekly planner
+
+Weekly planner remains available. **Start program** opens a Week 1 start-date chooser with This Monday / Next Monday shortcuts and a first-week date preview. Confirming activates the program and shifts all its workout dates by the same number of days, preserving numbered weeks, relative days, exercise IDs, notes, supersets and targets. No duplicate workouts are created; unrelated workouts are unchanged. The Home page links directly to the program's next workout in Weekly planner. **Align with planner** is also available from Home and program detail to adjust an unlogged program later.
+
+Programs with actual set results retain their start date so alignment cannot silently move recorded history. Their existing schedule can still be opened in Weekly planner, where upcoming workouts can be rescheduled individually within the program's date range. Invalid dates or a rejected shift leave the whole journal unchanged.

@@ -1,3 +1,8 @@
+import { alignProgram } from "../shared/programs.js";
+import {
+  programAlignmentDialog,
+  alignmentPreview,
+} from "./program-alignment.js";
 import { exerciseByName } from "../shared/exercises.js";
 import { connectAiView, copyAiEndpoint } from "./connect-ai.js";
 import { supersetDialog, saveSuperset, sortSupersets } from "./supersets.js";
@@ -303,6 +308,8 @@ function history() {
   return `<section class="history-list">${ws.map((w) => `<article class="history-card"><div><span class="tag">${dateLabel(w.date)} · ${fmt(w.date, { year: "numeric" })}${programSummary(w) ? ` · ${esc(programSummary(w))}` : ""}</span><h2>${esc(w.name)}</h2><p>${progress(w).done} of ${progress(w).total} sets logged</p></div><button class="button primary" data-action="log" data-id="${w.id}">${loggingWorkouts.has(w.id) ? "Collapse workout" : "View log →"}</button>${loggingWorkouts.has(w.id) ? logForm(w) : ""}</article>`).join("") || '<div class="empty"><span>↑</span><h3>Your next finish starts with a set.</h3><p>Complete a workout to see it here.</p></div>'}</section>`;
 }
 function dialog() {
+  if (modal.type === "start-program")
+    return programAlignmentDialog(state, modal.programId, modal.alignOnly, esc);
   if (modal.type === "supersets")
     return supersetDialog(workout(), modal.group || "", esc);
   if (["new-program", "edit-program", "copy-week"].includes(modal.type))
@@ -473,14 +480,45 @@ app.addEventListener("click", (event) => {
     form.elements.name.focus();
     return;
   }
-  if (a === "start-program") {
+  if (a === "start-program" || a === "align-program") {
     const id = b.dataset.program;
     if (state.programs.some((p) => p.id === id)) {
-      state.activeProgramId = id;
-      tab = "home";
-      save();
-      window.scrollTo(0, 0);
+      if (state.activeProgramId === id && a === "start-program") tab = "home";
+      else
+        modal = {
+          type: "start-program",
+          programId: id,
+          alignOnly: a === "align-program",
+        };
     }
+  }
+  if (a === "alignment-monday") {
+    const form = app.querySelector("#start-program-form");
+    form.elements.startDate.value = addDays(
+      weekStart(),
+      Number(b.dataset.offset),
+    );
+    form.querySelector(".program-alignment-preview").innerHTML =
+      alignmentPreview(
+        state,
+        modal.programId,
+        form.elements.startDate.value,
+        esc,
+      );
+    return;
+  }
+  if (a === "program-planner") {
+    const p = state.programs.find((p) => p.id === b.dataset.program);
+    const workouts = state.workouts
+      .filter((w) => w.programId === p.id)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    selected =
+      (workouts.find((w) => !isWorkoutComplete(w)) || workouts[0])?.date ||
+      p.startDate;
+    week = weekStart(new Date(selected + "T12:00:00"));
+    tab = "planner";
+    modal = null;
+    window.scrollTo(0, 0);
   }
   if (a === "new-program") modal = { type: "new-program" };
   if (a === "open-program") {
@@ -593,6 +631,23 @@ app.addEventListener("submit", (event) => {
   const form = event.target;
   if (!form.reportValidity()) return;
   const data = Object.fromEntries(new FormData(form));
+  if (form.id === "start-program-form") {
+    try {
+      const p = alignProgram(state, form.dataset.programId, data.startDate);
+      state.activeProgramId = p.id;
+      selected = p.startDate;
+      week = weekStart(new Date(p.startDate + "T12:00:00"));
+      tab = modal.alignOnly ? "planner" : "home";
+      modal = null;
+      loggingWorkouts.clear();
+      save();
+      render();
+      window.scrollTo(0, 0);
+    } catch (error) {
+      form.querySelector(".form-error").textContent = error.message;
+    }
+    return;
+  }
   if (form.id === "superset-form") {
     try {
       saveSuperset(
@@ -744,6 +799,11 @@ app.addEventListener("input", (event) => {
   const input = event.target;
   if (input.closest(".inline-workout-log"))
     active = input.closest(".inline-workout-log").dataset.workoutId;
+  if (input.name === "startDate" && input.form?.id === "start-program-form") {
+    input.form.querySelector(".program-alignment-preview").innerHTML =
+      alignmentPreview(state, input.form.dataset.programId, input.value, esc);
+    return;
+  }
   if (input.dataset.exerciseNote) {
     if (!input.checkValidity()) {
       input.reportValidity();

@@ -34,6 +34,9 @@ test("started programs persist and advance after completed sets, including undo 
   await page
     .getByRole("button", { name: "Start program →", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Start program & align →", exact: true })
+    .click();
   const next = page.getByRole("region", { name: "Next workout" });
   await expect(
     next.getByRole("heading", { name: "First session" }),

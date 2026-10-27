@@ -240,3 +240,80 @@ test("exercise history retains session notes and rejects invalid note lengths", 
   past.exercises[0].note = "x".repeat(1001);
   assert.equal(validState(state), false);
 });
+
+test("aligning a program moves every scheduled week together and preserves workout identity and plans", async () => {
+  const { alignProgram } = await import("../shared/programs.js");
+  const program = {
+    id: "align",
+    name: "Four weeks",
+    weeks: 4,
+    startDate: "2026-01-05",
+    note: "Strength",
+  };
+  const workouts = [0, 2, 7].map((offset, index) => ({
+    id: "shift-" + index,
+    programId: program.id,
+    date: addDays(program.startDate, offset),
+    name: "Day " + index,
+    note: "Keep this note",
+    exercises: [exercise("Back Squat", 3, 5, "reps", 95, "A")],
+  }));
+  const other = {
+    id: "other",
+    date: "2026-01-06",
+    name: "Independent",
+    note: "",
+    exercises: [],
+  };
+  const state = {
+    version: 1,
+    unit: "lbs",
+    programs: [program],
+    workouts: [...workouts, other],
+  };
+  const before = structuredClone(state);
+  alignProgram(state, program.id, "2026-11-02");
+  assert.deepEqual(
+    workouts.map((w) => w.date),
+    ["2026-11-02", "2026-11-04", "2026-11-09"],
+  );
+  assert.equal(program.startDate, "2026-11-02");
+  for (let i = 0; i < workouts.length; i++) {
+    assert.equal(workouts[i].id, before.workouts[i].id);
+    assert.deepEqual(workouts[i].exercises, before.workouts[i].exercises);
+    assert.equal(
+      programWeek(program, workouts[i].date),
+      programWeek(before.programs[0], before.workouts[i].date),
+    );
+  }
+  assert.equal(other.date, "2026-01-06");
+  assert.equal(validState(state), true);
+});
+test("alignment rejects invalid dates and shifting recorded history without partially moving the program", async () => {
+  const { alignProgram } = await import("../shared/programs.js");
+  const state = initialState();
+  const program = {
+    id: "align-logged",
+    name: "Logged program",
+    weeks: 4,
+    startDate: state.workouts[0].date,
+    note: "",
+  };
+  state.programs = [program];
+  state.workouts[0].programId = program.id;
+  state.workouts[0].exercises[0].logs[0] = {
+    weight: "95",
+    actual: "5",
+    done: true,
+  };
+  const before = structuredClone(state);
+  assert.throws(() => alignProgram(state, program.id, "2026-02-30"), /valid/);
+  assert.deepEqual(state, before);
+  assert.throws(
+    () => alignProgram(state, program.id, addDays(program.startDate, 7)),
+    /recorded results/,
+  );
+  assert.deepEqual(state, before);
+  alignProgram(state, program.id, program.startDate);
+  assert.deepEqual(state, before);
+});

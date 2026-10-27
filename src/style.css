@@ -3558,3 +3558,52 @@ body:has(.boot-screen) .pwa-help {
   gap: 8px;
   align-items: center;
 }
+
+.alignment-date-actions,
+.active-program-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.program-alignment-preview {
+  margin: 20px 0;
+  padding: 16px;
+  background: #f7f3fc;
+  border: 1px solid #e2d8ef;
+  border-radius: 12px;
+}
+.program-alignment-preview h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+.program-alignment-preview p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #74687f;
+}
+.alignment-workout {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e3dbed;
+  font-size: 13px;
+}
+.alignment-workout strong {
+  overflow-wrap: anywhere;
+}
+.alignment-workout span {
+  flex-shrink: 0;
+  color: #6f5c80;
+}
+@media (max-width: 600px) {
+  .alignment-workout {
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+  }
+  .active-program-links {
+    width: 100%;
+  }
+}

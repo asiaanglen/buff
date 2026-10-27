@@ -39,7 +39,7 @@ export function programsView({
     last = shiftDate(first, 6);
   const completed = workouts.reduce((n, w) => n + progress(w).done, 0),
     sets = workouts.reduce((n, w) => n + progress(w).total, 0);
-  return `<section class="program-detail"><div class="program-toolbar"><button class="text-button" data-action="all-programs">← All programs</button><button class="button primary" data-action="start-program" data-program="${esc(program.id)}">${state.activeProgramId === program.id ? "Continue program" : "Start program"} →</button><button class="button subtle" data-action="edit-program">Edit program</button></div>${program.note ? `<p class="program-description">${esc(program.note)}</p>` : ""}<div class="program-weeks" aria-label="Program weeks">${Array.from(
+  return `<section class="program-detail"><div class="program-toolbar"><button class="text-button" data-action="all-programs">← All programs</button><button class="button primary" data-action="start-program" data-program="${esc(program.id)}">${state.activeProgramId === program.id ? "Continue program" : "Start program"} →</button><button class="button subtle" data-action="align-program" data-program="${esc(program.id)}">Align with planner</button><button class="button subtle" data-action="edit-program">Edit program</button></div>${program.note ? `<p class="program-description">${esc(program.note)}</p>` : ""}<div class="program-weeks" aria-label="Program weeks">${Array.from(
     { length: Math.min(program.weeks, 12) },
     (_, i) => {
       const n =
