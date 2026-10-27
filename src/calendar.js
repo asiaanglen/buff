@@ -1,3 +1,4 @@
+import { onPlanner } from "../shared/programs.js";
 import { monthDates } from "../shared/calendar.js";
 import { programEnd } from "../shared/programs.js";
 import { isWorkoutComplete } from "./home.js";
@@ -23,7 +24,7 @@ export function weekCalendar({ state, week, selected, today, esc }) {
   return `<section class="calendar"><div class="section-title"><h2>Weekly schedule</h2>${calendarToggle("week")}</div><div class="week-controls"><button data-action="prev" aria-label="Previous week">‹</button><strong>${display(dates[0], { month: "short", day: "numeric" })} – ${display(dates[6], { month: "short", day: "numeric" })}, ${display(dates[6], { year: "numeric" })}</strong><button data-action="next" aria-label="Next week">›</button><button class="today" data-action="today">Today</button></div><p class="calendar-help">Drag a workout to another date using its ⠿ handle, or use Move on a workout below.</p><div class="days">${dates
     .map((date) => {
       const workouts = state.workouts.filter(
-        (workout) => workout.date === date,
+        (workout) => workout.date === date && onPlanner(state, workout),
       );
       return `<div class="day ${date === selected ? "selected" : ""}" data-day="${date}" data-calendar-date="${date}"><button type="button" class="week-date-select" aria-label="${esc(display(date, { weekday: "long", month: "long", day: "numeric", year: "numeric" }))}" aria-pressed="${date === selected}"><span class="day-name">${display(date, { weekday: "short" })} ${date === today ? '<i class="today-dot"></i>' : ""}</span><strong>${Number(date.slice(-2))}</strong></button>${workouts.length ? `<div class="day-workouts">${calendarWorkouts(workouts, esc)}</div><small>${workouts.length > 1 ? `${workouts.length} workouts` : `${workouts[0].exercises.length} exercises`}</small>` : '<span class="rest-label">Rest & recharge</span>'}</div>`;
     })
@@ -39,7 +40,9 @@ export function monthCalendar({ state, month, selected, today, esc }) {
     .map(
       (date) =>
         `<div class="month-day ${date.slice(0, 7) !== month.slice(0, 7) ? "outside-month" : ""} ${date === selected ? "selected" : ""} ${date === today ? "is-today" : ""}" data-calendar-date="${date}"><button type="button" class="month-date" data-day="${date}" aria-label="${esc(new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }))}" ${date === today ? 'aria-current="date"' : ""} aria-pressed="${date === selected}">${Number(date.slice(-2))}</button>${calendarWorkouts(
-          state.workouts.filter((workout) => workout.date === date),
+          state.workouts.filter(
+            (workout) => workout.date === date && onPlanner(state, workout),
+          ),
           esc,
           true,
         )}</div>`,

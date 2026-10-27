@@ -12,7 +12,12 @@ import {
 import { newExerciseDialog } from "./personal-exercises.js";
 import { createSharing, sharingRequest, invitationBanner } from "./sharing.js";
 import { pendingInvitation, clearInvitation } from "./invite-token.js";
-import { alignProgram } from "../shared/programs.js";
+import {
+  alignProgram,
+  onPlanner,
+  unenrollProgram,
+  deleteProgram,
+} from "../shared/programs.js";
 import {
   programAlignmentDialog,
   alignmentPreview,
@@ -276,7 +281,7 @@ function render() {
           : "The workouts you’ve finished, with every logged set saved.";
 
   const weekly = state.workouts.filter(
-    (w) => w.date >= week && w.date <= addDays(week, 6),
+    (w) => onPlanner(state, w) && w.date >= week && w.date <= addDays(week, 6),
   );
   const completed = weekly.filter((w) => {
     let p = progress(w);
@@ -307,7 +312,7 @@ ${
 ${calendarMessage ? `<p id="calendar-status" role="status" class="calendar-status ${calendarError ? "calendar-error" : ""}">${esc(calendarMessage)}</p>` : ""}
 <div class="detail-heading"><div><h2>${fmt(selected, { weekday: "long" })}<span>${fmt(selected, { month: "long", day: "numeric" })}</span></h2><p>Your plan. One good set at a time.</p></div><button class="text-button" data-action="new-workout">+ Add workout</button></div>${
         state.workouts
-          .filter((w) => w.date === selected)
+          .filter((w) => w.date === selected && onPlanner(state, w))
           .map(workoutCard)
           .join("") ||
         `<div class="empty"><span>☀</span><h3>A little space for your next win.</h3><p>Plan a workout for this day, or enjoy some well-earned rest.</p><button class="button primary" data-action="new-workout">+ Plan a workout</button></div>`
@@ -431,7 +436,7 @@ function moveCalendarWorkout(id, date) {
 }
 function moveWorkoutButton(w) {
   return tab === "planner"
-    ? `<button type="button" class="button subtle" data-action="move-workout" data-id="${esc(w.id)}">Move</button>`
+    ? `<button type="button" class="button subtle" data-action="move-workout" data-id="${esc(w.id)}">Move</button><button type="button" class="text-button" data-action="remove-from-planner" data-id="${esc(w.id)}">Remove from planner</button>`
     : "";
 }
 function workoutCard(w) {
@@ -712,6 +717,33 @@ app.addEventListener("click", (event) => {
     selectedProgramWeek = 1;
     tab = "programs";
   }
+  if (a === "remove-from-planner") {
+    if (
+      !confirm(
+        "Remove this workout from your planner? Your recorded results will be kept.",
+      )
+    )
+      return;
+    const entry = state.workouts.find((w) => w.id === b.dataset.id);
+    if (entry) entry.plannerHidden = true;
+    loggingWorkouts.delete(b.dataset.id);
+    save();
+    render();
+    return;
+  }
+  if (a === "unenroll-program") {
+    if (
+      !confirm(
+        "Unenroll from this program? Its workouts will leave your calendar. The program and all recorded results will be kept.",
+      )
+    )
+      return;
+    unenrollProgram(state, b.dataset.program);
+    loggingWorkouts.clear();
+    save();
+    render();
+    return;
+  }
   if (a === "all-programs") {
     selectedProgramId = null;
     selectedProgramWeek = 1;
@@ -722,14 +754,10 @@ app.addEventListener("click", (event) => {
   if (
     a === "delete-program" &&
     confirm(
-      "Delete this program? All workouts and logged sets will be kept in your weekly planner.",
+      "Delete this program and remove its workouts from the planner? Recorded results and notes will be preserved.",
     )
   ) {
-    for (const w of state.workouts)
-      if (w.programId === selectedProgramId) delete w.programId;
-    state.programs = state.programs.filter((p) => p.id !== selectedProgramId);
-    if (state.activeProgramId === selectedProgramId)
-      delete state.activeProgramId;
+    deleteProgram(state, selectedProgramId);
     selectedProgramId = null;
     modal = null;
     save();
@@ -842,6 +870,9 @@ app.addEventListener("submit", (event) => {
     try {
       const p = alignProgram(state, form.dataset.programId, data.startDate);
       state.activeProgramId = p.id;
+      delete p.unenrolled;
+      for (const w of state.workouts)
+        if (w.programId === p.id) delete w.plannerHidden;
       selected = p.startDate;
       calendarMonth = selected.slice(0, 7) + "-01";
       week = weekStart(new Date(p.startDate + "T12:00:00"));

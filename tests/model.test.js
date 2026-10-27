@@ -319,3 +319,41 @@ test("alignment rejects invalid dates atomically and moves recorded workouts wit
   alignProgram(state, program.id, program.startDate);
   assert.deepEqual(state, before);
 });
+
+test("unenrollment hides calendar entries while deletion preserves recorded results only", async () => {
+  const { unenrollProgram, deleteProgram, onPlanner } =
+    await import("../shared/programs.js");
+  const logged = {
+    id: "logged",
+    programId: "p",
+    exercises: [exercise("Squat", 1)],
+  };
+  logged.exercises[0].logs[0] = { weight: "100", actual: "5", done: true };
+  const planned = {
+    id: "planned",
+    programId: "p",
+    exercises: [exercise("Plank", 1)],
+  };
+  const independent = { id: "own", exercises: [] };
+  const state = {
+    programs: [{ id: "p" }],
+    activeProgramId: "p",
+    workouts: [logged, planned, independent],
+  };
+  unenrollProgram(state, "p");
+  assert.equal(state.activeProgramId, undefined);
+  assert.equal(state.workouts.length, 3);
+  assert.equal(onPlanner(state, logged), false);
+  assert.equal(onPlanner(state, planned), false);
+  assert.equal(onPlanner(state, independent), true);
+  delete state.programs[0].unenrolled;
+  assert.equal(onPlanner(state, planned), true);
+  deleteProgram(state, "p");
+  assert.deepEqual(
+    state.workouts.map((w) => w.id),
+    ["logged", "own"],
+  );
+  assert.equal(logged.programId, undefined);
+  assert.equal(onPlanner(state, logged), false);
+  assert.equal(logged.exercises[0].logs[0].weight, "100");
+});

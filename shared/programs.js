@@ -83,3 +83,36 @@ export function alignProgram(state, programId, startDate) {
   });
   return program;
 }
+
+export function onPlanner(state, workout) {
+  return (
+    !workout.plannerHidden &&
+    !(state.programs || []).some(
+      (p) => p.id === workout.programId && p.unenrolled,
+    )
+  );
+}
+export function unenrollProgram(state, programId) {
+  const program = (state.programs || []).find((p) => p.id === programId);
+  if (!program) return;
+  program.unenrolled = true;
+  if (state.activeProgramId === programId) delete state.activeProgramId;
+}
+export function deleteProgram(state, programId) {
+  state.workouts = state.workouts.filter((w) => {
+    if (w.programId !== programId) return true;
+    const recorded =
+      w.completed ||
+      w.exercises.some(
+        (e) =>
+          e.note ||
+          e.logs.some((l) => l.done || l.weight !== "" || l.actual !== ""),
+      );
+    if (!recorded) return false;
+    delete w.programId;
+    w.plannerHidden = true;
+    return true;
+  });
+  state.programs = (state.programs || []).filter((p) => p.id !== programId);
+  if (state.activeProgramId === programId) delete state.activeProgramId;
+}

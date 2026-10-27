@@ -240,3 +240,68 @@ test("calendar messages and workouts are cleared when another account signs in o
     0,
   );
 });
+
+test("unenroll removes a program from both calendar views and can be reversed", async ({
+  page,
+  baseURL,
+}) => {
+  const { state } = await seed(page, baseURL);
+  const { navigateTo } = await import("./navigation.js");
+  await navigateTo(page, "programs");
+  page.on("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "Unenroll", exact: true }).click();
+  await expect(page.getByText("Not enrolled", { exact: true })).toBeVisible();
+  await navigateTo(page, "planner");
+  await expect(page.locator("[data-calendar-workout]")).toHaveCount(0);
+  await expect(page.locator(".workout-card")).toHaveCount(0);
+  await page.getByRole("button", { name: "Month", exact: true }).click();
+  await expect(page.locator("[data-calendar-workout]")).toHaveCount(0);
+  await page.reload();
+  await navigateTo(page, "programs");
+  await page
+    .getByRole("button", { name: "Start program", exact: false })
+    .first()
+    .click();
+  await page
+    .getByRole("button", { name: "Start program & align", exact: false })
+    .click();
+  await navigateTo(page, "planner");
+  await expect(page.locator("[data-calendar-workout]")).toHaveCount(2);
+  const saved = (await (await page.request.get("/api/state")).json()).state;
+  expect(saved.workouts[0].exercises[0].logs).toEqual(
+    state.workouts[0].exercises[0].logs,
+  );
+  await page
+    .getByRole("button", { name: "Remove from planner", exact: true })
+    .first()
+    .click();
+  await expect(page.locator("[data-calendar-workout]")).toHaveCount(1);
+});
+
+test("deleting a program clears its calendar and keeps completed workout history", async ({
+  page,
+  baseURL,
+}) => {
+  await seed(page, baseURL);
+  const { navigateTo } = await import("./navigation.js");
+  await navigateTo(page, "programs");
+  await page
+    .getByRole("button", { name: "Open program", exact: false })
+    .click();
+  await page.getByRole("button", { name: "Edit program", exact: true }).click();
+  page.on("dialog", (d) => d.accept());
+  await page
+    .getByRole("button", { name: "Delete program", exact: true })
+    .click();
+  await navigateTo(page, "planner");
+  await expect(page.locator("[data-calendar-workout]")).toHaveCount(0);
+  await expect(page.locator(".workout-card")).toHaveCount(0);
+  await navigateTo(page, "history");
+  await expect(page.locator(".history-card")).toContainText("Logged strength");
+  await expect(page.locator("#sync-label")).toContainText("Synced");
+  await page.reload();
+  const saved = (await (await page.request.get("/api/state")).json()).state;
+  expect(saved.programs).toHaveLength(0);
+  expect(saved.workouts).toHaveLength(1);
+  expect(saved.workouts[0].exercises[0].note).toBe("Keep logged note");
+});
