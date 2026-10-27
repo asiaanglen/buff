@@ -41,6 +41,7 @@ import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/manrope";
 import "./style.css";
 import "./workout-log.css";
+import "./themes.css";
 import {
   uid,
   weekStart,
@@ -229,6 +230,10 @@ let initializing = true;
 let startupError = false;
 let lastRenderSignedIn = false;
 function render() {
+  document.documentElement.dataset.theme =
+    state?.theme === "muscle-mami" && cloud.isSignedIn()
+      ? "muscle-mami"
+      : "classic";
   if (initializing || startupError) {
     document.title = "Buff — Your workouts";
     app.innerHTML = `<section class="boot-screen" ${initializing ? 'role="status" aria-live="polite"' : ""}><div class="boot-content"><span class="boot-mark" aria-hidden="true">b.</span>${initializing ? '<span class="boot-spinner" aria-hidden="true"></span><h1>Loading Buff</h1><p>Getting your workouts ready…</p>' : '<h1>Couldn’t load Buff</h1><p>Check your connection, then try again.</p><button class="button primary" data-action="retry-start">Try again</button>'}</div></section>`;
@@ -1265,6 +1270,11 @@ document.addEventListener("keydown", (e) => {
   }
 });
 const cloud = createCloud({
+  onThemeChange: (theme) => {
+    state.theme = theme === "muscle-mami" ? "muscle-mami" : "classic";
+    save();
+    render();
+  },
   getState: () => state,
   setState: (next) => {
     state = inPounds(next);

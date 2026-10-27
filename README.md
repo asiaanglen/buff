@@ -263,3 +263,7 @@ Deployment/setup:
 Ownership is stored by account ID in `usage_owners`, survives email changes, and is never assigned automatically to the first user. There is no public owner-link issuance endpoint. A logged-out request or ordinary user cannot access dashboard data, even if they manually visit `/usage` or `/api/admin/usage`.
 
 Browser tests seed an isolated fake owner in their local D1 database. That fixture is never run during production deployment.
+
+### App themes
+
+Open **Account → App theme** to choose **Buff Classic** or **Muscle Mami**, an optional blush, rose and berry theme with heart accents. The choice saves in the account’s journal, works offline, and syncs to other devices. Signing out returns the public site to Classic. Themes change appearance only.

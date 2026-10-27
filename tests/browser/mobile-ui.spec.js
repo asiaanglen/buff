@@ -47,3 +47,67 @@ test("phone UI uses readable exercise cards, full-size inputs and accessible tap
     });
   }
 });
+
+test("Muscle Mami theme is optional, persists across devices and switches back to Classic", async ({
+  page,
+  browser,
+  baseURL,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Account and cross-device sync" })
+    .click();
+  await expect(page.getByLabel("App theme")).toHaveValue("classic");
+  await page.getByLabel("App theme").selectOption("muscle-mami");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-theme",
+    "muscle-mami",
+  );
+  await page
+    .getByRole("button", { name: "Close account", exact: true })
+    .click();
+  await expect(page.locator("#sync-label")).toContainText("Synced");
+  expect(
+    (await (await page.request.get("/api/state")).json()).state.theme,
+  ).toBe("muscle-mami");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-theme",
+    "muscle-mami",
+  );
+  const other = await browser.newContext({
+    storageState: { cookies: await page.context().cookies(), origins: [] },
+    viewport: { width: 320, height: 844 },
+  });
+  try {
+    const phone = await other.newPage();
+    await phone.goto(baseURL);
+    await expect(phone.locator("html")).toHaveAttribute(
+      "data-theme",
+      "muscle-mami",
+    );
+    expect(
+      await phone.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await phone.screenshot({
+      path: "/tmp/buff-muscle-mami-mobile.png",
+      fullPage: true,
+    });
+  } finally {
+    await other.close();
+  }
+  await page
+    .getByRole("button", { name: "Account and cross-device sync" })
+    .click();
+  await page.getByLabel("App theme").selectOption("classic");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "classic");
+  await page
+    .getByRole("button", { name: "Close account", exact: true })
+    .click();
+  await expect(page.locator("#sync-label")).toContainText("Synced");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "classic");
+});

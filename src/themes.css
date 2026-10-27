@@ -1,0 +1,172 @@
+/* Opt-in palette; workout data and layout stay the same across themes. */
+.theme-picker {
+  margin-top: 22px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #faf9fd;
+}
+.theme-picker h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+.theme-picker p {
+  margin-bottom: 16px;
+}
+.theme-picker label {
+  margin-bottom: 8px;
+}
+.theme-picker select {
+  width: 100%;
+  min-height: 46px;
+}
+.theme-picker small {
+  display: block;
+  margin-top: 10px;
+  color: #706575;
+  line-height: 1.5;
+}
+.theme-sparkle {
+  float: right;
+  color: var(--purple);
+  font-size: 28px;
+}
+:root[data-theme="muscle-mami"] {
+  --purple: #bd2868;
+  --muted: #826d7b;
+  --line: #efd5e2;
+  color: #432536;
+  background: #fff5f9;
+  color-scheme: light;
+}
+:root[data-theme="muscle-mami"] body {
+  background:
+    radial-gradient(ellipse at 90% 0%, #fce0ec 0, transparent 48%), #fff5f9;
+}
+:root[data-theme="muscle-mami"] :is(.sidebar, .topbar) {
+  background: #fffafd;
+  border-color: #efd5e2;
+}
+:root[data-theme="muscle-mami"] :is(h1, h2, h3, .brand) {
+  color: #58253f;
+}
+:root[data-theme="muscle-mami"] .brand-icon {
+  background: linear-gradient(135deg, #d22e7b, #a82b62);
+  border-radius: 14px 14px 14px 4px;
+  box-shadow: 0 4px 12px #c6337128;
+}
+:root[data-theme="muscle-mami"] .brand-dot {
+  color: #bd2868;
+}
+:root[data-theme="muscle-mami"] .nav-item.active {
+  color: #9e2055;
+  background: #fbe1ed;
+}
+:root[data-theme="muscle-mami"] :is(.eyebrow, .breadcrumb, .workspace-label) {
+  color: #95536f;
+}
+:root[data-theme="muscle-mami"] .primary {
+  background: linear-gradient(110deg, #bf286b, #a62461);
+  color: #fff;
+  box-shadow: 0 4px 12px #ad24632a;
+  border-radius: 12px;
+}
+:root[data-theme="muscle-mami"] .subtle {
+  color: #8e345e;
+  border-color: #eac1d4;
+  background: #fffafd;
+  border-radius: 12px;
+}
+:root[data-theme="muscle-mami"]
+  :is(
+    .workout-card,
+    .program-card,
+    .stat,
+    .history-card,
+    .home-workout,
+    .calendar
+  ) {
+  border-color: #efd5e2;
+  border-radius: 20px;
+  background-color: #fffafd;
+  box-shadow: 0 5px 20px #9d366409;
+}
+:root[data-theme="muscle-mami"]
+  :is(.tag, .stat-icon, .avatar, .workout-symbol, .calendar-workout) {
+  color: #97264f;
+  background: #fbe0eb;
+}
+:root[data-theme="muscle-mami"]
+  :is(.day.selected, .month-day.selected, .week-chip.selected, .theme-picker) {
+  background: #fce5ef;
+  border-color: #d36194;
+}
+:root[data-theme="muscle-mami"] :is(.theme-picker h3, .page-heading h1)::after {
+  content: " ♡";
+  color: #c33876;
+  font-weight: 500;
+}
+:root[data-theme="muscle-mami"] :is(input, select, textarea) {
+  border-color: #e7c5d5;
+  background-color: #fffcfe;
+  color: #432536;
+  border-radius: 12px;
+  accent-color: #bd2868;
+}
+:root[data-theme="muscle-mami"] :is(input, select, textarea):focus {
+  outline-color: #cb4f89;
+  border-color: #bd2868;
+}
+:root[data-theme="muscle-mami"] :is(button, a):focus-visible {
+  outline-color: #bc2e70;
+}
+:root[data-theme="muscle-mami"] .modal {
+  background: #fffafd;
+  border: 1px solid #efd5e2;
+  border-radius: 24px;
+}
+:root[data-theme="muscle-mami"]
+  :is(.inline-workout-log, .exercise-log-body, .log-row) {
+  border-color: #efd5e2;
+}
+:root[data-theme="muscle-mami"] .inline-workout-log :is(input, textarea) {
+  background: #fff1f7;
+  border-color: #e8bfd1;
+  color: #432536;
+}
+:root[data-theme="muscle-mami"]
+  :is(.workout-card, .history-card, .home-workout):has(.inline-workout-log) {
+  background: #fffafd;
+  border-color: #e9c8d9;
+}
+:root[data-theme="muscle-mami"] .theme-picker p {
+  color: #81546b;
+}
+:root[data-theme="muscle-mami"]
+  :is(p, .stat small, .optional, .account-help, .field-help) {
+  color: #81566d;
+}
+:root[data-theme="muscle-mami"]
+  .inline-workout-log
+  :is(.exercise-target-display, .add-set, .exercise-log-toggle) {
+  color: #8c2c57;
+}
+:root[data-theme="muscle-mami"]
+  :is(
+    .calendar-view-toggle button[aria-pressed="true"],
+    .superset-label,
+    .exercise-notes
+  ) {
+  background: #fbe2ed;
+  color: #8c2c57;
+}
+:root[data-theme="muscle-mami"] :is(.day-name, .text-button, .sync-link) {
+  color: #a12b60;
+}
+:root[data-theme="muscle-mami"] .days .calendar-workout {
+  flex-wrap: wrap;
+}
+:root[data-theme="muscle-mami"] .days .calendar-workout-name {
+  flex: 1 0 100%;
+  order: -1;
+}
