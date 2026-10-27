@@ -12,12 +12,11 @@ test("mobile uses one page dropdown and clearly labeled set logging accordions",
     await expect(menu).toBeVisible();
     await expect(menu).toHaveValue("planner");
     await expect(page.locator(".sidebar nav")).toBeHidden();
-    await expect(menu.locator("option")).toHaveCount(5);
+    await expect(menu.locator("option")).toHaveCount(4);
     for (const [tab, title] of [
       ["home", "Your next good workout."],
       ["programs", "Your next chapter."],
       ["history", "Completed workouts"],
-      ["ai", "Connect to AI"],
       ["planner", "Your week, in motion."],
     ]) {
       await menu.selectOption(tab);

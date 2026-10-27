@@ -176,13 +176,13 @@ Choose **Start workout** to begin logging within the workout card. Then tap an e
 Choose **Swap exercise** to open the library and select a replacement or enter a custom movement. The replacement keeps the planned sets, targets, weight and superset membership unless you adjust them; selecting a different tracking mode supplies a suitable initial target. Existing logged results cannot be reassigned to another movement: swapping is disabled for that exercise once results are entered, while other unlogged exercises remain swappable. Normal exercise dropdowns do not show the library. Adding an exercise still supports library search, and ordinary plan editing shows the selected movement's guide without opening the library.
 
 
-## Connect to AI
+## Connected AI apps
 
-The signed-in **Connect to AI** tab provides separate step-by-step setup guides for Claude and ChatGPT, a copyable MCP endpoint derived from the current host, permission descriptions, example prompts, troubleshooting, provider help links and a link to manage connected apps. Users authorize their own accounts through Buff OAuth; the page does not automatically connect external AI accounts. Custom app/connector availability and exact menus depend on the AI service’s plan and workspace settings.
+Open **Account → Manage connected AI apps** to review or disconnect the AI apps authorized through Buff OAuth. AI management is available through Account; there is no separate navigation tab.
 
 Startup shows a branded loading screen while the session and journal are checked, including in the initial HTML before JavaScript loads. Authenticated users go straight from loading to their planner/Home; anonymous users see the public landing page only after the session check. Failed startup shows a retry screen. Session, journal-load and provider-discovery requests have a 15-second timeout. **Swap exercise** sits beside the exercise name in both previews and expanded exercise headings.
 
-On phones, use the **Go to** dropdown at the top to switch between Home, Programs, Weekly planner, Completed workouts and Connect to AI. Desktop navigation keeps its sidebar buttons. Before starting, exercise previews show only names, set counts, target reps/time and weight. After starting, exercise headings expand or fold their fields and show logged-set counts.
+On phones, use the **Go to** dropdown at the top to switch between Home, Programs, Weekly planner and Completed workouts. Desktop navigation keeps its sidebar buttons. Before starting, exercise previews show only names, set counts, target reps/time and weight. After starting, exercise headings expand or fold their fields and show logged-set counts.
 
 
 MCP-created exercises now store an optional `libraryId` when a catalog name or alias matches. MCP exercise inputs also accept `library_id` from `search_exercises` for explicit selection; invalid IDs and conflicting known names are rejected before approval. Recognized timed exercises use timed tracking when no mode is supplied. The Edit exercise dialog shows the selected library entry with its guide and a Swap exercise control, including for older text-only exercises that match a catalog name. Custom movements remain supported. Cable Kickback (glutes, low cable with ankle strap) and Split Squat (both feet on the floor) are included with instructions and plural search aliases.

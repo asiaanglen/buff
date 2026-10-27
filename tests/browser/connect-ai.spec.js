@@ -1,54 +1,31 @@
-import { navigateTo } from "./navigation.js";
 import { test, expect } from "./auth-fixture.js";
-test("Connect to AI explains both services and copies the correct connector URL on phones", async ({
+test("navigation omits Connect to AI while account still opens connected app management", async ({
   page,
-  baseURL,
-  context,
 }) => {
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
-  await navigateTo(page, "ai");
-  await expect(
-    page.getByRole("heading", { name: "Connect to AI", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Connect to Claude" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Connect to ChatGPT" }),
-  ).toBeVisible();
-  await expect(page.getByLabel("Server URL", { exact: true })).toHaveValue(
-    baseURL + "/mcp",
-  );
-  await page.getByRole("button", { name: "Copy URL", exact: true }).click();
-  await expect(page.locator("#ai-copy-status")).toContainText("Copied.");
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-    baseURL + "/mcp",
-  );
-  await expect(
-    page.getByRole("link", { name: "Manage connected AI apps" }),
-  ).toHaveAttribute("href", "/connections");
-  await expect(
-    page.getByText("Every proposed change has an approval link.", {
+  for (const width of [1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/");
+    await expect(page.locator(".sidebar")).toBeVisible();
+    await expect(page.locator('[data-tab="ai"]')).toHaveCount(0);
+    await expect(
+      page.locator('#mobile-page-select option[value="ai"]'),
+    ).toHaveCount(0);
+    await page
+      .getByRole("button", {
+        name: "Account and cross-device sync",
+        exact: true,
+      })
+      .click();
+    const manage = page.getByRole("link", {
+      name: "Manage connected AI apps",
       exact: false,
-    }),
-  ).toBeVisible();
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
-  await page.screenshot({
-    path: "/tmp/buff-connect-ai-mobile.png",
-    fullPage: true,
-  });
-  await page.evaluate(() =>
-    Object.defineProperty(navigator, "clipboard", {
-      configurable: true,
-      value: { writeText: () => Promise.reject(new Error("denied")) },
-    }),
-  );
-  await page.getByRole("button", { name: "Copy URL", exact: true }).click();
-  await expect(page.locator("#ai-copy-status")).toContainText("URL selected.");
+    });
+    await expect(manage).toBeVisible();
+    await expect(manage).toHaveAttribute("href", "/connections");
+    await manage.click();
+    await expect(page).toHaveURL(/\/connections$/);
+    await expect(
+      page.getByRole("heading", { name: "Connected apps", exact: true }),
+    ).toBeVisible();
+  }
 });

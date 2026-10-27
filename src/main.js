@@ -11,7 +11,6 @@ import {
   alignmentPreview,
 } from "./program-alignment.js";
 import { exerciseByName } from "../shared/exercises.js";
-import { connectAiView, copyAiEndpoint } from "./connect-ai.js";
 import { supersetDialog, saveSuperset, sortSupersets } from "./supersets.js";
 import {
   exerciseLibrary,
@@ -244,29 +243,25 @@ function render() {
       Math.min(selectedProgramWeek, program().weeks),
     );
   const pageTitle =
-    tab === "ai"
-      ? "Connect to AI"
-      : tab === "home"
-        ? "Your next good workout."
-        : tab === "programs"
-          ? program()
-            ? program().name
-            : "Your next chapter."
-          : tab === "planner"
-            ? "Your week, in motion."
-            : "Completed workouts";
+    tab === "home"
+      ? "Your next good workout."
+      : tab === "programs"
+        ? program()
+          ? program().name
+          : "Your next chapter."
+        : tab === "planner"
+          ? "Your week, in motion."
+          : "Completed workouts";
   const pageDescription =
-    tab === "ai"
-      ? "Bring your workouts into Claude or ChatGPT, with you in control."
-      : tab === "home"
-        ? "Your program. One workout at a time."
-        : tab === "programs"
-          ? program()
-            ? `${program().weeks} weeks · ${dateLabel(program().startDate)} – ${dateLabel(programEnd(program()))}`
-            : "Create a program. Build it week by week. Make it your own."
-          : tab === "planner"
-            ? "A little planning. A little consistency. A stronger you."
-            : "The workouts you’ve finished, with every logged set saved.";
+    tab === "home"
+      ? "Your program. One workout at a time."
+      : tab === "programs"
+        ? program()
+          ? `${program().weeks} weeks · ${dateLabel(program().startDate)} – ${dateLabel(programEnd(program()))}`
+          : "Create a program. Build it week by week. Make it your own."
+        : tab === "planner"
+          ? "A little planning. A little consistency. A stronger you."
+          : "The workouts you’ve finished, with every logged set saved.";
 
   const weekly = state.workouts.filter(
     (w) => w.date >= week && w.date <= addDays(week, 6),
@@ -277,12 +272,11 @@ function render() {
   }).length;
   const total = weekly.reduce((n, w) => n + progress(w).total, 0);
   const done = weekly.reduce((n, w) => n + progress(w).done, 0);
-  app.innerHTML = `<aside class="sidebar"><a class="brand" href="/" aria-label="Buff home"><span class="brand-icon">b.</span>buff<span class="brand-dot">.</span></a><div class="workspace-label">YOUR WORKSPACE</div><nav><button data-tab="home" class="nav-item ${tab === "home" ? "active" : ""}"><span>⌂</span> Home</button><button data-tab="programs" class="nav-item ${tab === "programs" ? "active" : ""}"><span>▤</span> Programs</button><button data-tab="planner" class="nav-item ${tab === "planner" ? "active" : ""}"><span>▦</span> Weekly planner</button><button data-tab="history" class="nav-item ${tab === "history" ? "active" : ""}"><span>◷</span> Completed workouts</button><button data-tab="ai" class="nav-item ${tab === "ai" ? "active" : ""}"><span>✧</span> Connect to AI</button></nav><div class="mobile-navigation"><label for="mobile-page-select">Go to</label><select id="mobile-page-select" aria-label="Go to page">${[
+  app.innerHTML = `<aside class="sidebar"><a class="brand" href="/" aria-label="Buff home"><span class="brand-icon">b.</span>buff<span class="brand-dot">.</span></a><div class="workspace-label">YOUR WORKSPACE</div><nav><button data-tab="home" class="nav-item ${tab === "home" ? "active" : ""}"><span>⌂</span> Home</button><button data-tab="programs" class="nav-item ${tab === "programs" ? "active" : ""}"><span>▤</span> Programs</button><button data-tab="planner" class="nav-item ${tab === "planner" ? "active" : ""}"><span>▦</span> Weekly planner</button><button data-tab="history" class="nav-item ${tab === "history" ? "active" : ""}"><span>◷</span> Completed workouts</button></nav><div class="mobile-navigation"><label for="mobile-page-select">Go to</label><select id="mobile-page-select" aria-label="Go to page">${[
     ["home", "Home"],
     ["programs", "Programs"],
     ["planner", "Weekly planner"],
     ["history", "Completed workouts"],
-    ["ai", "Connect to AI"],
   ]
     .map(
       ([value, label]) =>
@@ -291,7 +285,7 @@ function render() {
     .join(
       "",
     )}</select></div><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">Y</span><div><strong>Your workspace</strong><small>Personal training journal</small></div></div></aside>
-<main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "ai" ? "Connect to AI" : tab === "home" ? "Home" : tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Completed workouts"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content"><div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div>${tab === "ai" ? "" : `<div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div>`}</div>
+<main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "home" ? "Home" : tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Completed workouts"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content"><div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div><div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div></div>
 ${inviteToken ? renderInvitation() : ""}${inviteSuccess ? `<div class="notice invitation-success" role="status">${esc(inviteSuccess)}</div>` : ""}
 ${storageError ? '<div class="notice">Device storage is unavailable or was reset. Your changes may not persist after closing this page.</div>' : ""}
 ${
@@ -330,9 +324,7 @@ ${
             workoutLog: (w) => (loggingWorkouts.has(w.id) ? logForm(w) : ""),
             isLogging: (id) => loggingWorkouts.has(id),
           })
-        : tab === "ai"
-          ? connectAiView(esc)
-          : history()
+        : history()
 }
 <footer><span class="footer-logo">b.</span> Progress isn’t always loud. Sometimes it’s just showing up. <span>YOU’VE GOT THIS</span></footer></div></main>${modal ? dialog() : ""}`;
   renderExerciseResults(app, state, esc);
@@ -588,10 +580,6 @@ app.addEventListener("click", (event) => {
   }
   if (a === "retry-start") {
     startApp();
-    return;
-  }
-  if (a === "copy-mcp") {
-    copyAiEndpoint(app);
     return;
   }
   if (a === "exercise-guide") {
