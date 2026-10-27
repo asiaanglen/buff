@@ -201,7 +201,7 @@ Before **Start workout**, the exercise list is a read-only preview with no per-e
 
 Weekly planner remains available. **Start program** opens a Week 1 start-date chooser with This Monday / Next Monday shortcuts and a first-week date preview. Confirming activates the program and shifts all its workout dates by the same number of days, preserving numbered weeks, relative days, exercise IDs, notes, supersets and targets. No duplicate workouts are created; unrelated workouts are unchanged. The Home page links directly to the program's next workout in Weekly planner. **Align with planner** is also available from Home and program detail to adjust an unlogged program later.
 
-Programs with actual set results retain their start date so alignment cannot silently move recorded history. Their existing schedule can still be opened in Weekly planner, where upcoming workouts can be rescheduled individually within the program's date range. Invalid dates or a rejected shift leave the whole journal unchanged.
+Program alignment accepts a new start date even after results have been logged. **Today** uses the device’s local calendar date. Every assigned workout, including completed and partially logged workouts, shifts by the same number of days; IDs, sets, results, notes, and numbered program weeks are preserved. The dialog explains that recorded workout dates move too. Invalid dates or a rejected shift leave the whole journal unchanged.
 
 ## Share a program with a friend
 

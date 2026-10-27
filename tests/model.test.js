@@ -289,7 +289,7 @@ test("aligning a program moves every scheduled week together and preserves worko
   assert.equal(other.date, "2026-01-06");
   assert.equal(validState(state), true);
 });
-test("alignment rejects invalid dates and shifting recorded history without partially moving the program", async () => {
+test("alignment rejects invalid dates atomically and moves recorded workouts without losing results", async () => {
   const { alignProgram } = await import("../shared/programs.js");
   const state = initialState();
   const program = {
@@ -309,10 +309,12 @@ test("alignment rejects invalid dates and shifting recorded history without part
   const before = structuredClone(state);
   assert.throws(() => alignProgram(state, program.id, "2026-02-30"), /valid/);
   assert.deepEqual(state, before);
-  assert.throws(
-    () => alignProgram(state, program.id, addDays(program.startDate, 7)),
-    /recorded results/,
-  );
+  alignProgram(state, program.id, addDays(before.programs[0].startDate, -9));
+  assert.equal(state.workouts[0].date, addDays(before.workouts[0].date, -9));
+  assert.deepEqual(state.workouts[0].exercises, before.workouts[0].exercises);
+  assert.deepEqual(state.workouts.slice(1), before.workouts.slice(1));
+  assert.equal(validState(state), true);
+  alignProgram(state, program.id, before.programs[0].startDate);
   assert.deepEqual(state, before);
   alignProgram(state, program.id, program.startDate);
   assert.deepEqual(state, before);

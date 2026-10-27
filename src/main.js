@@ -610,12 +610,12 @@ app.addEventListener("click", (event) => {
         };
     }
   }
-  if (a === "alignment-monday") {
+  if (a === "alignment-monday" || a === "alignment-today") {
     const form = app.querySelector("#start-program-form");
-    form.elements.startDate.value = addDays(
-      weekStart(),
-      Number(b.dataset.offset),
-    );
+    form.elements.startDate.value =
+      a === "alignment-today"
+        ? key(new Date())
+        : addDays(weekStart(), Number(b.dataset.offset));
     form.querySelector(".program-alignment-preview").innerHTML =
       alignmentPreview(
         state,

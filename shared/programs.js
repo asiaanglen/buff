@@ -68,10 +68,6 @@ export function alignProgram(state, programId, startDate) {
   if (!program || !validDate(startDate))
     throw Error("Choose a valid program and start date.");
   const offset = daysApart(program.startDate, startDate);
-  if (offset && programHasResults(programId, state.workouts))
-    throw Error(
-      "This program has recorded results. Keep its start date to preserve workout history; reschedule upcoming workouts individually in Weekly planner.",
-    );
   const nextProgram = { ...program, startDate };
   const shifted = state.workouts.map((workout) =>
     workout.programId === programId
