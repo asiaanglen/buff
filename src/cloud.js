@@ -1,4 +1,4 @@
-import { profileFields } from "./account-profile.js";
+import { profileFields, profileEditor } from "./account-profile.js";
 import { pendingInvitation } from "./invite-token.js";
 import { importGuest } from "./model.js";
 import { authScheme, passwordProof } from "./credentials.js";
@@ -230,7 +230,13 @@ export function createCloud({
       root.querySelector("input")?.focus();
       return;
     }
-    root.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title"><div class="modal-header"><div><div class="eyebrow">YOUR WORKOUTS, EVERYWHERE</div><h2 id="account-title">${user ? "Your account" : mode === "signup" ? "Create your account" : "Sign in to Buff"}</h2></div><button class="icon-button close" data-cloud="close" aria-label="Close account">×</button></div><p class="account-intro">${user ? `Signed in as <strong>${escape(user.email)}</strong>` : "Use the same account on every device to sync your plans and workout logs."}</p><p class="account-message" role="status">${escape(message)}</p><div id="google-auth-slot">${googleControls()}</div>${user ? `<p class="sync-detail" data-sync-status>${escape(status)}</p><div class="account-actions"><button class="button primary" data-cloud="sync">Sync now</button><button class="button subtle" data-cloud="download">Download a backup</button></div><div class="conflict-actions" ${conflict ? "" : "hidden"}><h3>Two devices changed your journal</h3><p>Neither version has been overwritten. Download your local backup before choosing.</p><button class="button subtle" data-cloud="use-cloud">Use cloud version</button><button class="button subtle" data-cloud="use-local">Replace cloud with this device</button></div><p class="account-help">Changes save automatically. You can safely keep editing when offline; pending changes sync when the server is reachable.</p><p><a class="text-button" href="/connections">Manage connected AI apps →</a></p><div class="modal-footer"><button class="text-button" data-cloud="import">Import guest workouts</button><button class="text-button danger" data-cloud="signout">Sign out</button></div>` : `<form id="auth-form">${mode === "signup" ? profileFields(escape) : ""}<label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>Password<input name="password" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" required maxlength="200"></label><button class="button primary auth-submit" type="submit">${mode === "signup" ? "Create account" : "Sign in"} →</button></form><button class="text-button auth-switch" data-cloud="${mode === "signup" ? "signin" : "signup"}">${mode === "signup" ? "Already have an account? Sign in" : "New to Buff? Create an account"}</button><p class="account-help">Guest workouts stay on this device. Your first cloud journal starts with your device’s workouts. Password reset is not available yet; keep your password somewhere safe.</p>`}</section></div>`;
+    if (user && mode === "edit-profile") {
+      root.dataset.mode = mode;
+      root.innerHTML = profileEditor(escape, user, message);
+      root.querySelector("input")?.focus();
+      return;
+    }
+    root.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title"><div class="modal-header"><div><div class="eyebrow">YOUR WORKOUTS, EVERYWHERE</div><h2 id="account-title">${user ? "Your account" : mode === "signup" ? "Create your account" : "Sign in to Buff"}</h2></div><button class="icon-button close" data-cloud="close" aria-label="Close account">×</button></div><p class="account-intro">${user ? `Signed in as <strong>${escape(user.email)}</strong>` : "Use the same account on every device to sync your plans and workout logs."}</p><p class="account-message" role="status">${escape(message)}</p><div id="google-auth-slot">${googleControls()}</div>${user ? `<p class="sync-detail" data-sync-status>${escape(status)}</p><div class="account-actions"><button class="button subtle" data-cloud="edit-profile">Edit profile</button><button class="button primary" data-cloud="sync">Sync now</button><button class="button subtle" data-cloud="download">Download a backup</button></div><div class="conflict-actions" ${conflict ? "" : "hidden"}><h3>Two devices changed your journal</h3><p>Neither version has been overwritten. Download your local backup before choosing.</p><button class="button subtle" data-cloud="use-cloud">Use cloud version</button><button class="button subtle" data-cloud="use-local">Replace cloud with this device</button></div><p class="account-help">Changes save automatically. You can safely keep editing when offline; pending changes sync when the server is reachable.</p><p><a class="text-button" href="/connections">Manage connected AI apps →</a></p><div class="modal-footer"><button class="text-button" data-cloud="import">Import guest workouts</button><button class="text-button danger" data-cloud="signout">Sign out</button></div>` : `<form id="auth-form">${mode === "signup" ? profileFields(escape) : ""}<label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>Password<input name="password" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" required maxlength="200"></label><button class="button primary auth-submit" type="submit">${mode === "signup" ? "Create account" : "Sign in"} →</button></form><button class="text-button auth-switch" data-cloud="${mode === "signup" ? "signin" : "signup"}">${mode === "signup" ? "Already have an account? Sign in" : "New to Buff? Create an account"}</button><p class="account-help">Guest workouts stay on this device. Your first cloud journal starts with your device’s workouts. Password reset is not available yet; keep your password somewhere safe.</p>`}</section></div>`;
     void refreshProviders();
     root.dataset.mode = mode;
     root.querySelector("input,button")?.focus();
@@ -239,10 +245,47 @@ export function createCloud({
     event.preventDefault();
     const form = event.target;
     if (!form.reportValidity()) return;
-    const b = form.querySelector("button");
+    const b = event.submitter || form.querySelector('[type="submit"]');
     b.disabled = true;
     const data = Object.fromEntries(new FormData(form));
     try {
+      if (form.id === "edit-profile-form") {
+        const email = data.email.trim().toLowerCase();
+        const current = data.currentPassword || "",
+          next = data.newPassword || "";
+        if (next !== (data.confirmPassword || ""))
+          throw Error("New passwords do not match.");
+        const credentialChange = email !== user.email || next !== "";
+        delete data.currentPassword;
+        delete data.newPassword;
+        delete data.confirmPassword;
+        data.email = email;
+        if (credentialChange) {
+          if (!current) {
+            form.elements.currentPassword?.focus();
+            throw Error(
+              "Enter your current password to change your email or password.",
+            );
+          }
+          const session = await request("/auth/session");
+          if (session.authScheme === authScheme) {
+            data.currentPassword = await passwordProof(user.email, current);
+            data.newPassword = await passwordProof(email, next || current);
+            data.credentialVersion = authScheme;
+          } else {
+            data.currentPassword = current;
+            data.newPassword = next || current;
+          }
+        }
+        const result = await request("/auth/profile", {
+          method: "POST",
+          body: JSON.stringify(data),
+        });
+        user = result.user;
+        notify(status);
+        open("signin", "Profile updated.");
+        return;
+      }
       if (form.id === "profile-form") {
         const result = await request("/auth/profile", {
           method: "POST",
@@ -301,6 +344,20 @@ export function createCloud({
     }
     b.disabled = true;
     try {
+      if (action === "edit-profile") {
+        const session = await request("/auth/session");
+        if (!session.user)
+          throw Error(
+            "Your session expired. Sign in again to edit your profile.",
+          );
+        user = session.user;
+        open("edit-profile");
+        return;
+      }
+      if (action === "account") {
+        open();
+        return;
+      }
       if (action === "link-google") {
         const result = await request(
           "/auth/google/link?return_to=" +

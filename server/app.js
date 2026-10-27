@@ -87,7 +87,7 @@ export function createApp({
     return accountUser(
       db
         .prepare(
-          "SELECT users.id,users.email,users.first_name,users.last_name,users.date_of_birth,users.profile_required FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?",
+          "SELECT users.id,users.email,users.password,users.first_name,users.last_name,users.date_of_birth,users.profile_required FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?",
         )
         .get(digest(token), Date.now()),
     );
@@ -195,18 +195,114 @@ export function createApp({
       next(e);
     }
   });
-  app.post("/api/auth/profile", requireUser, (req, res) => {
-    const error = profileError(req.body);
-    if (error) return res.status(400).json({ error });
-    db.prepare(
-      "UPDATE users SET first_name=?,last_name=?,date_of_birth=?,profile_required=0 WHERE id=?",
-    ).run(
-      req.body.firstName.trim(),
-      req.body.lastName.trim(),
-      req.body.dateOfBirth,
-      req.user.id,
-    );
-    res.json({ user: identify(req) });
+  app.post("/api/auth/profile", requireUser, async (req, res, next) => {
+    try {
+      const body = req.body;
+      const error = profileError(body);
+      if (error) return res.status(400).json({ error });
+      const email =
+        body.email === undefined
+          ? req.user.email
+          : typeof body.email === "string"
+            ? body.email.trim().toLowerCase()
+            : "";
+      if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        return res.status(400).json({ error: "Enter a valid email address." });
+      const credentialChange =
+        email !== req.user.email ||
+        (body.newPassword !== undefined && body.newPassword !== "");
+      if (credentialChange) {
+        if (
+          typeof body.currentPassword !== "string" ||
+          !body.currentPassword ||
+          body.currentPassword.length > 200 ||
+          typeof body.newPassword !== "string" ||
+          !body.newPassword ||
+          body.newPassword.length > 200
+        )
+          return res
+            .status(400)
+            .json({
+              error:
+                "Enter your current password to change your email or password.",
+            });
+        const row = db
+          .prepare("SELECT * FROM users WHERE id=?")
+          .get(req.user.id);
+        const current = await scrypt(body.currentPassword, row.salt, 64);
+        if (
+          current.length !== Buffer.from(row.password, "hex").length ||
+          !timingSafeEqual(current, Buffer.from(row.password, "hex"))
+        )
+          return res
+            .status(401)
+            .json({ error: "Your current password is incorrect." });
+        const salt = randomBytes(16).toString("hex"),
+          password = (await scrypt(body.newPassword, salt, 64)).toString("hex");
+        db.exec("BEGIN IMMEDIATE");
+        try {
+          const result = db
+            .prepare(
+              "UPDATE users SET first_name=?,last_name=?,date_of_birth=?,profile_required=0,email=?,password=?,salt=? WHERE id=? AND password=? AND email=?",
+            )
+            .run(
+              body.firstName.trim(),
+              body.lastName.trim(),
+              body.dateOfBirth,
+              email,
+              password,
+              salt,
+              req.user.id,
+              row.password,
+              req.user.email,
+            );
+          if (!result.changes) {
+            db.exec("ROLLBACK");
+            return res
+              .status(409)
+              .json({
+                error:
+                  "Your account changed on another device. Reload and try again.",
+              });
+          }
+          const token = req.headers.cookie
+            ?.split(";")
+            .map((s) => s.trim())
+            .find((s) => s.startsWith("buff_session="))
+            ?.slice(13);
+          db.prepare("DELETE FROM sessions WHERE user_id=? AND token<>?").run(
+            req.user.id,
+            digest(token),
+          );
+          db.exec("COMMIT");
+        } catch (error) {
+          db.exec("ROLLBACK");
+          if (
+            String(error.message).includes(
+              "UNIQUE constraint failed: users.email",
+            )
+          )
+            return res
+              .status(409)
+              .json({
+                error:
+                  "That email is already in use. Choose another email address.",
+              });
+          throw error;
+        }
+      } else
+        db.prepare(
+          "UPDATE users SET first_name=?,last_name=?,date_of_birth=?,profile_required=0 WHERE id=?",
+        ).run(
+          body.firstName.trim(),
+          body.lastName.trim(),
+          body.dateOfBirth,
+          req.user.id,
+        );
+      res.json({ user: identify(req) });
+    } catch (error) {
+      next(error);
+    }
   });
   app.post("/api/auth/signout", (req, res) => {
     const token = req.headers.cookie

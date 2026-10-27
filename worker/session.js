@@ -13,7 +13,7 @@ export async function identify(request, db) {
   if (!token || !/^[a-f0-9]{64}$/.test(token)) return null;
   const user = await db
     .prepare(
-      "SELECT users.id,users.email,users.first_name,users.last_name,users.date_of_birth,users.profile_required FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?",
+      "SELECT users.id,users.email,users.password,users.first_name,users.last_name,users.date_of_birth,users.profile_required FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?",
     )
     .bind(await digest(token), Date.now())
     .first();

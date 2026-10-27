@@ -30,6 +30,9 @@ export function accountUser(row) {
   return {
     id: row.id,
     email: row.email,
+    ...(typeof row.password === "string"
+      ? { passwordEnabled: !row.password.startsWith("google-only:") }
+      : {}),
     ...(row.first_name != null ? { firstName: row.first_name } : {}),
     ...(row.last_name != null ? { lastName: row.last_name } : {}),
     ...(row.date_of_birth != null ? { dateOfBirth: row.date_of_birth } : {}),

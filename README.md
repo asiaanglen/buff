@@ -231,3 +231,7 @@ SELECT first_name, last_name, email, date_of_birth FROM users ORDER BY email;
 ```
 
 Apply `0005_account_profiles.sql` with `npm run db:migrate:remote` before deploying this version. Existing account profile columns remain null until provided; no names or birth dates are inferred for existing users.
+
+## Edit profile
+
+Open **Account → Edit profile** to update First Name, Last Name, Date of Birth, or email. The editor loads the latest account details, validates changes, and provides Save changes and Cancel. Password accounts also have **Change password** with confirmation. Changing email or password requires the current password, preserves the current session, and signs out the account’s other browser sessions. Changing only name or birth date keeps those sessions active. Google-only accounts can update profile details while their email and sign-in remain managed through Google. Workout journals and account IDs are preserved throughout.

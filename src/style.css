@@ -3665,3 +3665,17 @@ body:has(#program-share-dialog[open]) .pwa-help {
   min-width: 0;
   width: 100%;
 }
+
+.profile-security {
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid #e4deec;
+  border-radius: 12px;
+}
+.profile-security summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.profile-security[open] summary {
+  margin-bottom: 16px;
+}

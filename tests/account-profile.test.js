@@ -34,7 +34,7 @@ test("account profiles require names and a real birth date without inventing an 
       password: "PRIVATE",
       salt: "PRIVATE",
     }),
-    { id: "legacy", email: "old@example.com" },
+    { id: "legacy", email: "old@example.com", passwordEnabled: true },
   );
   assert.deepEqual(
     accountUser({
@@ -49,6 +49,7 @@ test("account profiles require names and a real birth date without inventing an 
     {
       id: "new",
       email: "new@example.com",
+      passwordEnabled: true,
       firstName: "Ana",
       lastName: "O’Neill",
       dateOfBirth: "2000-02-29",

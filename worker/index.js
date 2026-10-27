@@ -148,6 +148,7 @@ async function api(request, env) {
       const user = {
         id: randomHex(16),
         email: normalized,
+        passwordEnabled: true,
         firstName: body.firstName.trim(),
         lastName: body.lastName.trim(),
         dateOfBirth: body.dateOfBirth,
@@ -192,17 +193,100 @@ async function api(request, env) {
     const body = await readBody(request);
     const error = profileError(body);
     if (error) return failure(error, 400);
-    await db
-      .prepare(
-        "UPDATE users SET first_name=?,last_name=?,date_of_birth=?,profile_required=0 WHERE id=?",
+    const email =
+      body.email === undefined
+        ? user.email
+        : typeof body.email === "string"
+          ? body.email.trim().toLowerCase()
+          : "";
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return failure("Enter a valid email address.", 400);
+    const credentialChange =
+      email !== user.email ||
+      (body.newPassword !== undefined && body.newPassword !== "");
+    if (credentialChange) {
+      if (!(await authLimit(request, db)))
+        return failure("Too many attempts. Try again in 15 minutes.", 429);
+      if (
+        body.credentialVersion !== authScheme ||
+        typeof body.currentPassword !== "string" ||
+        !/^[a-f0-9]{64}$/.test(body.currentPassword) ||
+        typeof body.newPassword !== "string" ||
+        !/^[a-f0-9]{64}$/.test(body.newPassword)
       )
-      .bind(
-        body.firstName.trim(),
-        body.lastName.trim(),
-        body.dateOfBirth,
-        user.id,
+        return failure(
+          "Enter your current password to change your email or password.",
+          400,
+        );
+      const row = await db
+        .prepare("SELECT * FROM users WHERE id=?")
+        .bind(user.id)
+        .first();
+      if (
+        !row ||
+        !(await checkVerifier(body.currentPassword, row.salt, row.password))
       )
-      .run();
+        return failure("Your current password is incorrect.", 401);
+      const salt = randomHex();
+      const password = await makeVerifier(body.newPassword, salt);
+      try {
+        const results = await db.batch([
+          db
+            .prepare(
+              "UPDATE users SET first_name=?,last_name=?,date_of_birth=?,profile_required=0,email=?,password=?,salt=? WHERE id=? AND password=? AND email=?",
+            )
+            .bind(
+              body.firstName.trim(),
+              body.lastName.trim(),
+              body.dateOfBirth,
+              email,
+              password,
+              salt,
+              user.id,
+              row.password,
+              user.email,
+            ),
+          db
+            .prepare(
+              "DELETE FROM sessions WHERE user_id=? AND token<>? AND EXISTS (SELECT 1 FROM users WHERE id=? AND password=?)",
+            )
+            .bind(
+              user.id,
+              await digest(sessionToken(request)),
+              user.id,
+              password,
+            ),
+        ]);
+        if (!results[0].meta.changes)
+          return failure(
+            "Your account changed on another device. Reload and try again.",
+            409,
+          );
+      } catch (error) {
+        if (
+          String(error.message).includes(
+            "UNIQUE constraint failed: users.email",
+          )
+        )
+          return failure(
+            "That email is already in use. Choose another email address.",
+            409,
+          );
+        throw error;
+      }
+    } else {
+      await db
+        .prepare(
+          "UPDATE users SET first_name=?,last_name=?,date_of_birth=?,profile_required=0 WHERE id=?",
+        )
+        .bind(
+          body.firstName.trim(),
+          body.lastName.trim(),
+          body.dateOfBirth,
+          user.id,
+        )
+        .run();
+    }
     return json({ user: await identify(request, db) });
   }
   if (path === "/api/auth/signout" && method === "POST") {

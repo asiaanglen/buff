@@ -176,3 +176,100 @@ test("workout history and account sessions survive a database reopen", async () 
     rmSync(folder, { recursive: true, force: true });
   }
 });
+
+test("profile edits preserve the local account and reauthenticate email/password changes atomically", async () => {
+  const { app, close } = createApp({ databasePath: ":memory:" });
+  const server = app.listen(0, "127.0.0.1");
+  await new Promise((resolve) => server.once("listening", resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  async function req(path, data, cookie = "") {
+    return fetch(base + "/api/auth/" + path, {
+      method: data ? "POST" : "GET",
+      headers: {
+        Origin: base,
+        "Content-Type": "application/json",
+        Cookie: cookie,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+  try {
+    const signup = await req("signup", {
+      ...signupProfile,
+      email: "profile@example.com",
+      password: "original",
+    });
+    assert.equal(signup.status, 200);
+    const user = (await signup.json()).user;
+    const cookie = signup.headers.get("set-cookie").split(";")[0];
+    const second = await req("signin", {
+      email: user.email,
+      password: "original",
+    });
+    const otherCookie = second.headers.get("set-cookie").split(";")[0];
+    const occupied = await req("signup", {
+      ...signupProfile,
+      email: "occupied@example.com",
+      password: "another",
+    });
+    assert.equal(occupied.status, 200);
+    assert.equal(
+      (
+        await req(
+          "profile",
+          {
+            ...signupProfile,
+            firstName: "Must roll back",
+            email: "occupied@example.com",
+            currentPassword: "original",
+            newPassword: "x",
+          },
+          cookie,
+        )
+      ).status,
+      409,
+    );
+    assert.deepEqual(
+      (await (await req("session", null, cookie)).json()).user,
+      user,
+    );
+    const updated = await req(
+      "profile",
+      {
+        ...signupProfile,
+        firstName: "Updated",
+        email: "updated@example.com",
+        currentPassword: "original",
+        newPassword: "x",
+      },
+      cookie,
+    );
+    assert.equal(updated.status, 200);
+    assert.equal((await updated.json()).user.id, user.id);
+    assert.equal(
+      (await (await req("session", null, cookie)).json()).user.email,
+      "updated@example.com",
+    );
+    assert.equal(
+      (await (await req("session", null, otherCookie)).json()).user,
+      null,
+    );
+    assert.equal(
+      (
+        await req("signin", {
+          email: "updated@example.com",
+          password: "original",
+        })
+      ).status,
+      401,
+    );
+    assert.equal(
+      (await req("signin", { email: "updated@example.com", password: "x" }))
+        .status,
+      200,
+    );
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    close();
+  }
+});
