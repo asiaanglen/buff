@@ -205,7 +205,7 @@ Programs with actual set results retain their start date so alignment cannot sil
 
 ## Share a program with a friend
 
-Choose **Share program** in Programs, program detail, or the active program on Home. Enter the name to put in your invitation and create a link. **Text a friend** opens the phone's messaging composer with:
+Choose **Share program** in Programs, program detail, or the active program on Home. The invitation is prepared automatically; your saved name is used, or ‘Your friend’ if you haven’t provided one. **Customize your name in the invitation** is optional. **Choose contact in Messages** opens the phone’s messaging composer. On iPhone, tap **+** in the **To:** field to select someone from Contacts, then send. iOS does not expose a direct website Contacts picker. The message is:
 
 > Hey there! [your name] invited you to get buff with them! Try their workout program here
 > [invitation link]

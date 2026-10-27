@@ -70,15 +70,30 @@ test("a phone invitation carries the requested message and adds the program afte
       },
     }),
   );
+  await page.addInitScript(() =>
+    Object.defineProperty(navigator, "userAgent", {
+      configurable: true,
+      value:
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile Safari/604.1",
+    }),
+  );
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await navigateTo(page, "programs");
   await page
     .getByRole("button", { name: "Share program", exact: false })
     .click();
+  await expect(page.locator(".share-result")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Choose contact in Messages", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Your name", { exact: true })).not.toBeVisible();
+  await page
+    .getByText("Customize your name in the invitation", { exact: true })
+    .click();
   await page.getByLabel("Your name", { exact: true }).fill("Alex");
   await page
-    .getByRole("button", { name: "Create invitation", exact: true })
+    .getByRole("button", { name: "Update invitation", exact: true })
     .click();
   await expect(
     page.getByRole("status").filter({ hasText: "Invitation ready." }),
@@ -96,8 +111,9 @@ test("a phone invitation carries the requested message and adds the program afte
     token = new URL(url).searchParams.get("invite");
   expect(token).toMatch(/^[a-f0-9]{64}$/);
   const sms = await page
-    .getByRole("link", { name: "Text a friend", exact: true })
+    .getByRole("link", { name: "Choose contact in Messages", exact: true })
     .getAttribute("href");
+  expect(sms).toMatch(/^sms:&body=/);
   expect(decodeURIComponent(sms.split("body=")[1])).toBe(message);
   await page.getByRole("button", { name: "Share…", exact: true }).click();
   expect((await page.evaluate(() => window.lastShare)).text).toBe(message);
