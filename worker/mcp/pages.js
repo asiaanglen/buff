@@ -1,3 +1,4 @@
+import { journalCompleted } from "../usage.js";
 import { identify, sessionToken } from "../session.js";
 import { randomHex, digest } from "../crypto.js";
 import { page, escape as esc, signIn, sameOrigin } from "../pages.js";
@@ -58,6 +59,12 @@ export async function approvalPage(request, env) {
       );
     const status = form.get("decision") === "approve" ? "applied" : "rejected";
     try {
+      const previous =
+        status === "applied"
+          ? await env.DB.prepare("SELECT data FROM journals WHERE user_id=?")
+              .bind(user.id)
+              .first()
+          : null;
       const result = await env.DB.prepare(
         "UPDATE mcp_approvals SET status=?,csrf_hash=NULL,session_hash=NULL WHERE id=? AND user_id=? AND status='pending' AND expires>? AND csrf_hash=? AND session_hash=?",
       )
@@ -70,6 +77,8 @@ export async function approvalPage(request, env) {
           undefined,
           409,
         );
+      if (status === "applied")
+        journalCompleted(env.DB, previous?.data || null, row.proposal);
     } catch (e) {
       if (String(e.message).includes("Journal changed"))
         return page(

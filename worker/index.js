@@ -1,3 +1,11 @@
+import { usageSetup } from "./usage-setup.js";
+import {
+  monitoredDatabase,
+  ownerUser,
+  journalCompleted,
+  reportSyncFailure,
+} from "./usage.js";
+import { usagePage } from "./usage-page.js";
 import { profileError, accountUser } from "../shared/account-profile.js";
 import { sharingApi } from "./sharing.js";
 import { handleGoogle, googleConfigured } from "./google.js";
@@ -30,7 +38,8 @@ async function createSession(request, db, user) {
     .prepare("INSERT INTO sessions (token,user_id,expires) VALUES (?,?,?)")
     .bind(await digest(token), user.id, Date.now() + 30 * 86400000)
     .run();
-  return json({ user, authScheme }, 200, {
+  db.usage?.actor(user.id);
+  return json({ user: await ownerUser(db, user), authScheme }, 200, {
     "Set-Cookie": cookie(request, token),
   });
 }
@@ -86,6 +95,10 @@ async function api(request, env) {
       (env.PUBLIC_ORIGIN || new URL(request.url).origin)
   )
     return failure("Request origin is not allowed.", 403);
+  if (path === "/api/admin/usage" && method === "GET")
+    return usagePage(request, env, true);
+  if (path === "/api/usage/events" && method === "POST")
+    return reportSyncFailure(request, env);
   if (path.startsWith("/api/program-shares")) return sharingApi(request, env);
   if (path === "/api/auth/providers" && method === "GET") {
     const enabled = googleConfigured(env),
@@ -115,7 +128,10 @@ async function api(request, env) {
       : failure("Database migrations have not been applied.", 503);
   }
   if (path === "/api/auth/session" && method === "GET")
-    return json({ user: await identify(request, db), authScheme });
+    return json({
+      user: await ownerUser(db, await identify(request, db)),
+      authScheme,
+    });
   if (
     ["/api/auth/signup", "/api/auth/signin"].includes(path) &&
     method === "POST"
@@ -172,6 +188,7 @@ async function api(request, env) {
           "Unable to create this account. Try signing in instead.",
           409,
         );
+      db.usage?.event("signup_success");
       return createSession(request, db, user);
     }
     const user = await db
@@ -185,6 +202,7 @@ async function api(request, env) {
     );
     if (!user || !verified)
       return failure("Email or password is incorrect.", 401);
+    db.usage?.event("signin_success");
     return createSession(request, db, accountUser(user));
   }
   if (path === "/api/auth/profile" && method === "POST") {
@@ -287,7 +305,7 @@ async function api(request, env) {
         )
         .run();
     }
-    return json({ user: await identify(request, db) });
+    return json({ user: await ownerUser(db, await identify(request, db)) });
   }
   if (path === "/api/auth/signout" && method === "POST") {
     const token = sessionToken(request);
@@ -315,6 +333,10 @@ async function api(request, env) {
     const { state, revision } = (await readBody(request)) || {};
     if (!Number.isSafeInteger(revision) || revision < 0 || !validState(state))
       return failure("Invalid workout journal.", 400);
+    const previous = await db
+      .prepare("SELECT data FROM journals WHERE user_id=? AND revision=?")
+      .bind(user.id, revision)
+      .first();
     const result =
       revision === 0
         ? await db
@@ -334,17 +356,22 @@ async function api(request, env) {
         "Another device updated your journal. Resolve the conflict before saving.",
         409,
       );
+    if (revision > 0) journalCompleted(db, previous?.data || null, state);
     return json({ revision: revision + 1 });
   }
   return failure("Unknown API endpoint.", 404);
 }
 const app = {
   async fetch(request, env) {
+    if (new URL(request.url).pathname === "/usage/setup")
+      return usageSetup(request, env);
+    if (new URL(request.url).pathname === "/usage")
+      return usagePage(request, env);
     if (new URL(request.url).pathname.startsWith("/api/")) {
       try {
         return await api(request, env);
       } catch (e) {
-        console.error("Buff API failure", e.name, e.message);
+        console.error("buff_api_failure", e.status || 500);
         return failure(
           e.status ? e.message : "The server could not complete this request.",
           e.status || 500,
@@ -356,7 +383,25 @@ const app = {
 };
 
 export default {
-  fetch(request, env, ctx) {
-    return handleOAuth(request, env, ctx, app);
+  async fetch(request, env, ctx) {
+    if (!env.DB) return handleOAuth(request, env, ctx, app);
+    const monitoring = monitoredDatabase(env.DB, env, request);
+    let response;
+    try {
+      response = await handleOAuth(
+        request,
+        { ...env, DB: monitoring.db },
+        ctx,
+        app,
+      );
+    } catch {
+      response = failure("The server could not complete this request.", 500);
+    }
+    ctx.waitUntil(
+      monitoring
+        .finish(response)
+        .catch(() => console.warn("usage_metrics_unavailable")),
+    );
+    return response;
   },
 };

@@ -57,6 +57,8 @@ export function safeGoogleReturn(value, origin) {
       (u.pathname === "/" ||
         u.pathname === "/app" ||
         u.pathname === "/connections" ||
+        u.pathname === "/usage" ||
+        u.pathname === "/usage/setup" ||
         u.pathname === "/oauth/authorize" ||
         u.pathname.startsWith("/approvals/"))
     )
@@ -271,6 +273,7 @@ export async function handleGoogle(
             )
             .bind(profile.sub, user.id),
         ]);
+        db.usage?.event("signup_success", 1, "google");
       } catch {
         user = await db
           .prepare(

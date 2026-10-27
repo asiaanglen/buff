@@ -16,11 +16,23 @@ export function testD1() {
           return statement.get(...args) || null;
         },
         async run() {
+          if (statement.columns().length)
+            return { results: statement.all(...args), meta: { changes: 0 } };
           const r = statement.run(...args);
-          return { meta: { changes: Number(r.changes) } };
+          return {
+            meta: {
+              changes: Number(r.changes),
+              rows_written: Number(r.changes),
+              rows_read: 0,
+            },
+          };
         },
         async all() {
-          return { results: statement.all(...args) };
+          const results = statement.all(...args);
+          return {
+            results,
+            meta: { rows_read: results.length, rows_written: 0 },
+          };
         },
       };
     },

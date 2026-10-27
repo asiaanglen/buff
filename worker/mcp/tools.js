@@ -151,6 +151,7 @@ export async function mcpHandler(request, env, ctx) {
       { error: "Account access is no longer available." },
       { status: 401 },
     );
+  env.DB.usage?.actor(userId);
   const scopes = ctx.auth.scope;
   if (!scopes.includes("buff:read"))
     return new Response("Read access is required.", {

@@ -3923,3 +3923,11 @@ body:has(#program-share-dialog[open]) .pwa-help {
     font-size: 26px;
   }
 }
+
+.journal-storage-warning {
+  background: #fff5d9;
+  color: #806220;
+  border: 1px solid #efdda9;
+  padding: 14px 16px;
+  border-radius: 10px;
+}

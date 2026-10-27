@@ -29,7 +29,9 @@ export function createCloud({
         u.origin === location.origin &&
         (u.pathname === "/oauth/authorize" ||
           u.pathname.startsWith("/approvals/") ||
-          u.pathname === "/connections")
+          u.pathname === "/connections" ||
+          u.pathname === "/usage" ||
+          u.pathname === "/usage/setup")
       )
         returnTo = u.pathname + u.search;
     }
@@ -93,6 +95,11 @@ export function createCloud({
       cached = JSON.parse(localStorage.getItem(`buff-account-${nextUser.id}`));
     } catch {}
     user = nextUser;
+    if (user.isUsageOwner) {
+      try {
+        sessionStorage.removeItem("buff-usage-owner-setup");
+      } catch {}
+    }
     revision = remote.revision;
     dirty = false;
     conflict = false;
@@ -120,6 +127,43 @@ export function createCloud({
           : "Synced",
     );
     if (dirty && !conflict) await sync();
+  }
+  function queueSyncIssue() {
+    if (!user) return;
+    try {
+      const key = "buff-sync-report-" + user.id;
+      if (!sessionStorage.getItem(key))
+        sessionStorage.setItem(key, crypto.randomUUID());
+    } catch {}
+  }
+  async function sendSyncIssue() {
+    if (!user) return;
+    const id = user.id,
+      key = "buff-sync-report-" + id;
+    try {
+      const report = sessionStorage.getItem(key);
+      if (!report) return;
+      const response = await fetch("/api/usage/events", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event: "sync_network_failure", id: report }),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (
+        response.ok &&
+        user?.id === id &&
+        sessionStorage.getItem(key) === report
+      )
+        sessionStorage.removeItem(key);
+    } catch {}
+  }
+  function journalUsage() {
+    if (!user) return { bytes: 0, warning: false };
+    const bytes = new TextEncoder().encode(
+      JSON.stringify(getState()),
+    ).byteLength;
+    return { bytes, warning: bytes >= 768000 };
   }
   async function sync() {
     if (!user || conflict) return;
@@ -161,7 +205,9 @@ export function createCloud({
             notify("Synced");
           }
         }
+        void sendSyncIssue();
       } catch (e) {
+        if (!e.status) queueSyncIssue();
         if (e.status === 409) {
           conflict = true;
           notify("Sync conflict — choose which version to keep");
@@ -236,7 +282,7 @@ export function createCloud({
       root.querySelector("input")?.focus();
       return;
     }
-    root.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title"><div class="modal-header"><div><div class="eyebrow">YOUR WORKOUTS, EVERYWHERE</div><h2 id="account-title">${user ? "Your account" : mode === "signup" ? "Create your account" : "Sign in to Buff"}</h2></div><button class="icon-button close" data-cloud="close" aria-label="Close account">×</button></div><p class="account-intro">${user ? `Signed in as <strong>${escape(user.email)}</strong>` : "Use the same account on every device to sync your plans and workout logs."}</p><p class="account-message" role="status">${escape(message)}</p><div id="google-auth-slot">${googleControls()}</div>${user ? `<p class="sync-detail" data-sync-status>${escape(status)}</p><div class="account-actions"><button class="button subtle" data-cloud="edit-profile">Edit profile</button><button class="button primary" data-cloud="sync">Sync now</button><button class="button subtle" data-cloud="download">Download a backup</button></div><div class="conflict-actions" ${conflict ? "" : "hidden"}><h3>Two devices changed your journal</h3><p>Neither version has been overwritten. Download your local backup before choosing.</p><button class="button subtle" data-cloud="use-cloud">Use cloud version</button><button class="button subtle" data-cloud="use-local">Replace cloud with this device</button></div><p class="account-help">Changes save automatically. You can safely keep editing when offline; pending changes sync when the server is reachable.</p><p><a class="text-button" href="/connections">Manage connected AI apps →</a></p><div class="modal-footer"><button class="text-button" data-cloud="import">Import guest workouts</button><button class="text-button danger" data-cloud="signout">Sign out</button></div>` : `<form id="auth-form">${mode === "signup" ? profileFields(escape) : ""}<label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>Password<input name="password" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" required maxlength="200"></label><button class="button primary auth-submit" type="submit">${mode === "signup" ? "Create account" : "Sign in"} →</button></form><button class="text-button auth-switch" data-cloud="${mode === "signup" ? "signin" : "signup"}">${mode === "signup" ? "Already have an account? Sign in" : "New to Buff? Create an account"}</button><p class="account-help">Guest workouts stay on this device. Your first cloud journal starts with your device’s workouts. Password reset is not available yet; keep your password somewhere safe.</p>`}</section></div>`;
+    root.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title"><div class="modal-header"><div><div class="eyebrow">YOUR WORKOUTS, EVERYWHERE</div><h2 id="account-title">${user ? "Your account" : mode === "signup" ? "Create your account" : "Sign in to Buff"}</h2></div><button class="icon-button close" data-cloud="close" aria-label="Close account">×</button></div><p class="account-intro">${user ? `Signed in as <strong>${escape(user.email)}</strong>` : "Use the same account on every device to sync your plans and workout logs."}</p><p class="account-message" role="status">${escape(message)}</p><div id="google-auth-slot">${googleControls()}</div>${user ? `<p class="sync-detail" data-sync-status>${escape(status)}</p><div class="account-actions"><button class="button subtle" data-cloud="edit-profile">Edit profile</button><button class="button primary" data-cloud="sync">Sync now</button><button class="button subtle" data-cloud="download">Download a backup</button></div><div class="conflict-actions" ${conflict ? "" : "hidden"}><h3>Two devices changed your journal</h3><p>Neither version has been overwritten. Download your local backup before choosing.</p><button class="button subtle" data-cloud="use-cloud">Use cloud version</button><button class="button subtle" data-cloud="use-local">Replace cloud with this device</button></div><p class="account-help">Changes save automatically. You can safely keep editing when offline; pending changes sync when the server is reachable.</p><p><a class="text-button" href="/connections">Manage connected AI apps →</a></p>${user.isUsageOwner ? '<p><a class="text-button" href="/usage">Usage dashboard →</a></p>' : ""}${journalUsage().warning ? '<p class="account-help journal-storage-warning" role="status">Your workout history is approaching the 1 MB sync limit. Download a backup before removing older workouts to make room.</p>' : ""}<div class="modal-footer"><button class="text-button" data-cloud="import">Import guest workouts</button><button class="text-button danger" data-cloud="signout">Sign out</button></div>` : `<form id="auth-form">${mode === "signup" ? profileFields(escape) : ""}<label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>Password<input name="password" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" required maxlength="200"></label><button class="button primary auth-submit" type="submit">${mode === "signup" ? "Create account" : "Sign in"} →</button></form><button class="text-button auth-switch" data-cloud="${mode === "signup" ? "signin" : "signup"}">${mode === "signup" ? "Already have an account? Sign in" : "New to Buff? Create an account"}</button><p class="account-help">Guest workouts stay on this device. Your first cloud journal starts with your device’s workouts. Password reset is not available yet; keep your password somewhere safe.</p>`}</section></div>`;
     void refreshProviders();
     root.dataset.mode = mode;
     root.querySelector("input,button")?.focus();
@@ -470,6 +516,7 @@ export function createCloud({
   return {
     save,
     open,
+    journalUsage,
     async flush() {
       clearTimeout(timer);
       await sync();

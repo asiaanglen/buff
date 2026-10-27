@@ -17,12 +17,15 @@ export async function identify(request, db) {
     )
     .bind(await digest(token), Date.now())
     .first();
+  if (user) db.usage?.actor(user.id);
   return accountUser(user);
 }
 export function cookie(request, token, clear = false) {
   return `buff_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${clear ? 0 : 30 * 86400}${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;
 }
 export async function issueSessionCookie(request, db, user) {
+  db.usage?.actor(user.id);
+  db.usage?.event("signin_success", 1, "google");
   const token = crypto
     .getRandomValues(new Uint8Array(32))
     .reduce((s, v) => s + v.toString(16).padStart(2, "0"), "");

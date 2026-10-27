@@ -6,6 +6,7 @@
   "compatibility_date": "2026-10-26",
   "workers_dev": true,
   "keep_vars": true,
+  "vars": { "USAGE_SAMPLE_RATE": "0.05" },
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
     "directory": "./dist",
@@ -19,6 +20,8 @@
       "/.well-known/*",
       "/approvals/*",
       "/connections",
+      "/usage",
+      "/usage/*",
     ],
   },
   "d1_databases": [

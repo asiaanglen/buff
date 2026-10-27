@@ -28,7 +28,7 @@ To deploy yourself with Wrangler:
 6. Run `npm run deploy`, then open the returned HTTPS `workers.dev` URL. If Cloudflare asks you to register a workers.dev subdomain, choose one in your account.
 7. Create an account and sign into that same account and URL on your other devices.
 
-The deployed app requires **no API keys or secrets in its runtime configuration**: Wrangler supplies `DB` and `ASSETS` bindings. Origin checks use the current site origin automatically. `PUBLIC_ORIGIN` is optional if you need to restrict sign-ins and writes to a single domain.
+The core workout app requires no external service API keys: Wrangler supplies `DB` and `ASSETS` bindings. Usage monitoring additionally uses the private `USAGE_METRICS_KEY` described below. Origin checks use the current site origin automatically. `PUBLIC_ORIGIN` is optional if you need to restrict sign-ins and writes to a single domain.
 
 The deployed Worker uses D1 database `buff` (`50c0fabf-368b-4cba-bf6c-138c861ec637`). Deployment credentials are separate from app accounts: create your own Buff account through the site; no owner login or default password has been created.
 
@@ -241,3 +241,25 @@ Open **Account → Edit profile** to update First Name, Last Name, Date of Birth
 In **Weekly planner**, choose **Week** or **Month** above the calendar. Month shows a Monday-first calendar with all workouts on their assigned dates, previous/next month controls, and Today. Completed workouts appear grey. Drag a workout’s **⠿** handle onto another date with a mouse or a touch screen; touch dragging scrolls the page near the top/bottom edge. You can also select a date, choose **Move** on a workout card, and pick a date without dragging.
 
 Moving a workout changes only its date: IDs, exercises, planned sets, logged results, supersets, and notes are retained and sync to the account’s other devices. Program workouts must stay within the program’s date range; use program alignment to shift the full program. An invalid drop leaves the journal unchanged and displays a message. Calendar month calculations use date-only arithmetic, and Today uses the device’s local calendar date.
+
+## Owner usage monitoring
+
+The owner-only **Account → Usage dashboard** page shows registered accounts, UTC daily active accounts, signups, workout-completion actions, failed sign-ins/syncs, database size, and journals nearing the 1 MB app limit. It offers 7-day and 30-day views. Completing a workout after undoing completion is another completion action; repeated saves of an already-complete workout are not counted again. Existing journal history is not backfilled as new activity.
+
+Hosting traffic and database-operation counters use a **5% random request sample** to limit monitoring overhead. They are labeled estimates, cover Buff rather than the whole Cloudflare account, and exclude background monitoring writes. Use the linked **Cloudflare traffic & CPU errors** and **Cloudflare database metrics** pages for account-wide quota data and platform-level errors. A Worker killed by the platform cannot reliably report its own failure. In-dashboard warnings appear at 70% and 90% of Free-plan allowances. Email/push alerts are not implemented.
+
+Users see a private warning when their journal reaches 750 KB. Offline sync incidents queue one identifier per outage in that account’s browser session and are reported after recovery, with duplicate reports ignored and at most 20 reports accepted per account per UTC day. Monitoring is best effort and does not block successful workout saves if its own writes fail.
+
+Monitoring stores hourly aggregate counters and daily HMAC account hashes, not names, emails, birth dates, passwords, workout names, notes, bodies, or raw URLs. Hashes change each UTC day. Old data is cleaned in bounded batches as sampled traffic arrives, targeting 30 days of retention. This is operational monitoring, not an audit log. Cloudflare’s deployment API token is never placed in the app runtime.
+
+Deployment/setup:
+
+1. Apply `0006_usage_monitoring.sql` with `npm run db:migrate:remote`.
+2. Configure a random private **USAGE_METRICS_KEY** with `node scripts/wrangler.js secret put USAGE_METRICS_KEY`; keep this key out of source control and client code. Preserve it across normal deployments.
+3. Deploy with `npm run deploy`. `USAGE_SAMPLE_RATE` defaults to `0.05`.
+4. From the trusted deployment environment, run `node scripts/create-usage-owner-link.js`. It issues a private one-time setup link valid for 24 hours, or reports that an owner already exists. Issuing a new link invalidates earlier unused links.
+5. Give the link only to the app owner. Open it, sign into the intended Buff account, and choose **Enable owner dashboard**. The code is carried in a browser URL fragment, kept out of HTTP URLs, verified on the server, and consumed atomically when ownership is granted.
+
+Ownership is stored by account ID in `usage_owners`, survives email changes, and is never assigned automatically to the first user. There is no public owner-link issuance endpoint. A logged-out request or ordinary user cannot access dashboard data, even if they manually visit `/usage` or `/api/admin/usage`.
+
+Browser tests seed an isolated fake owner in their local D1 database. That fixture is never run during production deployment.
