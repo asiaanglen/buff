@@ -1,4 +1,11 @@
 import {
+  monthCalendar,
+  weekCalendar,
+  moveWorkoutDialog,
+  setupCalendarDrag,
+} from "./calendar.js";
+import { moveWorkout, shiftMonth } from "../shared/calendar.js";
+import {
   personalExercise,
   applyDefinition,
 } from "../shared/personal-exercises.js";
@@ -73,7 +80,12 @@ let week = weekStart(),
   active = null,
   selectedProgramId = null,
   selectedProgramWeek = 1;
+let plannerView = "week",
+  calendarMonth = selected.slice(0, 7) + "-01",
+  calendarMessage = "",
+  calendarError = false;
 const app = document.querySelector("#app");
+const calendarDrag = setupCalendarDrag(app, moveCalendarWorkout);
 const loggingWorkouts = new Set();
 const openExerciseIds = new Map();
 let inviteToken = pendingInvitation();
@@ -290,15 +302,8 @@ ${inviteToken ? renderInvitation() : ""}${inviteSuccess ? `<div class="notice in
 ${storageError ? '<div class="notice">Device storage is unavailable or was reset. Your changes may not persist after closing this page.</div>' : ""}
 ${
   tab === "planner"
-    ? `<section class="stats"><div class="stat"><span class="stat-icon purple">▦</span><div><small>WORKOUTS PLANNED</small><strong>${weekly.length}<em>this week</em></strong></div></div><div class="stat"><span class="stat-icon green">✓</span><div><small>WORKOUTS COMPLETED</small><strong>${completed}<em>of ${weekly.length} planned</em></strong></div></div><div class="stat"><span class="stat-icon orange">ϟ</span><div><small>SETS IN THE BANK</small><strong>${done}<em>of ${total} planned</em></strong></div></div></section>
-<section class="calendar"><div class="section-title"><h2>Weekly schedule</h2><div class="week-controls"><button data-action="prev" aria-label="Previous week">‹</button><strong>${dateLabel(week)} – ${dateLabel(addDays(week, 6))}, ${fmt(addDays(week, 6), { year: "numeric" })}</strong><button data-action="next" aria-label="Next week">›</button><button class="today" data-action="today">Today</button></div></div><div class="days">${Array.from(
-        { length: 7 },
-        (_, i) => {
-          const date = addDays(week, i),
-            ws = state.workouts.filter((w) => w.date === date);
-          return `<button class="day ${date === selected ? "selected" : ""}" data-day="${date}"><span class="day-name">${fmt(date, { weekday: "short" })} ${date === key(new Date()) ? '<i class="today-dot"></i>' : ""}</span><strong>${fmt(date, { day: "numeric" })}</strong>${ws.length ? `<span class="day-workout">${esc(ws[0].name)}</span><small>${ws.length > 1 ? `${ws.length} workouts` : `${ws[0].exercises.length} exercises`}</small>` : '<span class="rest-label">Rest & recharge</span>'}</button>`;
-        },
-      ).join("")}</div></section>
+    ? `<section class="stats"><div class="stat"><span class="stat-icon purple">▦</span><div><small>WORKOUTS PLANNED</small><strong>${weekly.length}<em>this week</em></strong></div></div><div class="stat"><span class="stat-icon green">✓</span><div><small>WORKOUTS COMPLETED</small><strong>${completed}<em>of ${weekly.length} planned</em></strong></div></div><div class="stat"><span class="stat-icon orange">ϟ</span><div><small>SETS IN THE BANK</small><strong>${done}<em>of ${total} planned</em></strong></div></div></section>${plannerView === "month" ? monthCalendar({ state, month: calendarMonth, selected, today: key(new Date()), esc }) : weekCalendar({ state, week, selected, today: key(new Date()), esc })}
+${calendarMessage ? `<p id="calendar-status" role="status" class="calendar-status ${calendarError ? "calendar-error" : ""}">${esc(calendarMessage)}</p>` : ""}
 <div class="detail-heading"><div><h2>${fmt(selected, { weekday: "long" })}<span>${fmt(selected, { month: "long", day: "numeric" })}</span></h2><p>Your plan. One good set at a time.</p></div><button class="text-button" data-action="new-workout">+ Add workout</button></div>${
         state.workouts
           .filter((w) => w.date === selected)
@@ -379,14 +384,46 @@ function swapButton(w, e) {
   );
   return `<button type="button" class="text-button swap-exercise" data-action="swap-exercise" data-id="${w.id}" data-eid="${e.id}" aria-label="Swap exercise: ${esc(e.name)}" ${recorded ? 'disabled title="This exercise has recorded results; add a replacement to preserve its history."' : ""}>Swap exercise</button>`;
 }
+function moveCalendarWorkout(id, date) {
+  try {
+    if (state.workouts.find((workout) => workout.id === id)?.date === date) {
+      modal = null;
+      render();
+      return true;
+    }
+    const moved = moveWorkout(state, id, date);
+    selected = date;
+    week = weekStart(new Date(date + "T12:00:00"));
+    calendarMonth = date.slice(0, 7) + "-01";
+    calendarMessage = `Moved ${moved.name} to ${dateLabel(date)}. Your results and notes are kept.`;
+    calendarError = false;
+    modal = null;
+    loggingWorkouts.delete(id);
+    save();
+    render();
+    return true;
+  } catch (error) {
+    calendarMessage = error.message;
+    calendarError = true;
+    if (modal?.type === "move-workout")
+      app.querySelector(".form-error").textContent = error.message;
+    else render();
+    return false;
+  }
+}
+function moveWorkoutButton(w) {
+  return tab === "planner"
+    ? `<button type="button" class="button subtle" data-action="move-workout" data-id="${esc(w.id)}">Move</button>`
+    : "";
+}
 function workoutCard(w) {
   const p = progress(w);
   const logging = loggingWorkouts.has(w.id);
   if (isWorkoutComplete(w) && !logging) {
-    return `<article class="workout-card workout-complete workout-minimized"><div class="workout-heading"><div class="workout-title"><div class="tag">COMPLETED</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises · ${p.done} sets completed</p></div><div class="workout-actions"><button class="button subtle" data-action="log" data-id="${w.id}">View log</button></div></div></article>`;
+    return `<article class="workout-card workout-complete workout-minimized"><div class="workout-heading"><div class="workout-title"><div class="tag">COMPLETED</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises · ${p.done} sets completed</p></div><div class="workout-actions">${moveWorkoutButton(w)}<button class="button subtle" data-action="log" data-id="${w.id}">View log</button></div></div></article>`;
   }
   let lastGroup = null;
-  return `<article class="workout-card ${isWorkoutComplete(w) ? "workout-complete" : ""}"><div class="workout-heading"><div class="workout-symbol">${upArrow}</div><div class="workout-title"><div class="tag">${p.total && p.done === p.total ? "COMPLETED" : programSummary(w) ? esc(programSummary(w)) : "STRENGTH & CONDITIONING"}</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises <span>·</span> ${p.total} sets <span>·</span> ${p.done} sets completed</p></div><div class="workout-actions"><button class="button subtle" data-action="edit-workout" data-id="${w.id}">Edit plan</button><button class="button primary" data-action="log" data-id="${w.id}">${logging ? "Collapse workout" : p.done ? "Resume workout" : "Start workout"} <span>→</span></button></div></div>${w.note ? `<p class="workout-note">${esc(w.note)}</p>` : ""}${
+  return `<article class="workout-card ${isWorkoutComplete(w) ? "workout-complete" : ""}"><div class="workout-heading"><div class="workout-symbol">${upArrow}</div><div class="workout-title"><div class="tag">${p.total && p.done === p.total ? "COMPLETED" : programSummary(w) ? esc(programSummary(w)) : "STRENGTH & CONDITIONING"}</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises <span>·</span> ${p.total} sets <span>·</span> ${p.done} sets completed</p></div><div class="workout-actions">${moveWorkoutButton(w)}<button class="button subtle" data-action="edit-workout" data-id="${w.id}">Edit plan</button><button class="button primary" data-action="log" data-id="${w.id}">${logging ? "Collapse workout" : p.done ? "Resume workout" : "Start workout"} <span>→</span></button></div></div>${w.note ? `<p class="workout-note">${esc(w.note)}</p>` : ""}${
     logging
       ? logForm(w)
       : `<div class="exercise-table exercise-preview"><div class="exercise-table-head"><span>EXERCISE</span><span>SETS</span><span>TARGET</span><span>WEIGHT</span></div>${w.exercises
@@ -405,6 +442,8 @@ function history() {
   return `<section class="history-list">${ws.map((w) => `<article class="history-card"><div><span class="tag">${dateLabel(w.date)} · ${fmt(w.date, { year: "numeric" })}${programSummary(w) ? ` · ${esc(programSummary(w))}` : ""}</span><h2>${esc(w.name)}</h2><p>${progress(w).done} of ${progress(w).total} sets logged</p></div><button class="button primary" data-action="log" data-id="${w.id}">${loggingWorkouts.has(w.id) ? "Collapse workout" : "View log →"}</button>${loggingWorkouts.has(w.id) ? logForm(w) : ""}</article>`).join("") || '<div class="empty"><span>↑</span><h3>Your next finish starts with a set.</h3><p>Complete a workout to see it here.</p></div>'}</section>`;
 }
 function dialog() {
+  if (modal.type === "move-workout")
+    return moveWorkoutDialog(state, workout(), esc);
   if (modal.type === "start-program")
     return programAlignmentDialog(state, modal.programId, modal.alignOnly, esc);
   if (modal.type === "supersets")
@@ -540,16 +579,19 @@ function completeExercises(exercises, done = true) {
   return true;
 }
 app.addEventListener("click", (event) => {
+  const day = event.target.closest("[data-day]");
+  if (day) {
+    selected = day.dataset.day;
+    week = weekStart(new Date(selected + "T12:00:00"));
+    calendarMessage = "";
+    render();
+    return;
+  }
   const b = event.target.closest("button");
   if (!b) return;
   if (b.dataset.tab) {
     loggingWorkouts.clear();
     tab = b.dataset.tab;
-    render();
-    return;
-  }
-  if (b.dataset.day) {
-    selected = b.dataset.day;
     render();
     return;
   }
@@ -634,6 +676,7 @@ app.addEventListener("click", (event) => {
       (workouts.find((w) => !isWorkoutComplete(w)) || workouts[0])?.date ||
       p.startDate;
     week = weekStart(new Date(selected + "T12:00:00"));
+    calendarMonth = selected.slice(0, 7) + "-01";
     tab = "planner";
     modal = null;
     window.scrollTo(0, 0);
@@ -675,6 +718,21 @@ app.addEventListener("click", (event) => {
     return;
   }
   if (b.dataset.id) active = b.dataset.id;
+  if (a === "calendar-view") {
+    plannerView = b.dataset.view;
+    calendarMonth = selected.slice(0, 7) + "-01";
+    calendarMessage = "";
+  }
+  if (a === "calendar-prev-month" || a === "calendar-next-month") {
+    calendarMonth = shiftMonth(
+      calendarMonth,
+      a === "calendar-prev-month" ? -1 : 1,
+    );
+    selected = calendarMonth;
+    week = weekStart(new Date(selected + "T12:00:00"));
+    calendarMessage = "";
+  }
+  if (a === "move-workout") modal = { type: "move-workout" };
   if (a === "prev" || a === "next") {
     week = addDays(week, a === "prev" ? -7 : 7);
     selected = week;
@@ -682,6 +740,8 @@ app.addEventListener("click", (event) => {
   if (a === "today") {
     week = weekStart();
     selected = key(new Date());
+    calendarMonth = selected.slice(0, 7) + "-01";
+    calendarMessage = "";
   }
   if (a === "new-workout") {
     active = null;
@@ -749,11 +809,16 @@ app.addEventListener("submit", (event) => {
   const form = event.target;
   if (!form.reportValidity()) return;
   const data = Object.fromEntries(new FormData(form));
+  if (form.id === "move-workout-form") {
+    moveCalendarWorkout(form.dataset.workoutId, data.date);
+    return;
+  }
   if (form.id === "start-program-form") {
     try {
       const p = alignProgram(state, form.dataset.programId, data.startDate);
       state.activeProgramId = p.id;
       selected = p.startDate;
+      calendarMonth = selected.slice(0, 7) + "-01";
       week = weekStart(new Date(p.startDate + "T12:00:00"));
       tab = modal.alignOnly ? "planner" : "home";
       modal = null;
@@ -850,6 +915,7 @@ app.addEventListener("submit", (event) => {
       selectedProgramWeek = programWeek(program(), w.date);
     }
     selected = w.date;
+    calendarMonth = selected.slice(0, 7) + "-01";
     week = weekStart(new Date(w.date + "T12:00:00"));
     active = w.id;
     modal = null;
@@ -1110,6 +1176,8 @@ const cloud = createCloud({
   getState: () => state,
   setState: (next) => {
     state = inPounds(next);
+    calendarMessage = "";
+    calendarError = false;
     loggingWorkouts.clear();
     openExerciseIds.clear();
     modal = null;
@@ -1117,6 +1185,7 @@ const cloud = createCloud({
     render();
   },
   canApply: () =>
+    !calendarDrag.isDragging() &&
     !modal &&
     !app.querySelector(".inline-workout-log") &&
     !document.querySelector("#program-share-dialog[open]"),

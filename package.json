@@ -7,7 +7,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "node --test tests/model.test.js tests/server.test.js tests/credentials.test.js tests/import.test.js tests/google.test.js tests/exercises.test.js tests/sharing.test.js tests/personal-exercises.test.js tests/account-profile.test.js",
+    "test": "node --test tests/model.test.js tests/server.test.js tests/credentials.test.js tests/import.test.js tests/google.test.js tests/exercises.test.js tests/sharing.test.js tests/personal-exercises.test.js tests/account-profile.test.js tests/calendar.test.js",
     "test:e2e": "playwright test",
     "server": "node server/index.js",
     "start": "node server/index.js",

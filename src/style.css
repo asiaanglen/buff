@@ -3679,3 +3679,247 @@ body:has(#program-share-dialog[open]) .pwa-help {
 .profile-security[open] summary {
   margin-bottom: 16px;
 }
+
+.calendar-view-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 12px;
+}
+.calendar-view-toggle button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  color: #757080;
+}
+.calendar-view-toggle button[aria-pressed="true"] {
+  background: #eee9fc;
+  color: #7054b6;
+  font-weight: 700;
+}
+.calendar-help {
+  color: #837b90;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+.calendar .week-controls {
+  margin: 12px 0;
+}
+.day-workouts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+.calendar-workout {
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+  margin: 4px 0;
+  padding: 5px 3px;
+  border-radius: 6px;
+  background: #eee9fc;
+  color: #66518f;
+  cursor: grab;
+}
+.calendar-workout-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: left;
+  color: inherit;
+}
+.calendar-drag-handle {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  min-width: 18px;
+  min-height: 24px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.calendar-workout-complete {
+  background: #eeeff1;
+  color: #747780;
+}
+.calendar-complete-mark {
+  font-size: 10px;
+  flex-shrink: 0;
+}
+.calendar-source {
+  opacity: 0.4;
+}
+.calendar-drop-target {
+  outline: 2px solid #8063cb;
+  outline-offset: -2px;
+  background: #f0eafd !important;
+}
+.calendar-drag-ghost {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  max-width: 200px;
+  padding: 12px 16px;
+  border: 1px solid #cbbbe9;
+  border-radius: 10px;
+  color: #66518f;
+  background: #f1ebff;
+  box-shadow: 0 6px 24px #33204430;
+  font-size: 14px;
+}
+.month-controls {
+  display: flex;
+  justify-content: center;
+}
+.month-weekdays,
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.month-weekdays span {
+  padding: 10px 0;
+  text-align: center;
+  color: #8b8395;
+  font-size: 12px;
+}
+.month-grid {
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.month-day {
+  min-width: 0;
+  min-height: 115px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 6px;
+  background: white;
+}
+.month-day.selected {
+  background: #f7f3ff;
+  box-shadow: inset 0 0 0 2px #b4a0de;
+}
+.month-day.outside-month {
+  background: #f6f6f8;
+}
+.month-date {
+  background: transparent;
+  border: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: #50495e;
+  font: inherit;
+  font-weight: 650;
+}
+.outside-month .month-date {
+  color: #a49eac;
+}
+.is-today .month-date {
+  background: #8063cb;
+  color: white;
+}
+.month-day .calendar-workout-name {
+  background: none;
+  border: 0;
+  padding: 3px 0;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  min-width: 0;
+}
+.calendar-status {
+  padding: 12px 16px;
+  border-radius: 10px;
+  color: #446b54;
+  background: #edf6ef;
+  font-size: 14px;
+}
+.calendar-error {
+  color: #b44b62;
+  background: #fff0f2;
+}
+@media (max-width: 600px) {
+  .calendar .section-title {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .calendar-view-toggle button {
+    min-height: 44px;
+  }
+  .days .calendar-workout-name {
+    font-size: 13px;
+  }
+  .month-day {
+    min-height: 96px;
+    padding: 2px;
+  }
+  .month-date {
+    width: 100%;
+    min-height: 40px;
+    font-size: 12px;
+  }
+  .month-day .calendar-workout {
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 2px;
+  }
+  .month-day .calendar-drag-handle {
+    min-height: 44px;
+    width: 100%;
+  }
+  .month-day .calendar-workout-name {
+    font-size: 10px;
+    width: 100%;
+    line-height: 1.4;
+    padding: 2px 0 6px;
+  }
+  .month-day .calendar-complete-mark {
+    margin: 0 auto;
+  }
+  .month-weekdays span {
+    font-size: 10px;
+  }
+}
+
+.week-date-select {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+}
+.week-date-select > strong {
+  font:
+    650 23px "Manrope Variable",
+    sans-serif;
+  margin: 8px 0 14px;
+}
+.day.selected .week-date-select > strong {
+  color: #7962c6;
+}
+@media (max-width: 600px) {
+  .week-date-select > strong {
+    font-size: 26px;
+  }
+}

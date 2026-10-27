@@ -27,6 +27,7 @@ export default defineConfig({
     "single-exercise.spec.js",
     "workout-layout.spec.js",
     "program-alignment.spec.js",
+    "calendar.spec.js",
     "sharing.spec.js",
   ],
   workers: 1,

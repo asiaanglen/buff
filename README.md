@@ -235,3 +235,9 @@ Apply `0005_account_profiles.sql` with `npm run db:migrate:remote` before deploy
 ## Edit profile
 
 Open **Account → Edit profile** to update First Name, Last Name, Date of Birth, or email. The editor loads the latest account details, validates changes, and provides Save changes and Cancel. Password accounts also have **Change password** with confirmation. Changing email or password requires the current password, preserves the current session, and signs out the account’s other browser sessions. Changing only name or birth date keeps those sessions active. Google-only accounts can update profile details while their email and sign-in remain managed through Google. Workout journals and account IDs are preserved throughout.
+
+## Calendar and drag-to-reschedule
+
+In **Weekly planner**, choose **Week** or **Month** above the calendar. Month shows a Monday-first calendar with all workouts on their assigned dates, previous/next month controls, and Today. Completed workouts appear grey. Drag a workout’s **⠿** handle onto another date with a mouse or a touch screen; touch dragging scrolls the page near the top/bottom edge. You can also select a date, choose **Move** on a workout card, and pick a date without dragging.
+
+Moving a workout changes only its date: IDs, exercises, planned sets, logged results, supersets, and notes are retained and sync to the account’s other devices. Program workouts must stay within the program’s date range; use program alignment to shift the full program. An invalid drop leaves the journal unchanged and displays a message. Calendar month calculations use date-only arithmetic, and Today uses the device’s local calendar date.
