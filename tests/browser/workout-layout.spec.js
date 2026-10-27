@@ -157,3 +157,42 @@ test("narrow Home and completed workout cards keep the set table inside the phon
     ),
   ).toBe(true);
 });
+
+test("before Start workout the light preview contains only exercise names and targets", async ({
+  page,
+}) => {
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/");
+    const card = page.locator(".workout-card").first();
+    const preview = card.locator(".exercise-preview");
+    await expect(preview).toBeVisible();
+    await expect(
+      preview.getByText("Barbell bench press", { exact: true }),
+    ).toBeVisible();
+    await expect(preview.getByRole("button")).toHaveCount(0);
+    await expect(preview.locator("input,textarea")).toHaveCount(0);
+    await expect(
+      card.locator(".inline-workout-log,.workout-bottom"),
+    ).toHaveCount(0);
+    await expect(page.getByText("Log sets", { exact: true })).toHaveCount(0);
+    await card
+      .getByRole("button", { name: "Start workout", exact: false })
+      .click();
+    await expect(card.locator(".inline-workout-log")).toBeVisible();
+    await expect(
+      page.getByLabel("Barbell bench press set 1 weight", { exact: true }),
+    ).toBeVisible();
+    expect(
+      await card.evaluate((e) => getComputedStyle(e).backgroundColor),
+    ).toBe("rgb(255, 255, 255)");
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await card
+      .locator(".exercise-accordion[open]")
+      .screenshot({ path: `/tmp/buff-light-workout-${width}.png` });
+  }
+});

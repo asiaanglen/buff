@@ -1,3 +1,4 @@
+import { workoutTool } from "./exercise-navigation.js";
 import { navigateTo } from "./navigation.js";
 import { test, expect } from "./auth-fixture.js";
 async function createProgram(page, name, weeks) {
@@ -32,9 +33,11 @@ test("plans a custom program, logs a workout, copies a week and safely deletes o
     page.getByRole("heading", { name: "Strength block", exact: true }),
   ).toBeVisible();
   await addWorkout(page, "Upper strength");
-  await page
-    .getByRole("button", { name: "Add exercise", exact: false })
-    .click();
+  await workoutTool(
+    page,
+    page.locator(".workout-card").first(),
+    "Add exercise",
+  );
   await page.getByLabel("Exercise name").fill("Bench press");
   await page.getByLabel("Sets", { exact: true }).fill("2");
   await page

@@ -5,7 +5,9 @@ test("inline exercises have only set checkboxes and additional sets preserve res
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await page.locator('[data-action="expand-exercise"]').first().click();
+  await page
+    .getByRole("button", { name: /Start workout|Resume workout/ })
+    .click();
   await expect(
     page.getByLabel("Barbell bench press exercise completed", { exact: true }),
   ).toHaveCount(0);
@@ -50,7 +52,9 @@ test("inline exercises have only set checkboxes and additional sets preserve res
     .check();
   await expect(page.locator("#sync-label")).toContainText("Synced");
   await page.reload();
-  await page.locator('[data-action="expand-exercise"]').first().click();
+  await page
+    .getByRole("button", { name: /Start workout|Resume workout/ })
+    .click();
   await expect(
     page.getByLabel("Barbell bench press set 5 reps", { exact: true }),
   ).toHaveValue("6");

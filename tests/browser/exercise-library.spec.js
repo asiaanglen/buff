@@ -1,3 +1,4 @@
+import { workoutTool } from "./exercise-navigation.js";
 import { test, expect } from "./auth-fixture.js";
 test("exercise library searches aliases and variations, supports timed exercises and custom names", async ({
   page,
@@ -5,7 +6,7 @@ test("exercise library searches aliases and variations, supports timed exercises
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   const card = page.locator(".workout-card").first();
-  await card.getByRole("button", { name: "Add exercise" }).click();
+  await workoutTool(page, card, "Add exercise");
   await page.getByLabel("Search exercises", { exact: true }).fill("RDL");
   await expect(
     page.getByRole("button", {
@@ -29,7 +30,7 @@ test("exercise library searches aliases and variations, supports timed exercises
   await expect(
     card.getByText("Romanian Deadlift", { exact: true }),
   ).toBeVisible();
-  await card.getByRole("button", { name: "Add exercise" }).click();
+  await workoutTool(page, card, "Add exercise");
   await page
     .getByLabel("Search exercises", { exact: true })
     .fill("neutral grip pull up");
@@ -46,7 +47,7 @@ test("exercise library searches aliases and variations, supports timed exercises
   await expect(
     card.getByText("Neutral Grip Pull Up", { exact: true }),
   ).toBeVisible();
-  await card.getByRole("button", { name: "Add exercise" }).click();
+  await workoutTool(page, card, "Add exercise");
   await page.getByLabel("Search exercises", { exact: true }).fill("plank");
   await page.getByLabel("Muscle group", { exact: true }).selectOption("Core");
   await page
@@ -61,7 +62,7 @@ test("exercise library searches aliases and variations, supports timed exercises
     .getByRole("button", { name: "Add exercise", exact: false })
     .last()
     .click();
-  await card.getByRole("button", { name: "Add exercise" }).click();
+  await workoutTool(page, card, "Add exercise");
   await page
     .getByLabel("Search exercises", { exact: true })
     .fill("my special movement");
@@ -78,7 +79,7 @@ test("exercise library searches aliases and variations, supports timed exercises
   await expect(
     card.getByText("My special movement", { exact: true }),
   ).toBeVisible();
-  await card.getByRole("button", { name: "Add exercise" }).click();
+  await workoutTool(page, card, "Add exercise");
   await page.getByLabel("Search exercises", { exact: true }).fill("my special");
   await expect(
     page.getByRole("button", {
@@ -97,7 +98,7 @@ test("typing directly into Exercise name opens matching library results, includi
 }) => {
   await page.goto("/");
   const card = page.locator(".workout-card").first();
-  await card.getByRole("button", { name: "Add exercise" }).click();
+  await workoutTool(page, card, "Add exercise");
   await page.getByLabel("Exercise name", { exact: true }).fill("front squat");
   await page
     .getByRole("button", {
@@ -111,6 +112,9 @@ test("typing directly into Exercise name opens matching library results, includi
   await page
     .getByRole("button", { name: "Add exercise", exact: false })
     .last()
+    .click();
+  await card
+    .getByRole("button", { name: "Start workout", exact: false })
     .click();
   await card
     .getByRole("button", { name: "Swap exercise: Front Squat", exact: true })
@@ -145,9 +149,7 @@ test("cable kickbacks and split squats can be selected with their guides and sta
       "both feet on the floor",
     ],
   ]) {
-    await card
-      .getByRole("button", { name: "Add exercise", exact: false })
-      .click();
+    await workoutTool(page, card, "Add exercise");
     await page.getByLabel("Search exercises", { exact: true }).fill(query);
     await page
       .getByRole("button", { name: `How to: ${name}`, exact: true })

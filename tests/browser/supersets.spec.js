@@ -1,3 +1,4 @@
+import { workoutTool } from "./exercise-navigation.js";
 import { test, expect } from "./auth-fixture.js";
 import { exercise, key } from "../../src/model.js";
 test("creates and edits multiple supersets without losing logs or notes; logs show grouping and no Done logging button", async ({
@@ -29,7 +30,7 @@ test("creates and edits multiple supersets without losing logs or notes; logs sh
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   const card = page.locator(".workout-card");
-  await card.getByRole("button", { name: "Supersets", exact: false }).click();
+  await workoutTool(page, card, "Supersets");
   await page
     .getByRole("button", { name: "Create superset", exact: false })
     .click();
@@ -40,7 +41,7 @@ test("creates and edits multiple supersets without losing logs or notes; logs sh
     .getByRole("button", { name: "Create superset", exact: false })
     .click();
   await expect(card.locator(".superset-label")).toHaveCount(1);
-  await card.getByRole("button", { name: "Supersets", exact: false }).click();
+  await workoutTool(page, card, "Supersets");
   await expect(page.getByLabel("Superset name", { exact: true })).toHaveValue(
     "B",
   );
@@ -66,7 +67,7 @@ test("creates and edits multiple supersets without losing logs or notes; logs sh
     "Good depth.",
   );
   await page.getByRole("button", { name: "Collapse workout" }).click();
-  await card.getByRole("button", { name: "Supersets", exact: false }).click();
+  await workoutTool(page, card, "Supersets");
   await page.getByLabel("Choose superset", { exact: true }).selectOption("A");
   await page.getByLabel("Superset name", { exact: true }).fill("Upper");
   await page
@@ -75,7 +76,7 @@ test("creates and edits multiple supersets without losing logs or notes; logs sh
   await expect(
     card.locator(".superset-label").filter({ hasText: "SUPERSET UPPER" }),
   ).toBeVisible();
-  await card.getByRole("button", { name: "Supersets", exact: false }).click();
+  await workoutTool(page, card, "Supersets");
   await page
     .getByLabel("Choose superset", { exact: true })
     .selectOption("UPPER");

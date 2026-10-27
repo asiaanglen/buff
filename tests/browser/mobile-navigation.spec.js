@@ -26,21 +26,22 @@ test("mobile uses one page dropdown and clearly labeled set logging accordions",
       ).toBeVisible();
       await expect(menu).toHaveValue(tab);
     }
-    await expect(page.locator(".exercise-log-hint")).toBeVisible();
-    const control = page.locator('[data-action="expand-exercise"]').first();
-    await expect(control).toContainText("Log sets");
+    await expect(page.locator(".exercise-preview-row")).not.toHaveCount(0);
+    await expect(page.locator('[data-action="expand-exercise"]')).toHaveCount(
+      0,
+    );
     await page.screenshot({
       path: `/tmp/buff-mobile-navigation-${width}.png`,
       fullPage: false,
     });
-    await control.click();
+    await page
+      .getByRole("button", { name: "Start workout", exact: false })
+      .click();
     const accordion = page.locator(".exercise-accordion").first();
-    await expect(accordion.locator(".exercise-close-label")).toBeVisible();
     await expect(
       accordion.locator('[data-field="weight"]').first(),
     ).toBeVisible();
-    await accordion.locator(".exercise-close-label").click();
-    await expect(accordion.locator(".exercise-open-label")).toBeVisible();
+    await accordion.locator("h3").click();
     await expect(
       accordion.locator('[data-field="weight"]').first(),
     ).toBeHidden();

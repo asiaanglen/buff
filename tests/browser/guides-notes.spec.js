@@ -1,3 +1,4 @@
+import { workoutTool } from "./exercise-navigation.js";
 import { test, expect } from "./auth-fixture.js";
 import { exercise, addDays, key } from "../../src/model.js";
 test("guides open from the library, plan and workout log without losing edits; notes sync and appear in history", async ({
@@ -56,13 +57,19 @@ test("guides open from the library, plan and workout log without losing edits; n
     .locator(".workout-card")
     .filter({ hasText: "Today training" });
   await card
+    .getByRole("button", { name: "Start workout", exact: false })
+    .click();
+  await card
     .getByRole("button", { name: "How to: Back Squat", exact: true })
     .click();
   await expect(page.locator("#exercise-guide")).toContainText(
     "Set a bar on your upper back",
   );
   await page.keyboard.press("Escape");
-  await card.getByRole("button", { name: "Add exercise" }).click();
+  await card
+    .getByRole("button", { name: "Collapse workout", exact: false })
+    .click();
+  await workoutTool(page, card, "Add exercise");
   await page.getByLabel("Exercise name", { exact: true }).fill("plank");
   await page
     .getByRole("button", { name: "How to: Plank", exact: true })

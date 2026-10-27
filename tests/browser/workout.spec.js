@@ -1,4 +1,5 @@
-import { openExercise } from "./exercise-navigation.js";
+import { workoutTool } from "./exercise-navigation.js";
+import { openExercise, editPlannedExercise } from "./exercise-navigation.js";
 import { navigateTo } from "./navigation.js";
 import { test, expect } from "./auth-fixture.js";
 test("plans workouts with supersets, logs reps and time, and persists after reload", async ({
@@ -17,7 +18,7 @@ test("plans workouts with supersets, logs reps and time, and persists after relo
     has: page.getByRole("heading", { name: "Leg day", exact: true }),
   });
   async function add(name, mode, target) {
-    await card.getByRole("button", { name: "Add exercise" }).click();
+    await workoutTool(page, card, "Add exercise");
     await page.getByLabel("Exercise name").fill(name);
     await page.getByLabel("Sets", { exact: true }).fill("2");
     await page.getByLabel("Track by").selectOption(mode);
@@ -67,7 +68,7 @@ test("edits, reschedules, removes exercises and deletes workouts", async ({
   page,
 }) => {
   await page.goto("/app");
-  await page.getByRole("button", { name: "Edit Barbell bench press" }).click();
+  await editPlannedExercise(page, "Barbell bench press");
   await page.getByLabel("Sets", { exact: true }).fill("5");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.locator(".exercise-row").first()).toContainText("5 sets");
@@ -79,7 +80,7 @@ test("edits, reschedules, removes exercises and deletes workouts", async ({
     page.getByRole("heading", { name: "Updated workout", exact: true }),
   ).toBeVisible();
   page.on("dialog", (d) => d.accept());
-  await page.getByRole("button", { name: "Edit Barbell bench press" }).click();
+  await editPlannedExercise(page, "Barbell bench press");
   await page.getByRole("button", { name: "Remove exercise" }).click();
   await expect(
     page.getByText("Barbell bench press", { exact: true }),
