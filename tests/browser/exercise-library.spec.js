@@ -317,9 +317,11 @@ test("planning a workout searches the library and saves selected exercises", asy
     .getByRole("button", { name: "Plan a workout", exact: false })
     .first()
     .click();
+  await expect(page.getByLabel("Workout name", { exact: true })).toHaveCount(0);
   await page
-    .getByLabel("Workout name", { exact: true })
-    .fill("Library search workout");
+    .getByRole("button", { name: "Create workout", exact: false })
+    .click();
+  await expect(page.locator("#workout-form")).toBeVisible();
   const search = page.getByLabel("Search exercise library");
   await search.fill("bench");
   await page.getByRole("button", { name: /^Barbell Bench Press / }).click();
@@ -336,7 +338,9 @@ test("planning a workout searches the library and saves selected exercises", asy
     .click();
   const workout = page
     .locator(".workout-card")
-    .filter({ has: page.getByText("Library search workout", { exact: true }) });
+    .filter({
+      has: page.getByText("Romanian Deadlift + Plank", { exact: true }),
+    });
   await expect(workout).toContainText("Romanian Deadlift");
   await expect(workout).toContainText("Plank");
   await expect(workout).not.toContainText("Bench Press");
