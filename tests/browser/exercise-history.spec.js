@@ -28,10 +28,8 @@ test("logger shows previous actual weights and reps per set without marking pref
   await expect(bench.locator(".previous-performance")).toContainText(
     "40 lbs × 8 reps",
   );
-  await expect(bench.locator(".log-row").first()).toContainText(
-    "Last: 42.5 lbs",
-  );
-  await expect(bench.locator(".log-row").first()).toContainText("Last: 9 reps");
+  await expect(bench.locator(".log-row").first()).toContainText("42.5 lbs");
+  await expect(bench.locator(".log-row").first()).toContainText("× 9");
   await expect(
     page.getByLabel("Barbell bench press set 1 weight", { exact: true }),
   ).toHaveValue("40");
@@ -82,7 +80,7 @@ test("existing device history is displayed in pounds after conversion without ch
   await expect(bench.locator(".previous-performance")).toContainText(
     "88.18 lbs × 8 reps",
   );
-  await expect(bench).toContainText("WEIGHT (lbs)");
+  await expect(bench).toContainText("Lbs");
   const saved = await page.evaluate(() => window.readTestJournal());
   expect(saved.unit).toBe("lbs");
   expect(saved.workouts[0].exercises[0].logs[0].actual).toBe("8");

@@ -9,6 +9,12 @@ export const exerciseInstructions = {
     cues: [
       "Keep knees tracking with toes and heels grounded. Use the rack safeties rather than testing an uncontrolled depth.",
     ],
+    quickSteps: [
+      "Position the bar on your upper back and set your feet about shoulder-width apart.",
+      "Brace your trunk and keep your chest lifted.",
+      "Bend your hips and knees together, keeping your heels grounded.",
+      "Lower to a controlled depth, then push through your whole feet to stand.",
+    ],
   },
   "front-squat": {
     steps: [
@@ -19,6 +25,11 @@ export const exerciseInstructions = {
     cues: [
       "Support the bar on your shoulders rather than your wrists; reduce depth if you cannot keep the bar secure.",
     ],
+    quickSteps: [
+      "Rest the bar across the fronts of your shoulders, with your elbows lifted.",
+      "Brace and sit between your heels, keeping the bar balanced over your feet.",
+      "Push through your whole feet to stand without dropping your elbows.",
+    ],
   },
   "romanian-deadlift": {
     steps: [
@@ -28,6 +39,11 @@ export const exerciseInstructions = {
     ],
     cues: [
       "Keep the knee bend nearly constant; the weight does not need to reach the floor.",
+    ],
+    quickSteps: [
+      "Hold the weight in front of your thighs with a slight bend in your knees.",
+      "Brace and push your hips back, keeping the weight close to your legs.",
+      "Lower until you feel a controlled hamstring stretch, then drive your hips forward to stand.",
     ],
   },
   "conventional-deadlift": {
@@ -109,6 +125,11 @@ export const exerciseInstructions = {
     cues: [
       "Keep the knee bend nearly constant; the weight does not need to reach the floor.",
     ],
+    quickSteps: [
+      "Hold dumbbells in front of your thighs with your knees softly bent.",
+      "Push your hips back and lower the weights close to your legs.",
+      "Keep your back steady, then bring your hips forward to stand.",
+    ],
   },
   "bulgarian-split-squat": {
     steps: [
@@ -118,6 +139,11 @@ export const exerciseInstructions = {
     ],
     cues: [
       "Use a long enough stance to keep the front heel down; start with bodyweight or support for balance.",
+    ],
+    quickSteps: [
+      "Rest your rear foot on a stable low bench, with the front foot planted firmly.",
+      "Lower straight down by bending the front knee and hip.",
+      "Push through your front foot to rise, then repeat on the other side.",
     ],
   },
   "dumbbell-lunge": {
@@ -343,6 +369,11 @@ export const exerciseInstructions = {
       "Lower slowly until your arms are extended through a comfortable range.",
     ],
     cues: ["Avoid swinging or craning your neck to reach the bar."],
+    quickSteps: [
+      "Grip the bar with palms facing away and start in a controlled hang.",
+      "Pull your elbows down toward your sides to raise your chest.",
+      "Lower slowly without swinging or kicking.",
+    ],
   },
   "neutral-grip-pull-up": {
     steps: [
@@ -352,6 +383,11 @@ export const exerciseInstructions = {
     ],
     cues: [
       "Keep your legs quiet and use assistance if you cannot complete a controlled rep.",
+    ],
+    quickSteps: [
+      "Hold the parallel handles with your palms facing each other.",
+      "Pull your elbows toward your ribs to raise your body.",
+      "Lower slowly without swinging; use assistance when needed.",
     ],
   },
   "chin-up": {
@@ -418,6 +454,11 @@ export const exerciseInstructions = {
     ],
     cues: [
       "Keep your shoulders and hips square rather than twisting the weight up.",
+    ],
+    quickSteps: [
+      "Support one hand on a bench and hinge forward with a steady back.",
+      "Pull the dumbbell toward your hip without twisting your torso.",
+      "Lower slowly, then repeat on the other side.",
     ],
   },
   "chest-supported-dumbbell-row": {
@@ -523,6 +564,11 @@ export const exerciseInstructions = {
     cues: [
       "Keep shoulders supported and avoid bouncing the bar off your chest.",
     ],
+    quickSteps: [
+      "Lie on a flat bench with your feet planted and a spotter or safety bars available.",
+      "Set your shoulder blades and lower the bar toward your chest with control.",
+      "Press the bar up without bouncing it or lifting your shoulders off the bench.",
+    ],
   },
   "incline-barbell-bench-press": {
     steps: [
@@ -552,6 +598,11 @@ export const exerciseInstructions = {
     ],
     cues: [
       "Keep wrists stacked over elbows; use a load you can get into and out of position safely.",
+    ],
+    quickSteps: [
+      "Lie on a flat bench with dumbbells above your chest and your feet planted.",
+      "Lower the weights beside your chest, keeping your wrists over your elbows.",
+      "Press back up without crashing the dumbbells together.",
     ],
   },
   "incline-dumbbell-bench-press": {
@@ -969,6 +1020,11 @@ export const exerciseInstructions = {
     cues: [
       "Start with feet grounded; avoid rounding your back or whipping your arms side to side.",
     ],
+    quickSteps: [
+      "Sit with your knees bent and heels grounded, then lean back slightly.",
+      "Keep your spine long and gently rotate your ribcage from side to side.",
+      "Move in control without swinging your arms or pulling on your neck.",
+    ],
   },
   crunch: {
     steps: [
@@ -1080,6 +1136,11 @@ export const exerciseInstructions = {
     ],
     cues: [
       "Keep hips from sagging or lifting high; use a knees-down version if needed.",
+    ],
+    quickSteps: [
+      "Place your elbows under your shoulders and extend your legs behind you.",
+      "Brace your abdomen and glutes to hold your body in a straight line.",
+      "Breathe steadily and keep your hips from sagging for the planned time.",
     ],
   },
   "side-plank": {
@@ -1445,6 +1506,11 @@ export const exerciseInstructions = {
     cues: [
       "Move only as far as you can keep your pelvis steady. Squeeze your glute rather than arching your lower back or swinging the leg.",
     ],
+    quickSteps: [
+      "Attach an ankle strap to a low cable and hold a stable support.",
+      "Brace and extend the working leg behind you from the hip.",
+      "Return slowly without arching your lower back, then repeat on the other side.",
+    ],
   },
   "split-squat": {
     steps: [
@@ -1454,6 +1520,11 @@ export const exerciseInstructions = {
     ],
     cues: [
       "Keep your front knee tracking with your toes and both feet in the same position throughout the set. Start with bodyweight before adding resistance.",
+    ],
+    quickSteps: [
+      "Take a staggered stance with both feet on the floor and your rear heel raised.",
+      "Bend both knees to lower the rear knee, keeping the front foot flat.",
+      "Push through your front foot to rise. Keep your feet in place and repeat on both sides.",
     ],
   },
 };

@@ -24,6 +24,7 @@ export default defineConfig({
     "loading.spec.js",
     "mobile-navigation.spec.js",
     "single-exercise.spec.js",
+    "workout-layout.spec.js",
   ],
   workers: 1,
   use: {

@@ -189,3 +189,7 @@ MCP-created exercises now store an optional `libraryId` when a catalog name or a
 
 
 Workout actions now say **Start workout** (or **Resume workout** after results have been entered). Exercise accordions use exclusive groups plus a JavaScript fallback to keep only one exercise expanded per workout. Set values and notes remain in place when an exercise folds, and any hidden invalid field is opened if bulk completion needs it corrected.
+
+## Focused mobile workout layout
+
+Expanded phone workouts use a dark, uncluttered panel with a large rep/time target, the exercise name and swap action, inline instruction cues, an Add note field, and a five-column set table: Set, Previous, Lbs, Reps/Sec, and completion. Previous values come from the matching completed set in the latest earlier session; missing values show a dash. Notes stay with the exercise session and current targets still prefill actual-entry fields. Common movements have shorter inline cues, while How to retains the full movement guide. Desktop styling stays light. The layout is verified at 320px and 390px, including the Home and Completed workouts contexts.

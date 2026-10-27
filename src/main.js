@@ -17,6 +17,7 @@ import { createCloud } from "./cloud.js";
 import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/manrope";
 import "./style.css";
+import "./workout-log.css";
 import {
   uid,
   weekStart,
@@ -326,12 +327,6 @@ function previousPerformanceHeader(w, e) {
     return '<p class="previous-performance empty-history">No completed history for this exercise yet.</p>';
   return `<div class="previous-performance"><span>LAST TIME · ${esc(fmt(history.date, { month: "short", day: "numeric", year: "numeric" }))}</span><strong>${history.latest.weight} ${state.unit} × ${history.latest.actual} ${e.mode === "time" ? "sec" : "reps"}</strong><small>Last completed set (set ${history.latest.setNumber}) · ${esc(history.workoutName)}</small></div>`;
 }
-function previousSetLabel(w, e, index, field) {
-  const history = previousExercisePerformance(state, w, e);
-  if (!history) return "";
-  const set = history.sets.find((s) => s.setNumber === index + 1);
-  return `<small class="previous-set">Last: ${set ? `${field === "weight" ? set.weight : set.actual} ${field === "weight" ? state.unit : e.mode === "time" ? "sec" : "reps"}` : "—"}</small>`;
-}
 function workoutHistory(w) {
   return `<details class="workout-history"><summary>Workout history</summary><p>Previous completed sets for these exercises, across your programs. Weight is in lbs.</p>${w.exercises
     .map((e) => {
@@ -340,8 +335,50 @@ function workoutHistory(w) {
     })
     .join("")}</details>`;
 }
+function previousSetCell(e, index, history) {
+  const set = history?.sets.find((set) => set.setNumber === index + 1);
+  return `<span class="log-previous" ${set ? `aria-label="Previous set ${index + 1}: ${set.weight} lbs × ${set.actual} ${e.mode === "time" ? "sec" : "reps"}"` : 'aria-label="No previous completed set"'}>${set ? `${set.weight} lbs <span>× ${set.actual}${e.mode === "time" ? " sec" : ""}</span>` : "—"}</span>`;
+}
+function exerciseLog(w, e, index) {
+  const history = previousExercisePerformance(state, w, e);
+  const entry =
+    exerciseByName(e.name) || (e.libraryId && findLibraryExercise(e.libraryId));
+  const groupHeading =
+    e.group && (index === 0 || w.exercises[index - 1].group !== e.group)
+      ? `<div class="log-superset-heading"><strong>Superset ${esc(e.group)}</strong><p>Alternate these exercises, one set each, then repeat for your remaining sets.</p></div>`
+      : "";
+  return `${groupHeading}<details class="log-exercise exercise-accordion" name="workout-${esc(w.id)}" data-exercise-id="${esc(e.id)}" ${(openExerciseIds.get(w.id) || new Set()).has(e.id) ? "open" : ""}>
+    <summary>
+      <span class="exercise-target-display">${e.target} <span>${e.mode === "time" ? "sec" : "reps"}</span></span>
+      <h3>${esc(e.name)} ${e.group ? `<span class="superset-chip">Superset ${esc(e.group)}</span>` : ""}</h3>
+      ${swapButton(w, e)}
+      <span class="exercise-expand-label"><span class="exercise-open-label">Log sets</span><span class="exercise-close-label">Hide sets</span> · <span class="exercise-set-progress">${e.logs.filter((log) => log.done).length}/${e.sets} sets logged</span></span>
+    </summary>
+    <div class="exercise-log-body">
+      ${entry ? `<ul class="exercise-inline-instructions" aria-label="${esc(e.name)} instructions">${(entry.instructions.quickSteps || entry.instructions.steps).map((step) => `<li>${esc(step)}</li>`).join("")}</ul>` : ""}
+      <div class="exercise-guide-link">${exerciseGuideButton(e.name, esc)}</div>
+      <p class="log-target-description">Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p>
+      <label class="exercise-notes"><span class="visually-hidden">Notes for ${esc(e.name)}</span><textarea aria-label="Notes for ${esc(e.name)}" data-exercise-note="${esc(e.id)}" maxlength="1000" rows="1" placeholder="Add note…">${esc(e.note || "")}</textarea></label>
+      ${previousPerformanceHeader(w, e)}
+      <div class="log-head"><span>Set</span><span>Previous</span><span>Lbs</span><span>${e.mode === "time" ? "Sec" : "Reps"}</span><span class="log-done-heading">Done</span></div>
+      ${e.logs
+        .map(
+          (l, i) => `<div class="log-row ${l.done ? "set-done" : ""}">
+        <strong class="log-set-number">${i + 1}</strong>
+        ${previousSetCell(e, i, history)}
+        <div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} weight" type="number" inputmode="decimal" min="0" max="5000" step="0.01" placeholder="${e.weight}" value="${esc(l.weight === "" ? e.weight : l.weight)}" data-eid="${e.id}" data-set="${i}" data-field="weight"></div>
+        <div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" type="number" inputmode="numeric" min="0" max="10000" step="1" placeholder="${e.target}" value="${esc(l.actual === "" ? e.target : l.actual)}" data-eid="${e.id}" data-set="${i}" data-field="actual"></div>
+        <input aria-label="${esc(e.name)} set ${i + 1} completed" type="checkbox" ${l.done ? "checked" : ""} data-eid="${e.id}" data-set="${i}" data-field="done">
+      </div>`,
+        )
+        .join("")}
+      <button type="button" class="text-button add-set" data-action="add-set" data-id="${w.id}" data-eid="${e.id}" aria-label="Add set to ${esc(e.name)}" ${e.sets >= 30 ? "disabled" : ""}>+ Add set</button>
+      ${e.sets >= 30 ? '<p class="field-help">Maximum of 30 sets per exercise.</p>' : ""}
+    </div>
+  </details>`;
+}
 function logForm(w) {
-  return `<section class="inline-workout-log" data-workout-id="${esc(w.id)}">${workoutHistory(w)}<p class="log-intro">Targets are prefilled. Adjust your results, then check off each set as you go. Use + Add set for extra sets. Mark as complete accepts all displayed results and finishes the workout.</p><form class="log-form">${w.exercises.map((e, i) => `${e.group && (i === 0 || w.exercises[i - 1].group !== e.group) ? `<div class="log-superset-heading"><strong>Superset ${esc(e.group)}</strong><p>Alternate these exercises, one set each, then repeat for your remaining sets.</p></div>` : ""}<details class="log-exercise exercise-accordion" name="workout-${esc(w.id)}" data-exercise-id="${esc(e.id)}" ${(openExerciseIds.get(w.id) || new Set()).has(e.id) ? "open" : ""}><summary><h3>${esc(e.name)} ${e.group ? `<span class="superset-chip">Superset ${esc(e.group)}</span>` : ""}</h3>${swapButton(w, e)}<span class="exercise-expand-label"><span class="exercise-open-label">Log sets</span><span class="exercise-close-label">Hide sets</span> · <span class="exercise-set-progress">${e.logs.filter((log) => log.done).length}/${e.sets} sets logged</span></span></summary>${exerciseGuideButton(e.name, esc)}<p>Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p>${previousPerformanceHeader(w, e)}<div class="log-head"><span>SET</span><span>WEIGHT (${state.unit})</span><span>${e.mode === "time" ? "TIME (SEC)" : "REPS"}</span><span>DONE</span></div>${e.logs.map((l, i) => `<div class="log-row ${l.done ? "set-done" : ""}"><strong>${i + 1}</strong><div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} weight" type="number" min="0" max="5000" step="0.01" placeholder="${e.weight}" value="${esc(l.weight === "" ? e.weight : l.weight)}" data-eid="${e.id}" data-set="${i}" data-field="weight">${previousSetLabel(w, e, i, "weight")}</div><div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" type="number" min="0" max="10000" step="1" placeholder="${e.target}" value="${esc(l.actual === "" ? e.target : l.actual)}" data-eid="${e.id}" data-set="${i}" data-field="actual">${previousSetLabel(w, e, i, "actual")}</div><input aria-label="${esc(e.name)} set ${i + 1} completed" type="checkbox" ${l.done ? "checked" : ""} data-eid="${e.id}" data-set="${i}" data-field="done"></div>`).join("")}<button type="button" class="text-button add-set" data-action="add-set" data-id="${w.id}" data-eid="${e.id}" aria-label="Add set to ${esc(e.name)}" ${e.sets >= 30 ? "disabled" : ""}>+ Add set</button>${e.sets >= 30 ? '<p class="field-help">Maximum of 30 sets per exercise.</p>' : ""}<label class="exercise-notes">Notes for ${esc(e.name)}<textarea aria-label="Notes for ${esc(e.name)}" data-exercise-note="${esc(e.id)}" maxlength="1000" placeholder="How it felt, technique reminders, or changes for next time…">${esc(e.note || "")}</textarea></label></details>`).join("") || "<p>Add an exercise to your plan to start logging.</p>"}<div class="modal-footer"><span class="autosave">Changes save automatically</span>${w.exercises.length && !isWorkoutComplete(w) ? `<button type="button" class="button primary" data-action="complete-workout" data-id="${w.id}">Mark as complete</button>` : ""}</div></form></section>`;
+  return `<section class="inline-workout-log" data-workout-id="${esc(w.id)}">${workoutHistory(w)}<p class="log-intro" role="status">Adjust your results, then check each completed set. Mark as complete accepts all displayed results.</p><form class="log-form">${w.exercises.map((e, index) => exerciseLog(w, e, index)).join("") || "<p>Add an exercise to your plan to start logging.</p>"}<div class="modal-footer"><span class="autosave">Changes save automatically</span>${w.exercises.length && !isWorkoutComplete(w) ? `<button type="button" class="button primary" data-action="complete-workout" data-id="${w.id}">Mark as complete</button>` : ""}</div></form></section>`;
 }
 // Read and validate every affected input before changing any saved set.
 function logRoot() {
