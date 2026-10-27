@@ -44,7 +44,7 @@ test("exercise dropdown logs in place and opens the library only for swapping, r
     page.getByRole("heading", { name: "Swap exercise", exact: true }),
   ).toBeVisible();
   await page
-    .getByLabel("Search exercises", { exact: true })
+    .getByLabel("Exercise name", { exact: true })
     .fill("incline dumbbell bench");
   await page
     .getByRole("button", {
@@ -139,9 +139,7 @@ test("older text-only program exercises are recognized and can be swapped from t
   await dialog
     .getByRole("button", { name: "Swap exercise: Back Squat", exact: true })
     .click();
-  await page
-    .getByLabel("Search exercises", { exact: true })
-    .fill("front squat");
+  await page.getByLabel("Exercise name", { exact: true }).fill("front squat");
   await page
     .getByRole("button", {
       name: "Front Squat Legs · Barbell · Reps",

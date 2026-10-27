@@ -1,3 +1,8 @@
+import {
+  personalExercise,
+  applyDefinition,
+} from "../shared/personal-exercises.js";
+import { newExerciseDialog } from "./personal-exercises.js";
 import { createSharing, sharingRequest, invitationBanner } from "./sharing.js";
 import { pendingInvitation, clearInvitation } from "./invite-token.js";
 import { alignProgram } from "../shared/programs.js";
@@ -351,6 +356,31 @@ function selectedExerciseCard(w, e) {
     (e.libraryId && findLibraryExercise(e.libraryId)) || exerciseByName(e.name);
   return `<div class="selected-exercise-card"><div><span class="eyebrow">${entry ? "EXERCISE LIBRARY" : "CUSTOM EXERCISE"}</span><h3>${esc(entry?.name || e.name)}</h3>${entry ? `<p>${esc(entry.category)} · ${esc(entry.equipment)}</p>` : ""}</div><div class="selected-exercise-actions">${exerciseGuideButton(entry?.name || e.name, esc)}${swapButton(w, e)}</div></div>`;
 }
+function chooseExercise(choice) {
+  const form = app.querySelector("#exercise-form");
+  if (!form) return;
+  form.elements.name.value = choice.name;
+  form.dataset.pickedName = choice.name;
+  if (form.elements.mode.value !== choice.mode) {
+    form.elements.mode.value = choice.mode;
+    form.elements.target.value = choice.mode === "time" ? 45 : 10;
+  }
+  form.elements.weight.readOnly = choice.weighted === false;
+  if (choice.weighted === false) form.elements.weight.value = "0";
+  renderExerciseResults(app, state, esc);
+  form.elements.name.focus();
+}
+function openPersonalExercise() {
+  const form = app.querySelector("#exercise-form");
+  if (!form) return;
+  newExerciseDialog({
+    name: form.elements.name.value,
+    state,
+    save,
+    choose: chooseExercise,
+    esc,
+  });
+}
 function swapButton(w, e) {
   const recorded = e.logs.some(
     (log) => log.done || log.weight !== "" || log.actual !== "",
@@ -401,7 +431,7 @@ function dialog() {
           ? selectedProgramId
           : null),
   );
-  return `<div class="modal-backdrop"><section class="modal ${modal.type === "log" ? "log-modal" : ""}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="eyebrow">YOUR TRAINING JOURNAL</div><h2 id="modal-title">${modal.type === "log" ? esc(w.name) : modal.type === "swap" ? "Swap exercise" : modal.type === "exercise" ? (e ? "Edit exercise" : "Add an exercise") : modal.type === "edit" ? "Edit workout" : "Plan a workout"}</h2></div><button class="icon-button close" data-action="close" aria-label="Close dialog">×</button></div>${modal.type === "log" ? logForm(w) : ["exercise", "swap"].includes(modal.type) ? `<form id="exercise-form">${modal.type === "swap" ? '<p class="exercise-swap-message" role="status">Choose a replacement from the library or enter a custom exercise. Sets, targets and superset membership are kept; adjust them if needed.</p>' : ""}<label>Exercise name<input name="name" required maxlength="100" placeholder="Search exercises or enter your own" autocomplete="off" value="${esc(e?.name || "")}"></label>${modal.type === "swap" || !e ? exerciseLibrary(esc) : selectedExerciseCard(w, e)}<div class="form-grid"><label>Sets<input name="sets" type="number" required min="1" max="30" value="${e?.sets || 3}"></label><label>Track by<select name="mode"><option value="reps" ${e?.mode !== "time" ? "selected" : ""}>Repetitions</option><option value="time" ${e?.mode === "time" ? "selected" : ""}>Time (seconds)</option></select></label><label>Target per set<input name="target" type="number" required min="1" max="10000" value="${e?.target || 10}"></label><label>Planned weight (${state.unit})<input name="weight" type="number" min="0" max="5000" step="0.01" value="${e?.weight || 0}"></label></div><label>Superset group <span class="optional">optional</span><input name="group" maxlength="12" placeholder="e.g. A" value="${esc(e?.group || "")}"><small>Use the same group for exercises you want to alternate.</small></label><div class="modal-footer">${e ? '<button type="button" class="text-button danger" data-action="delete-exercise">Remove exercise</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "swap" ? "Swap exercise" : e ? "Save changes" : "Add exercise"} →</button></div></form>` : `<form id="workout-form"><label>Workout name<input name="name" required maxlength="100" placeholder="e.g. Lower body strength" value="${esc(modal.type === "edit" ? w.name : "")}"></label>${workoutProgramFields(w, workoutDate)}<label>Date<input name="date" type="date" required value="${workoutDate}" ${assignedProgram ? `min="${assignedProgram.startDate}" max="${programEnd(assignedProgram)}"` : ""}></label><label>Workout notes <span class="optional">optional</span><textarea name="note" maxlength="500" placeholder="A focus, a reminder, a little motivation…">${esc(modal.type === "edit" ? w.note : "")}</textarea></label>${modal.type === "edit" ? `<section class="plan-exercise-editor"><h3>Exercises</h3>${w.exercises.map((item) => `<div><span>${esc(item.name)}</span><button type="button" class="button subtle" data-action="edit-exercise" data-id="${w.id}" data-eid="${item.id}" aria-label="Edit ${esc(item.name)}">Edit</button></div>`).join("")}<div class="plan-workout-tools"><button type="button" class="text-button" data-action="add-exercise" data-id="${w.id}">+ Add exercise</button><button type="button" class="text-button" data-action="supersets" data-id="${w.id}">Supersets</button></div></section>` : ""}<div class="modal-footer">${modal.type === "edit" ? '<button type="button" class="text-button danger" data-action="delete-workout">Delete workout</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "edit" ? "Save changes" : "Create workout"} →</button></div></form>`}</section></div>`;
+  return `<div class="modal-backdrop"><section class="modal ${modal.type === "log" ? "log-modal" : ""}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="eyebrow">YOUR TRAINING JOURNAL</div><h2 id="modal-title">${modal.type === "log" ? esc(w.name) : modal.type === "swap" ? "Swap exercise" : modal.type === "exercise" ? (e ? "Edit exercise" : "Add an exercise") : modal.type === "edit" ? "Edit workout" : "Plan a workout"}</h2></div><button class="icon-button close" data-action="close" aria-label="Close dialog">×</button></div>${modal.type === "log" ? logForm(w) : ["exercise", "swap"].includes(modal.type) ? `<form id="exercise-form" data-picked-name="${esc(e?.name || "")}">${modal.type === "swap" ? '<p class="exercise-swap-message" role="status">Choose a replacement from the library or enter a custom exercise. Sets, targets and superset membership are kept; adjust them if needed.</p>' : ""}<label>Exercise name<input name="name" required maxlength="100" placeholder="Search exercises or enter your own" autocomplete="off" value="${esc(e?.name || "")}"></label>${e && modal.type !== "swap" ? selectedExerciseCard(w, e) : ""}${exerciseLibrary(esc)}<div class="form-grid"><label>Sets<input name="sets" type="number" required min="1" max="30" value="${e?.sets || 3}"></label><label>Track by<select name="mode"><option value="reps" ${e?.mode !== "time" ? "selected" : ""}>Repetitions</option><option value="time" ${e?.mode === "time" ? "selected" : ""}>Time (seconds)</option></select></label><label>Target per set<input name="target" type="number" required min="1" max="10000" value="${e?.target || 10}"></label><label>Planned weight (${state.unit})<input name="weight" type="number" min="0" max="5000" step="0.01" value="${e?.weight || 0}" ${e?.weighted === false ? "readonly" : ""}></label></div><label>Superset group <span class="optional">optional</span><input name="group" maxlength="12" placeholder="e.g. A" value="${esc(e?.group || "")}"><small>Use the same group for exercises you want to alternate.</small></label><div class="modal-footer">${e ? '<button type="button" class="text-button danger" data-action="delete-exercise">Remove exercise</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "swap" ? "Swap exercise" : e ? "Save changes" : "Add exercise"} →</button></div></form>` : `<form id="workout-form"><label>Workout name<input name="name" required maxlength="100" placeholder="e.g. Lower body strength" value="${esc(modal.type === "edit" ? w.name : "")}"></label>${workoutProgramFields(w, workoutDate)}<label>Date<input name="date" type="date" required value="${workoutDate}" ${assignedProgram ? `min="${assignedProgram.startDate}" max="${programEnd(assignedProgram)}"` : ""}></label><label>Workout notes <span class="optional">optional</span><textarea name="note" maxlength="500" placeholder="A focus, a reminder, a little motivation…">${esc(modal.type === "edit" ? w.note : "")}</textarea></label>${modal.type === "edit" ? `<section class="plan-exercise-editor"><h3>Exercises</h3>${w.exercises.map((item) => `<div><span>${esc(item.name)}</span><button type="button" class="button subtle" data-action="edit-exercise" data-id="${w.id}" data-eid="${item.id}" aria-label="Edit ${esc(item.name)}">Edit</button></div>`).join("")}<div class="plan-workout-tools"><button type="button" class="text-button" data-action="add-exercise" data-id="${w.id}">+ Add exercise</button><button type="button" class="text-button" data-action="supersets" data-id="${w.id}">Supersets</button></div></section>` : ""}<div class="modal-footer">${modal.type === "edit" ? '<button type="button" class="text-button danger" data-action="delete-workout">Delete workout</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "edit" ? "Save changes" : "Create workout"} →</button></div></form>`}</section></div>`;
 }
 function previousPerformanceHeader(w, e) {
   const history = previousExercisePerformance(state, w, e);
@@ -425,6 +455,13 @@ function exerciseLog(w, e, index) {
   const history = previousExercisePerformance(state, w, e);
   const entry =
     exerciseByName(e.name) || (e.libraryId && findLibraryExercise(e.libraryId));
+  const personal = personalExercise(state, e.name);
+  const instructions = e.instructions || personal?.instructions;
+  const steps = instructions
+    ? instructions.split(/\n+/).filter(Boolean)
+    : entry
+      ? entry.instructions.quickSteps || entry.instructions.steps
+      : [];
   const groupHeading =
     e.group && (index === 0 || w.exercises[index - 1].group !== e.group)
       ? `<div class="log-superset-heading"><strong>Superset ${esc(e.group)}</strong><p>Alternate these exercises, one set each, then repeat for your remaining sets.</p></div>`
@@ -437,7 +474,7 @@ function exerciseLog(w, e, index) {
       <span class="exercise-expand-label"><span class="exercise-set-progress">${e.logs.filter((log) => log.done).length}/${e.sets} sets logged</span></span>
     </summary>
     <div class="exercise-log-body">
-      ${entry ? `<ul class="exercise-inline-instructions" aria-label="${esc(e.name)} instructions">${(entry.instructions.quickSteps || entry.instructions.steps).map((step) => `<li>${esc(step)}</li>`).join("")}</ul>` : ""}
+      ${steps.length ? `<ul class="exercise-inline-instructions" aria-label="${esc(e.name)} instructions">${steps.map((step) => `<li>${esc(step)}</li>`).join("")}</ul>` : ""}
       <div class="exercise-guide-link"><button type="button" class="text-button" data-action="edit-exercise" data-id="${w.id}" data-eid="${e.id}" aria-label="Edit ${esc(e.name)}">Edit exercise</button></div>
       <p class="log-target-description">Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p>
       <label class="exercise-notes"><span class="visually-hidden">Notes for ${esc(e.name)}</span><textarea aria-label="Notes for ${esc(e.name)}" data-exercise-note="${esc(e.id)}" maxlength="1000" rows="1" placeholder="Add note…">${esc(e.note || "")}</textarea></label>
@@ -448,7 +485,7 @@ function exerciseLog(w, e, index) {
           (l, i) => `<div class="log-row ${l.done ? "set-done" : ""}">
         <strong class="log-set-number">${i + 1}</strong>
         ${previousSetCell(e, i, history)}
-        <div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} weight" type="number" inputmode="decimal" min="0" max="5000" step="0.01" placeholder="${e.weight}" value="${esc(l.weight === "" ? e.weight : l.weight)}" data-eid="${e.id}" data-set="${i}" data-field="weight"></div>
+        <div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} weight" type="number" inputmode="decimal" min="0" max="5000" step="0.01" placeholder="${e.weight}" ${e.weighted === false ? 'readonly title="Bodyweight exercise"' : ""} value="${esc(l.weight === "" ? e.weight : l.weight)}" data-eid="${e.id}" data-set="${i}" data-field="weight"></div>
         <div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" type="number" inputmode="numeric" min="0" max="10000" step="1" placeholder="${e.target}" value="${esc(l.actual === "" ? e.target : l.actual)}" data-eid="${e.id}" data-set="${i}" data-field="actual"></div>
         <input aria-label="${esc(e.name)} set ${i + 1} completed" type="checkbox" ${l.done ? "checked" : ""} data-eid="${e.id}" data-set="${i}" data-field="done">
       </div>`,
@@ -561,17 +598,16 @@ app.addEventListener("click", (event) => {
     showExerciseGuide(b.dataset.libraryId, esc);
     return;
   }
-  if (a === "choose-exercise" || a === "choose-custom-exercise") {
-    const form = app.querySelector("#exercise-form");
+  if (a === "new-personal-exercise") {
+    openPersonalExercise();
+    return;
+  }
+  if (a === "choose-exercise" || a === "choose-personal-exercise") {
     const choice =
-      a === "choose-exercise" ? findLibraryExercise(b.dataset.libraryId) : null;
-    form.elements.name.value = choice ? choice.name : b.dataset.exerciseName;
-    if (choice && form.elements.mode.value !== choice.mode) {
-      form.elements.mode.value = choice.mode;
-      form.elements.target.value = choice.mode === "time" ? 45 : 10;
-    }
-    form.querySelector(".exercise-library").open = false;
-    form.elements.name.focus();
+      a === "choose-exercise"
+        ? findLibraryExercise(b.dataset.libraryId)
+        : state.customExercises?.find((e) => e.id === b.dataset.personalId);
+    if (choice) chooseExercise(choice);
     return;
   }
   if (a === "start-program" || a === "align-program") {
@@ -842,6 +878,15 @@ app.addEventListener("submit", (event) => {
         "This exercise has recorded results. Add a new exercise to keep those results with the original movement.";
       return;
     }
+    const definition = personalExercise(state, data.name);
+    if (
+      !definition &&
+      !exerciseByName(data.name) &&
+      (!old || old.name !== data.name.trim())
+    ) {
+      openPersonalExercise();
+      return;
+    }
     const e = exercise(
       data.name.trim(),
       Number(data.sets),
@@ -850,6 +895,12 @@ app.addEventListener("submit", (event) => {
       Number(data.weight),
       data.group.trim().toUpperCase(),
     );
+    if (definition) applyDefinition(e, definition);
+    else if (old && old.name === e.name && old.instructions) {
+      e.instructions = old.instructions;
+      e.weighted = old.weighted;
+      if (old.customExerciseId) e.customExerciseId = old.customExerciseId;
+    }
     if (old) {
       e.id = old.id;
       if (old.note !== undefined) e.note = old.note;
@@ -910,17 +961,9 @@ app.addEventListener("input", (event) => {
     save();
     return;
   }
-  if (event.target.id === "exercise-search")
-    renderExerciseResults(app, state, esc);
-  if (
-    event.target.name === "name" &&
-    event.target.form?.id === "exercise-form"
-  ) {
-    const library = app.querySelector(".exercise-library");
-    if (!library) return;
-    library.open = true;
-    app.querySelector("#exercise-search").value = event.target.value;
-    app.querySelector("#exercise-category").value = "";
+  if (input.name === "name" && input.form?.id === "exercise-form") {
+    delete input.form.dataset.pickedName;
+    input.form.elements.weight.readOnly = false;
     renderExerciseResults(app, state, esc);
   }
 });
@@ -938,10 +981,6 @@ app.addEventListener("change", (event) => {
   if (input.id === "superset-picker") {
     modal.group = input.value;
     render();
-    return;
-  }
-  if (input.id === "exercise-category") {
-    renderExerciseResults(app, state, esc);
     return;
   }
   if (input.id === "program-week-picker") {
@@ -1044,7 +1083,6 @@ app.addEventListener("change", (event) => {
     input.dataset.field === "done" &&
     input.checked &&
     workout().programId &&
-    tab === "programs" &&
     isWorkoutComplete(workout())
   ) {
     loggingWorkouts.delete(active);
@@ -1053,7 +1091,12 @@ app.addEventListener("change", (event) => {
   }
 });
 document.addEventListener("keydown", (e) => {
-  if (document.querySelector("#exercise-guide[open]")) return;
+  if (
+    document.querySelector(
+      "#exercise-guide[open], #personal-exercise-dialog[open], #program-share-dialog[open]",
+    )
+  )
+    return;
   if (e.key === "Escape" && modal) {
     modal = null;
     render();

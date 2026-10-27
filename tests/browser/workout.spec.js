@@ -29,13 +29,13 @@ test("plans workouts with supersets, logs reps and time, and persists after relo
       .last()
       .click();
   }
-  await add("Squat", "reps", "8");
+  await add("Back Squat", "reps", "8");
   await add("Wall sit", "time", "45");
   await expect(card.locator(".superset-label")).toHaveCount(1);
   await card.getByRole("button", { name: "Start workout" }).click();
-  await page.getByLabel("Squat set 1 weight", { exact: true }).fill("50");
-  await page.getByLabel("Squat set 1 reps", { exact: true }).fill("8");
-  await page.getByLabel("Squat set 1 completed", { exact: true }).check();
+  await page.getByLabel("Back Squat set 1 weight", { exact: true }).fill("50");
+  await page.getByLabel("Back Squat set 1 reps", { exact: true }).fill("8");
+  await page.getByLabel("Back Squat set 1 completed", { exact: true }).check();
   await openExercise(page, "Wall sit");
   await page.getByLabel("Wall sit set 1 weight", { exact: true }).fill("0");
   await page.getByLabel("Wall sit set 1 seconds", { exact: true }).fill("40");
@@ -54,7 +54,7 @@ test("plans workouts with supersets, logs reps and time, and persists after relo
     .getByRole("button", { name: "View log" })
     .click();
   await expect(
-    page.getByLabel("Squat set 1 weight", { exact: true }),
+    page.getByLabel("Back Squat set 1 weight", { exact: true }),
   ).toHaveValue("50");
   await expect(
     page.getByLabel("Wall sit set 1 seconds", { exact: true }),

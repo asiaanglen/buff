@@ -3735,3 +3735,38 @@ body:has(#program-share-dialog[open]) .pwa-help {
 .workout-minimized .tag {
   color: #72757d;
 }
+
+.exercise-suggestions {
+  margin: -8px 0 20px;
+}
+.exercise-suggestions #exercise-search-status:not(:empty) {
+  font-size: 13px;
+  color: #757080;
+  margin: 8px 0;
+}
+.exercise-suggestions .exercise-search-results {
+  max-height: 240px;
+  overflow-y: auto;
+}
+.add-personal-exercise {
+  width: 100%;
+  text-align: left;
+  margin-top: 8px;
+}
+.personal-weight-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+.personal-weight-option input {
+  width: 22px;
+  height: 22px;
+}
+.log-input-cell input[readonly] {
+  color: #777;
+  background: #eeeff1;
+}
+#personal-exercise-dialog .modal-footer {
+  gap: 12px;
+}

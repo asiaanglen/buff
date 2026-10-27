@@ -583,3 +583,78 @@ test("existing broad-write grants need new consent before editing individual exe
     await client.close();
   }
 });
+
+test("MCP searches the account's personal library and links its definitions when planning", async ({
+  page,
+  baseURL,
+}) => {
+  const definition = {
+    id: "personal-hold",
+    name: "My private balance hold",
+    mode: "time",
+    weighted: false,
+    instructions: "Balance and breathe slowly.",
+  };
+  const { client } = await connect(page, baseURL);
+  const put = await page.request.put("/api/state", {
+    headers: { Origin: baseURL },
+    data: {
+      revision: 0,
+      state: {
+        version: 1,
+        unit: "lbs",
+        programs: [],
+        workouts: [],
+        customExercises: [definition],
+      },
+    },
+  });
+  expect(put.ok()).toBeTruthy();
+  try {
+    const found = await client.callTool({
+      name: "search_exercises",
+      arguments: { query: "private balance" },
+    });
+    expect(found.structuredContent.exercises).toEqual([
+      expect.objectContaining({
+        id: definition.id,
+        personal: true,
+        weighted: false,
+      }),
+    ]);
+    const proposal = await client.callTool({
+      name: "plan_workout",
+      arguments: {
+        name: "Balance session",
+        date: "2026-10-26",
+        exercises: [
+          {
+            name: definition.name,
+            library_id: definition.id,
+            sets: 2,
+            target: 30,
+            weight: 50,
+          },
+        ],
+      },
+    });
+    expect(proposal.isError).not.toBe(true);
+    await page.goto(proposal.structuredContent.approvalUrl);
+    await page
+      .getByRole("button", { name: "Approve changes", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Change applied" }),
+    ).toBeVisible();
+    const { state } = await (await page.request.get("/api/state")).json();
+    expect(state.workouts[0].exercises[0]).toMatchObject({
+      customExerciseId: definition.id,
+      mode: "time",
+      weight: 0,
+      weighted: false,
+      instructions: definition.instructions,
+    });
+  } finally {
+    await client.close();
+  }
+});

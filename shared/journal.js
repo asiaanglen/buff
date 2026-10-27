@@ -28,6 +28,27 @@ export function validState(s) {
   )
     return false;
   if (s.displayName !== undefined && !text(s.displayName, 80)) return false;
+  if (s.customExercises !== undefined) {
+    if (!Array.isArray(s.customExercises) || s.customExercises.length > 1000)
+      return false;
+    const customIds = new Set();
+    for (const e of s.customExercises) {
+      if (
+        !e ||
+        !text(e.id, 100) ||
+        !e.id ||
+        customIds.has(e.id) ||
+        !text(e.name, 100) ||
+        !e.name.trim() ||
+        !text(e.instructions, 3000) ||
+        !e.instructions.trim() ||
+        !["reps", "time"].includes(e.mode) ||
+        typeof e.weighted !== "boolean"
+      )
+        return false;
+      customIds.add(e.id);
+    }
+  }
   const programs = new Map();
   for (const p of s.programs || []) {
     if (
@@ -76,6 +97,9 @@ export function validState(s) {
         !text(e.group, 12) ||
         (e.libraryId !== undefined && !text(e.libraryId, 100)) ||
         (e.note !== undefined && !text(e.note, 1000)) ||
+        (e.customExerciseId !== undefined && !text(e.customExerciseId, 100)) ||
+        (e.instructions !== undefined && !text(e.instructions, 3000)) ||
+        (e.weighted !== undefined && typeof e.weighted !== "boolean") ||
         !["time", "reps"].includes(e.mode) ||
         !Number.isInteger(e.sets) ||
         e.sets < 1 ||

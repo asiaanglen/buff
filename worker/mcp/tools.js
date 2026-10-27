@@ -1,4 +1,8 @@
 import {
+  personalExercise,
+  applyDefinition,
+} from "../../shared/personal-exercises.js";
+import {
   searchExercises,
   exerciseByName,
   exerciseCatalog,
@@ -53,10 +57,12 @@ const find = (rows, id, label) => {
   if (!row) throw Error(`${label} was not found in your account.`);
   return row;
 };
-function newExercise(e) {
-  const byName = exerciseByName(e.name);
+function newExercise(e, state) {
+  const personal = personalExercise(state, e.name);
+  const byName = exerciseByName(e.name) || personal;
   const selected = e.library_id
-    ? exerciseCatalog.find((item) => item.id === e.library_id)
+    ? exerciseCatalog.find((item) => item.id === e.library_id) ||
+      state.customExercises?.find((item) => item.id === e.library_id)
     : byName;
   if (e.library_id && !selected)
     throw Error(
@@ -66,7 +72,7 @@ function newExercise(e) {
     throw Error(
       "The exercise name and library ID refer to different movements.",
     );
-  return exercise(
+  const created = exercise(
     e.library_id ? selected.name : e.name,
     e.sets,
     e.target,
@@ -74,6 +80,9 @@ function newExercise(e) {
     e.weight,
     e.superset.trim().toUpperCase(),
   );
+  if (selected && typeof selected.instructions === "string")
+    applyDefinition(created, selected);
+  return created;
 }
 function groupExercises(rows) {
   const order = new Map();
@@ -83,14 +92,14 @@ function groupExercises(rows) {
   }
   rows.sort((a, b) => order.get(a.group || a.id) - order.get(b.group || b.id));
 }
-function newWorkout(p, input) {
+function newWorkout(p, input, state) {
   const w = {
     id: crypto.randomUUID(),
     programId: p.id,
     name: input.name,
     date: shiftDate(p.startDate, (input.week - 1) * 7 + input.day - 1),
     note: input.notes,
-    exercises: input.exercises.map(newExercise),
+    exercises: input.exercises.map((e) => newExercise(e, state)),
   };
   groupExercises(w.exercises);
   return w;
@@ -262,7 +271,7 @@ export async function mcpHandler(request, env, ctx) {
   }
   tool(
     "search_exercises",
-    "Search Buff's built-in public exercise catalog by movement, alias, muscle group or equipment. Returns canonical names and whether to track reps or time; these can be used in exercise proposals. Custom names are also allowed.",
+    "Search Buff's built-in catalog and your own private exercise library by movement, alias, muscle group or equipment. Returns canonical names and whether to track reps or time; these can be used in exercise proposals. Custom names are also allowed.",
     {
       query: z.string().max(100).default(""),
       category: z.string().max(50).default(""),
@@ -271,7 +280,32 @@ export async function mcpHandler(request, env, ctx) {
       offset: z.number().int().min(0).default(0),
     },
     true,
-    async (a) => searchExercises(a),
+    async (a) => {
+      const { state } = await load(env.DB, userId);
+      const builtins = searchExercises({
+        ...a,
+        offset: 0,
+        limit: exerciseCatalog.length,
+      }).exercises;
+      const own = (state.customExercises || [])
+        .filter(
+          (e) =>
+            !a.category &&
+            !a.equipment &&
+            e.name.toLowerCase().includes(a.query.trim().toLowerCase()),
+        )
+        .map((e) => ({
+          ...e,
+          personal: true,
+          category: "Your library",
+          equipment: e.weighted ? "Weighted" : "Bodyweight",
+        }));
+      const matches = [...builtins, ...own];
+      return {
+        exercises: matches.slice(a.offset, a.offset + a.limit),
+        total: matches.length,
+      };
+    },
   );
   tool(
     "list_programs",
@@ -414,7 +448,7 @@ export async function mcpHandler(request, env, ctx) {
         for (const w of a.workouts) {
           if (w.week > p.weeks)
             throw Error("A workout week is outside the program.");
-          state.workouts.push(newWorkout(p, w));
+          state.workouts.push(newWorkout(p, w, state));
         }
         return `Create “${p.name}”, ${p.weeks} weeks, with ${a.workouts.length} workouts.`;
       }),
@@ -460,7 +494,7 @@ export async function mcpHandler(request, env, ctx) {
         let w;
         if (a.program_id) {
           const p = find(state.programs, a.program_id, "Program");
-          w = newWorkout(p, { ...a, week: a.week || 1 });
+          w = newWorkout(p, { ...a, week: a.week || 1 }, state);
           if (a.date) w.date = a.date;
           if (a.week && programWeek(p, w.date) !== a.week)
             throw Error(
@@ -474,7 +508,7 @@ export async function mcpHandler(request, env, ctx) {
             name: a.name,
             date: a.date,
             note: a.notes,
-            exercises: a.exercises.map(newExercise),
+            exercises: a.exercises.map((e) => newExercise(e, state)),
           };
           groupExercises(w.exercises);
         }
@@ -490,7 +524,7 @@ export async function mcpHandler(request, env, ctx) {
     (a) =>
       propose(a, (state, a) => {
         const w = find(state.workouts, a.workout_id, "Workout");
-        w.exercises.push(...a.exercises.map(newExercise));
+        w.exercises.push(...a.exercises.map((e) => newExercise(e, state)));
         groupExercises(w.exercises);
         return `Add ${a.exercises.length} exercises to “${w.name}”.`;
       }),
@@ -565,9 +599,14 @@ export async function mcpHandler(request, env, ctx) {
         for (const key of ["name", "target", "mode", "weight"])
           if (a[key] !== undefined) e[key] = a[key];
         if (a.name !== undefined) {
+          delete e.instructions;
+          delete e.customExerciseId;
+          delete e.weighted;
           const match = exerciseByName(e.name);
           if (match) e.libraryId = match.id;
           else delete e.libraryId;
+          const personal = personalExercise(state, e.name);
+          if (personal) applyDefinition(e, personal);
         }
         if (a.superset !== undefined) e.group = a.superset.trim().toUpperCase();
         groupExercises(w.exercises);

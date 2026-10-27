@@ -70,8 +70,7 @@ test("started programs persist and advance after completed sets, including undo 
     next.getByRole("heading", { name: "First session" }),
   ).toBeVisible();
   await next.getByRole("button", { name: "Start workout" }).click();
-  await page.getByLabel("Squat set 1 completed").check();
-  await page.getByRole("button", { name: "Collapse workout" }).click();
+  await page.getByLabel("Squat set 1 completed").click();
   await expect(
     next.getByRole("heading", { name: "Second session" }),
   ).toBeVisible();
@@ -87,8 +86,7 @@ test("started programs persist and advance after completed sets, including undo 
   ).toBeVisible();
   for (let i = 0; i < 2; i++) {
     await next.getByRole("button", { name: "Start workout" }).click();
-    await page.getByLabel("Squat set 1 completed").check();
-    await page.getByRole("button", { name: "Collapse workout" }).click();
+    await page.getByLabel("Squat set 1 completed").click();
   }
   await expect(
     next.getByText("Every workout completed. Well done!"),
