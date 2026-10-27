@@ -205,9 +205,9 @@ Programs with actual set results retain their start date so alignment cannot sil
 
 ## Share a program with a friend
 
-Choose **Share program** in Programs, program detail, or the active program on Home. The invitation is prepared automatically; your saved name is used, or ‘Your friend’ if you haven’t provided one. **Customize your name in the invitation** is optional. **Choose contact in Messages** opens the phone’s messaging composer. On iPhone, tap **+** in the **To:** field to select someone from Contacts, then send. iOS does not expose a direct website Contacts picker. The message is:
+Choose **Share program** in Programs, program detail, or the active program on Home. The invitation is prepared automatically, with no name-entry step. **Choose contact in Messages** opens the phone’s messaging composer. On iPhone, tap **+** in the **To:** field to select someone from Contacts, then send. iOS does not expose a direct website Contacts picker. The message is:
 
-> Hey there! [your name] invited you to get buff with them! Try their workout program here
+> Wanna get buff with me? Try out this new workout program!
 > [invitation link]
 
 Choose the recipient from your phone's contacts in Messages and send it. Supported phones also offer the native **Share…** sheet; **Copy invitation** works for any messaging app. Buff does not upload contacts, send texts automatically, or use a paid SMS service.

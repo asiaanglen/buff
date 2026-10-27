@@ -13,8 +13,8 @@ export async function sharingRequest(path, options = {}) {
     );
   return result;
 }
-export const invitationMessage = (name, url) =>
-  `Hey there! ${name} invited you to get buff with them! Try their workout program here\n${url}`;
+export const invitationMessage = (url) =>
+  `Wanna get buff with me? Try out this new workout program!\n${url}`;
 export function smsLink(message) {
   const ios =
     /iPhone|iPad|iPod/.test(navigator.userAgent) ||
@@ -40,7 +40,7 @@ export function createSharing({ getState, save, flush, esc }) {
     dialog.className = "program-share-dialog";
     document.body.append(dialog);
     dialog.setAttribute("aria-labelledby", "share-program-title");
-    dialog.innerHTML = `<div class="modal-header"><div><div class="eyebrow">GET BUFF TOGETHER</div><h2 id="share-program-title">Share program</h2></div><button type="button" class="icon-button" aria-label="Close sharing">×</button></div><p>Invite a friend to try <strong>${esc(program.name)}</strong>. They’ll get their own copy after signing up or signing in.</p><p class="share-privacy">The program plan is shared. Your logged results and exercise session notes stay private.</p><details class="share-sender"><summary>Customize your name in the invitation</summary><p>This is your name, shown to your friend. You’ll choose the recipient in Messages.</p><form id="share-program-form"><label>Your name<input name="inviterName" maxlength="80" autocomplete="given-name" placeholder="Your friend" value="${esc(getState().displayName || "")}"></label><button type="submit" class="button subtle">Update invitation</button></form></details><p class="share-status" role="status"></p><section class="share-result" hidden><label for="share-message">Invitation message</label><textarea id="share-message" readonly rows="5"></textarea><div class="share-actions"><a class="button primary share-sms" href="#">Choose contact in Messages</a><button type="button" class="button subtle share-native" ${typeof navigator.share === "function" ? "" : "hidden"}>Share…</button><button type="button" class="button subtle share-copy">Copy invitation</button></div><p class="share-help">Messages opens with your invitation filled in. On iPhone, tap + in the To field to choose someone from Contacts, then tap Send. You can also use Share… to choose another messaging app.</p></section><details class="share-manage"><summary>Manage invitation links</summary><div class="share-links"></div></details>`;
+    dialog.innerHTML = `<div class="modal-header"><div><div class="eyebrow">GET BUFF TOGETHER</div><h2 id="share-program-title">Share program</h2></div><button type="button" class="icon-button" aria-label="Close sharing">×</button></div><p>Invite a friend to try <strong>${esc(program.name)}</strong>. They’ll get their own copy after signing up or signing in.</p><p class="share-privacy">The program plan is shared. Your logged results and exercise session notes stay private.</p><p class="share-status" role="status"></p><button type="button" class="button subtle share-retry" hidden>Try again</button><section class="share-result" hidden><label for="share-message">Invitation message</label><textarea id="share-message" readonly rows="5"></textarea><div class="share-actions"><a class="button primary share-sms" href="#">Choose contact in Messages</a><button type="button" class="button subtle share-native" ${typeof navigator.share === "function" ? "" : "hidden"}>Share…</button><button type="button" class="button subtle share-copy">Copy invitation</button></div><p class="share-help">Messages opens with your invitation filled in. On iPhone, tap + in the To field to choose someone from Contacts, then tap Send. You can also use Share… to choose another messaging app.</p></section><details class="share-manage"><summary>Manage invitation links</summary><div class="share-links"></div></details>`;
     const status = dialog.querySelector(".share-status");
     dialog
       .querySelector('[aria-label="Close sharing"]')
@@ -77,24 +77,19 @@ export function createSharing({ getState, save, flush, esc }) {
           button.disabled = false;
         }
       });
-    dialog.querySelector("form").addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const form = event.target;
-      if (!form.reportValidity()) return;
-      const button = form.querySelector("button");
-      button.disabled = true;
+    const retry = dialog.querySelector(".share-retry");
+    async function prepareInvitation() {
+      retry.hidden = true;
       status.textContent = "Preparing your invitation…";
       try {
-        const enteredName = form.elements.inviterName.value.trim();
-        const name = enteredName || "Your friend";
-        if (enteredName) getState().displayName = enteredName;
+        const name = getState().displayName || "Your friend";
         save();
         await flush();
         const result = await sharingRequest("", {
           method: "POST",
           body: JSON.stringify({ programId, inviterName: name }),
         });
-        const message = invitationMessage(result.inviterName, result.url);
+        const message = invitationMessage(result.url);
         dialog.querySelector("#share-message").value = message;
         dialog.querySelector(".share-sms").href = smsLink(message);
         dialog.querySelector(".share-result").hidden = false;
@@ -127,12 +122,12 @@ export function createSharing({ getState, save, flush, esc }) {
         await loadLinks();
       } catch (error) {
         status.textContent = error.message;
-      } finally {
-        button.disabled = false;
+        retry.hidden = false;
       }
-    });
+    }
+    retry.addEventListener("click", prepareInvitation);
     dialog.showModal();
-    dialog.querySelector("form").requestSubmit();
+    prepareInvitation();
     loadLinks().catch((error) => {
       dialog.querySelector(".share-links").textContent = error.message;
     });

@@ -87,14 +87,10 @@ test("a phone invitation carries the requested message and adds the program afte
   await expect(
     page.getByRole("link", { name: "Choose contact in Messages", exact: true }),
   ).toBeVisible();
-  await expect(page.getByLabel("Your name", { exact: true })).not.toBeVisible();
-  await page
-    .getByText("Customize your name in the invitation", { exact: true })
-    .click();
-  await page.getByLabel("Your name", { exact: true }).fill("Alex");
-  await page
-    .getByRole("button", { name: "Update invitation", exact: true })
-    .click();
+  await expect(page.getByLabel("Your name", { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByText("Customize your name in the invitation", { exact: true }),
+  ).toHaveCount(0);
   await expect(
     page.getByRole("status").filter({ hasText: "Invitation ready." }),
   ).toBeVisible();
@@ -105,7 +101,7 @@ test("a phone invitation carries the requested message and adds the program afte
     .getByLabel("Invitation message", { exact: true })
     .inputValue();
   expect(message).toMatch(
-    /^Hey there! Alex invited you to get buff with them! Try their workout program here\n/,
+    /^Wanna get buff with me\? Try out this new workout program!\n/,
   );
   const url = message.split("\n").at(-1),
     token = new URL(url).searchParams.get("invite");
@@ -129,7 +125,7 @@ test("a phone invitation carries the requested message and adds the program afte
   await guest.goto(url);
   await expect(
     guest.getByRole("region", { name: "Workout program invitation" }),
-  ).toContainText("Alex invited you to get buff!");
+  ).toContainText("Your friend invited you to get buff!");
   await expect(guest.locator(".sidebar")).toHaveCount(0);
   await guest.screenshot({
     path: "/tmp/buff-program-invitation-mobile.png",
