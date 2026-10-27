@@ -1,3 +1,4 @@
+import { fillSignupProfile } from "../signup-profile.js";
 import { test, expect } from "@playwright/test";
 test("two isolated devices share workouts, retain offline changes, and resolve conflicts explicitly", async ({
   browser,
@@ -14,6 +15,7 @@ test("two isolated devices share workouts, retain offline changes, and resolve c
       await page
         .getByRole("button", { name: "New to Buff? Create an account" })
         .click();
+    if (signup) await fillSignupProfile(page);
     await page.getByLabel("Email", { exact: true }).fill(email);
     await page.getByLabel(/^Password/).fill("workout journal password");
     await page

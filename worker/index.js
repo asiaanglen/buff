@@ -1,3 +1,4 @@
+import { profileError, accountUser } from "../shared/account-profile.js";
 import { sharingApi } from "./sharing.js";
 import { handleGoogle, googleConfigured } from "./google.js";
 import { inPounds } from "../shared/weights.js";
@@ -141,13 +142,29 @@ async function api(request, env) {
       );
     const normalized = email.trim().toLowerCase();
     if (path.endsWith("signup")) {
+      const error = profileError(body);
+      if (error) return failure(error, 400);
       const salt = randomHex();
-      const user = { id: randomHex(16), email: normalized };
+      const user = {
+        id: randomHex(16),
+        email: normalized,
+        firstName: body.firstName.trim(),
+        lastName: body.lastName.trim(),
+        dateOfBirth: body.dateOfBirth,
+      };
       const result = await db
         .prepare(
-          "INSERT INTO users (id,email,password,salt) VALUES (?,?,?,?) ON CONFLICT(email) DO NOTHING",
+          "INSERT INTO users (id,email,password,salt,first_name,last_name,date_of_birth) VALUES (?,?,?,?,?,?,?) ON CONFLICT(email) DO NOTHING",
         )
-        .bind(user.id, user.email, await makeVerifier(password, salt), salt)
+        .bind(
+          user.id,
+          user.email,
+          await makeVerifier(password, salt),
+          salt,
+          user.firstName,
+          user.lastName,
+          user.dateOfBirth,
+        )
         .run();
       if (!result.meta.changes)
         return failure(
@@ -167,7 +184,26 @@ async function api(request, env) {
     );
     if (!user || !verified)
       return failure("Email or password is incorrect.", 401);
-    return createSession(request, db, { id: user.id, email: user.email });
+    return createSession(request, db, accountUser(user));
+  }
+  if (path === "/api/auth/profile" && method === "POST") {
+    const user = await identify(request, db);
+    if (!user) return failure("Sign in to save your profile.", 401);
+    const body = await readBody(request);
+    const error = profileError(body);
+    if (error) return failure(error, 400);
+    await db
+      .prepare(
+        "UPDATE users SET first_name=?,last_name=?,date_of_birth=?,profile_required=0 WHERE id=?",
+      )
+      .bind(
+        body.firstName.trim(),
+        body.lastName.trim(),
+        body.dateOfBirth,
+        user.id,
+      )
+      .run();
+    return json({ user: await identify(request, db) });
   }
   if (path === "/api/auth/signout" && method === "POST") {
     const token = sessionToken(request);

@@ -44,6 +44,12 @@ function setup() {
       "utf8",
     ),
   );
+  DB.raw.exec(
+    readFileSync(
+      new URL("../migrations/0005_account_profiles.sql", import.meta.url),
+      "utf8",
+    ),
+  );
   return { DB, GOOGLE_CLIENT_ID: client, GOOGLE_CLIENT_SECRET: "test-secret" };
 }
 function cookie(response) {
@@ -104,7 +110,10 @@ async function flow(
 test("Google callback creates a session only after validating signed identity and consumes state once", async () => {
   const env = setup();
   try {
-    const f = await flow(env, { returnTo: "/app" });
+    const f = await flow(env, {
+      returnTo: "/app",
+      claims: { given_name: "Ana", family_name: "O’Neill" },
+    });
     assert.equal(f.to.origin, "https://accounts.google.com");
     assert.equal(f.to.searchParams.get("code_challenge_method"), "S256");
     const result = await handleGoogle(
@@ -124,6 +133,10 @@ test("Google callback creates a session only after validating signed identity an
       env.DB,
     );
     assert.equal(user.email, "person@example.com");
+    assert.equal(user.firstName, "Ana");
+    assert.equal(user.lastName, "O’Neill");
+    assert.equal(user.profileRequired, true);
+    assert.equal(user.dateOfBirth, undefined);
     assert.equal(
       env.DB.raw.prepare("SELECT COUNT(*) AS n FROM google_identities").get().n,
       1,
@@ -239,7 +252,7 @@ test("Google return destinations cannot leave Buff, and changed linking sessions
   const env = setup();
   try {
     env.DB.raw
-      .prepare("INSERT INTO users VALUES(?,?,?,?)")
+      .prepare("INSERT INTO users(id,email,password,salt) VALUES(?,?,?,?)")
       .run("existing", "person@example.com", "existing-verifier", "salt");
     const session = (
       await issueSessionCookie(new Request(origin), env.DB, { id: "existing" })

@@ -1,3 +1,4 @@
+import { signupProfile } from "../signup-profile.js";
 import { test as base, expect } from "@playwright/test";
 import { passwordProof, authScheme } from "../../src/credentials.js";
 export { expect };
@@ -5,11 +6,9 @@ export { expect };
 // keep unrelated test accounts from sharing the production sign-in rate bucket.
 export const test = base.extend({
   page: async ({ page, baseURL }, use) => {
-    await page
-      .context()
-      .setExtraHTTPHeaders({
-        "CF-Connecting-IP": `198.18.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250) + 1}`,
-      });
+    await page.context().setExtraHTTPHeaders({
+      "CF-Connecting-IP": `198.18.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250) + 1}`,
+    });
     const email = `app-${crypto.randomUUID()}@example.com`,
       password = "a private fixture password";
     const meta = await (
@@ -18,6 +17,7 @@ export const test = base.extend({
     const signup = await page.request.post(baseURL + "/api/auth/signup", {
       headers: { Origin: baseURL },
       data: {
+        ...signupProfile,
         email,
         password:
           meta.authScheme === authScheme

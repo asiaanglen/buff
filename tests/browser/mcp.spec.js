@@ -1,3 +1,4 @@
+import { signupProfile } from "../signup-profile.js";
 import { test, expect } from "@playwright/test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -10,6 +11,7 @@ async function connect(page, base, write = true, editExercises = write) {
     data: {
       email,
       password: await passwordProof(email, "a private workout password"),
+      ...signupProfile,
       credentialVersion: authScheme,
     },
   });
@@ -313,6 +315,7 @@ test("OAuth rejects code reuse and another account cannot approve or read a prop
       data: {
         email,
         password: await passwordProof(email, "another private password"),
+        ...signupProfile,
         credentialVersion: authScheme,
       },
     });
@@ -388,6 +391,7 @@ test("OAuth signs in through Buff and returns to consent in a fresh browser", as
         data: {
           email,
           password: await passwordProof(email, password),
+          ...signupProfile,
           credentialVersion: authScheme,
         },
       })

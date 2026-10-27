@@ -1,3 +1,5 @@
+import { fillSignupProfile } from "../signup-profile.js";
+import { signupProfile } from "../signup-profile.js";
 import { test, expect } from "./auth-fixture.js";
 import { exercise, daysApart } from "../../src/model.js";
 import { navigateTo } from "./navigation.js";
@@ -50,6 +52,7 @@ async function signedContext(browser, baseURL) {
     data: {
       email,
       password: await passwordProof(email, "x"),
+      ...signupProfile,
       credentialVersion: authScheme,
     },
   });
@@ -141,6 +144,7 @@ test("a phone invitation carries the requested message and adds the program afte
     "/api/auth/google/start?return_to=" +
       encodeURIComponent("/?invite=" + token),
   );
+  await fillSignupProfile(guest);
   await guest
     .getByLabel("Email", { exact: true })
     .fill(`new-friend-${crypto.randomUUID()}@example.com`);

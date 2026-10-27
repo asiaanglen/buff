@@ -5,6 +5,7 @@ export default defineConfig({
     "workout.spec.js",
     "sync.spec.js",
     "worker-api.spec.js",
+    "signup-profile.spec.js",
     "programs.spec.js",
     "mcp.spec.js",
     "import.spec.js",

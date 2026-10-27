@@ -3657,3 +3657,11 @@ body:has(#program-share-dialog[open]) .pwa-help {
 #personal-exercise-dialog .modal-footer {
   gap: 12px;
 }
+
+.account-profile-fields .profile-birth {
+  grid-column: 1 / -1;
+}
+.account-profile-fields input {
+  min-width: 0;
+  width: 100%;
+}

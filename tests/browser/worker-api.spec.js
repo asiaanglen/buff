@@ -1,3 +1,5 @@
+import { fillSignupProfile } from "../signup-profile.js";
+import { signupProfile } from "../signup-profile.js";
 import { test, expect } from "@playwright/test";
 import { passwordProof, authScheme } from "../../src/credentials.js";
 import { initialState } from "../../src/model.js";
@@ -11,7 +13,7 @@ test("D1 API authenticates users, isolates data, enforces origin and rejects sta
   expect((await request.get("/api/state")).status()).toBe(401);
   const signup = await request.post("/api/auth/signup", {
     headers,
-    data: { email, password, credentialVersion: authScheme },
+    data: { email, password, ...signupProfile, credentialVersion: authScheme },
   });
   expect(signup.status()).toBe(200);
   expect(signup.headers()["set-cookie"]).toContain("HttpOnly");
@@ -63,6 +65,7 @@ test("D1 API authenticates users, isolates data, enforces origin and rejects sta
         data: {
           email,
           password: "0".repeat(64),
+          ...signupProfile,
           credentialVersion: authScheme,
         },
       })
@@ -72,7 +75,12 @@ test("D1 API authenticates users, isolates data, enforces origin and rejects sta
     (
       await request.post("/api/auth/signin", {
         headers,
-        data: { email, password, credentialVersion: authScheme },
+        data: {
+          email,
+          password,
+          ...signupProfile,
+          credentialVersion: authScheme,
+        },
       })
     ).status(),
   ).toBe(200);
@@ -86,6 +94,7 @@ test("D1 API authenticates users, isolates data, enforces origin and rejects sta
         data: {
           email: other,
           password: await passwordProof(other, "another long password"),
+          ...signupProfile,
           credentialVersion: authScheme,
         },
       })
@@ -107,6 +116,7 @@ test("browser sends a stretched credential, never the raw password, to the Worke
     .getByRole("button", { name: "New to Buff? Create an account" })
     .click();
   const email = `proof-${Date.now()}@example.com`;
+  await fillSignupProfile(page);
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel(/^Password/).fill(raw);
   await page
@@ -128,6 +138,7 @@ test("legacy cloud journals are read in pounds and saving them does not double-c
     data: {
       email,
       password: await passwordProof(email, "pounds migration password"),
+      ...signupProfile,
       credentialVersion: authScheme,
     },
   });
@@ -163,4 +174,72 @@ test("legacy cloud journals are read in pounds and saving them does not double-c
   const again = await (await request.get("/api/state")).json();
   expect(again.revision).toBe(2);
   expect(again.state.workouts[0].exercises[0].weight).toBe(88.18);
+});
+
+test("signup validates and persists private account names and birth dates across sessions", async ({
+  request,
+  baseURL,
+}) => {
+  const email = `profile-${crypto.randomUUID()}@example.com`;
+  const password = await passwordProof(email, "profile password");
+  const credentials = { email, password, credentialVersion: authScheme };
+  const headers = {
+    Origin: baseURL,
+    "CF-Connecting-IP": `198.18.252.${Math.floor(Math.random() * 200) + 1}`,
+  };
+  const profile = {
+    firstName: "  Ana-María  ",
+    lastName: " O’Neill ",
+    dateOfBirth: "2000-02-29",
+  };
+  for (const data of [
+    credentials,
+    { ...credentials, ...profile, firstName: " " },
+    { ...credentials, ...profile, lastName: " " },
+    { ...credentials, ...profile, dateOfBirth: "2001-02-29" },
+    { ...credentials, ...profile, dateOfBirth: "2999-01-01" },
+  ]) {
+    const invalid = await request.post("/api/auth/signup", { headers, data });
+    expect(invalid.status()).toBe(400);
+  }
+  const signup = await request.post("/api/auth/signup", {
+    headers,
+    data: { ...credentials, ...profile },
+  });
+  expect(signup.status()).toBe(200);
+  const { user } = await signup.json();
+  expect(user).toMatchObject({
+    firstName: "Ana-María",
+    lastName: "O’Neill",
+    dateOfBirth: profile.dateOfBirth,
+  });
+  expect(user.password).toBeUndefined();
+  expect(user.salt).toBeUndefined();
+  await request.post("/api/auth/signout", { headers, data: {} });
+  expect((await request.get("/api/auth/session")).ok()).toBeTruthy();
+  expect(
+    (await (await request.get("/api/auth/session")).json()).user,
+  ).toBeNull();
+  expect(
+    (
+      await request.post("/api/auth/profile", { headers, data: profile })
+    ).status(),
+  ).toBe(401);
+  const signin = await request.post("/api/auth/signin", {
+    headers,
+    data: credentials,
+  });
+  expect(signin.status()).toBe(200);
+  expect((await signin.json()).user).toEqual(user);
+  expect((await (await request.get("/api/auth/session")).json()).user).toEqual(
+    user,
+  );
+  expect(
+    (
+      await request.post("/api/auth/profile", {
+        headers: { Origin: "https://other.example" },
+        data: profile,
+      })
+    ).status(),
+  ).toBe(403);
 });

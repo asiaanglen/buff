@@ -1,3 +1,4 @@
+import { fillSignupProfile } from "../signup-profile.js";
 import { workoutTool } from "./exercise-navigation.js";
 import { navigateTo } from "./navigation.js";
 import { test, expect } from "./auth-fixture.js";
@@ -152,6 +153,7 @@ test("programs and their workouts sync across two separate devices", async ({
         await page
           .getByRole("button", { name: "New to Buff? Create an account" })
           .click();
+      if (signup) await fillSignupProfile(page);
       await page.getByLabel("Email", { exact: true }).fill(email);
       await page.getByLabel(/^Password/).fill("program sync password");
       await page

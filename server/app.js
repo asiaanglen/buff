@@ -1,3 +1,4 @@
+import { profileError, accountUser } from "../shared/account-profile.js";
 import { inPounds } from "../shared/weights.js";
 import { validState } from "../shared/journal.js";
 import express from "express";
@@ -27,6 +28,19 @@ export function createApp({
  CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY,email TEXT NOT NULL UNIQUE,password TEXT NOT NULL,salt TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,expires INTEGER NOT NULL);
  CREATE TABLE IF NOT EXISTS journals (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,revision INTEGER NOT NULL,data TEXT NOT NULL);`);
+  const columns = new Set(
+    db
+      .prepare("PRAGMA table_info(users)")
+      .all()
+      .map((column) => column.name),
+  );
+  for (const column of ["first_name", "last_name", "date_of_birth"])
+    if (!columns.has(column))
+      db.exec(`ALTER TABLE users ADD COLUMN ${column} TEXT`);
+  if (!columns.has("profile_required"))
+    db.exec(
+      "ALTER TABLE users ADD COLUMN profile_required INTEGER NOT NULL DEFAULT 0",
+    );
   const app = express();
   if (production) app.set("trust proxy", 1);
   app.disable("x-powered-by");
@@ -70,11 +84,13 @@ export function createApp({
       .find((s) => s.startsWith("buff_session="))
       ?.slice(13);
     if (!token) return null;
-    return db
-      .prepare(
-        "SELECT users.id,users.email FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?",
-      )
-      .get(digest(token), Date.now());
+    return accountUser(
+      db
+        .prepare(
+          "SELECT users.id,users.email,users.first_name,users.last_name,users.date_of_birth,users.profile_required FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?",
+        )
+        .get(digest(token), Date.now()),
+    );
   }
   function requireUser(req, res, next) {
     req.user = identify(req);
@@ -97,18 +113,16 @@ export function createApp({
       maxAge: 30 * 86400000,
       path: "/",
     });
-    res.json({ user: { id: user.id, email: user.email } });
+    res.json({ user: accountUser(user) });
   }
   app.get("/api/auth/providers", (_req, res) =>
     res.json({ google: false, googleLinked: false }),
   );
   app.get("/api/auth/google/start", (_req, res) =>
-    res
-      .status(503)
-      .json({
-        error:
-          "Google sign-in is available on the Workers deployment after configuration.",
-      }),
+    res.status(503).json({
+      error:
+        "Google sign-in is available on the Workers deployment after configuration.",
+    }),
   );
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
   app.get("/api/auth/session", (req, res) =>
@@ -126,8 +140,12 @@ export function createApp({
         password.length > 200
       )
         return res.status(400).json({
-          error: "Use a valid email and a non-empty password of at most 200 characters.",
+          error:
+            "Use a valid email and a non-empty password of at most 200 characters.",
         });
+      const profile = req.body;
+      const error = profileError(profile);
+      if (error) return res.status(400).json({ error });
       const normalized = email.trim().toLowerCase();
       if (db.prepare("SELECT id FROM users WHERE email=?").get(normalized))
         return res.status(409).json({
@@ -136,13 +154,18 @@ export function createApp({
       const salt = randomBytes(16).toString("hex");
       const hash = (await scrypt(password, salt, 64)).toString("hex");
       const user = { id: randomBytes(16).toString("hex"), email: normalized };
-      db.prepare("INSERT INTO users VALUES (?,?,?,?)").run(
+      db.prepare(
+        "INSERT INTO users(id,email,password,salt,first_name,last_name,date_of_birth) VALUES (?,?,?,?,?,?,?)",
+      ).run(
         user.id,
         normalized,
         hash,
         salt,
+        profile.firstName.trim(),
+        profile.lastName.trim(),
+        profile.dateOfBirth,
       );
-      session(user, res);
+      session(db.prepare("SELECT * FROM users WHERE id=?").get(user.id), res);
     } catch (e) {
       next(e);
     }
@@ -171,6 +194,19 @@ export function createApp({
     } catch (e) {
       next(e);
     }
+  });
+  app.post("/api/auth/profile", requireUser, (req, res) => {
+    const error = profileError(req.body);
+    if (error) return res.status(400).json({ error });
+    db.prepare(
+      "UPDATE users SET first_name=?,last_name=?,date_of_birth=?,profile_required=0 WHERE id=?",
+    ).run(
+      req.body.firstName.trim(),
+      req.body.lastName.trim(),
+      req.body.dateOfBirth,
+      req.user.id,
+    );
+    res.json({ user: identify(req) });
   });
   app.post("/api/auth/signout", (req, res) => {
     const token = req.headers.cookie

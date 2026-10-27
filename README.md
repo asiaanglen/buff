@@ -219,3 +219,15 @@ Links remain available until disabled by their owner under **Manage invitation l
 Completed workouts in a program collapse into a grey summary card. Completing the last set or choosing **Mark as complete** in Programs keeps you in the program; **View log** reopens the saved results for review or correction.
 
 Exercise search now appears directly under the **Exercise name** field. **Add New Exercise** opens a private definition form for instructions, rep/time tracking and optional weight tracking. Personal definitions sync with the account, appear in that account’s MCP exercise search, and are copied with a shared program only when used by that program.
+
+## Signup profile fields
+
+New email signups require **First Name**, **Last Name**, and **Date of Birth**. Names accept up to 80 characters, and birth dates must be real calendar dates that are not in the future. New Google accounts prefill available names and complete the same profile fields after authentication. Existing accounts remain usable without a profile-completion prompt.
+
+Account profiles are stored in the `users` table, separately from workout journals and shared program snapshots. An authenticated user can retrieve their own profile through `/api/auth/session`; birth dates are not included in program invitations or MCP workout data. In Cloudflare D1’s `buff` database Console, account owners can view the collected fields with:
+
+```sql
+SELECT first_name, last_name, email, date_of_birth FROM users ORDER BY email;
+```
+
+Apply `0005_account_profiles.sql` with `npm run db:migrate:remote` before deploying this version. Existing account profile columns remain null until provided; no names or birth dates are inferred for existing users.

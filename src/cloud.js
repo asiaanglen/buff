@@ -1,3 +1,4 @@
+import { profileFields } from "./account-profile.js";
 import { pendingInvitation } from "./invite-token.js";
 import { importGuest } from "./model.js";
 import { authScheme, passwordProof } from "./credentials.js";
@@ -223,7 +224,13 @@ export function createCloud({
     if (slot) slot.innerHTML = googleControls();
   }
   function open(mode = "signin", message = "") {
-    root.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title"><div class="modal-header"><div><div class="eyebrow">YOUR WORKOUTS, EVERYWHERE</div><h2 id="account-title">${user ? "Your account" : mode === "signup" ? "Create your account" : "Sign in to Buff"}</h2></div><button class="icon-button close" data-cloud="close" aria-label="Close account">×</button></div><p class="account-intro">${user ? `Signed in as <strong>${escape(user.email)}</strong>` : "Use the same account on every device to sync your plans and workout logs."}</p><p class="account-message" role="status">${escape(message)}</p><div id="google-auth-slot">${googleControls()}</div>${user ? `<p class="sync-detail" data-sync-status>${escape(status)}</p><div class="account-actions"><button class="button primary" data-cloud="sync">Sync now</button><button class="button subtle" data-cloud="download">Download a backup</button></div><div class="conflict-actions" ${conflict ? "" : "hidden"}><h3>Two devices changed your journal</h3><p>Neither version has been overwritten. Download your local backup before choosing.</p><button class="button subtle" data-cloud="use-cloud">Use cloud version</button><button class="button subtle" data-cloud="use-local">Replace cloud with this device</button></div><p class="account-help">Changes save automatically. You can safely keep editing when offline; pending changes sync when the server is reachable.</p><p><a class="text-button" href="/connections">Manage connected AI apps →</a></p><div class="modal-footer"><button class="text-button" data-cloud="import">Import guest workouts</button><button class="text-button danger" data-cloud="signout">Sign out</button></div>` : `<form id="auth-form"><label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>Password<input name="password" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" required maxlength="200"></label><button class="button primary auth-submit" type="submit">${mode === "signup" ? "Create account" : "Sign in"} →</button></form><button class="text-button auth-switch" data-cloud="${mode === "signup" ? "signin" : "signup"}">${mode === "signup" ? "Already have an account? Sign in" : "New to Buff? Create an account"}</button><p class="account-help">Guest workouts stay on this device. Your first cloud journal starts with your device’s workouts. Password reset is not available yet; keep your password somewhere safe.</p>`}</section></div>`;
+    if (user?.profileRequired) {
+      root.dataset.mode = "profile";
+      root.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title"><div class="modal-header"><h2 id="account-title">Complete your profile</h2></div><p>Add your details to finish creating your Buff account.</p><p class="account-message" role="status">${escape(message)}</p><form id="profile-form">${profileFields(escape, user)}<button type="submit" class="button primary">Continue</button></form><div class="modal-footer"><button type="button" class="text-button" data-cloud="signout">Sign out</button></div></section></div>`;
+      root.querySelector("input")?.focus();
+      return;
+    }
+    root.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title"><div class="modal-header"><div><div class="eyebrow">YOUR WORKOUTS, EVERYWHERE</div><h2 id="account-title">${user ? "Your account" : mode === "signup" ? "Create your account" : "Sign in to Buff"}</h2></div><button class="icon-button close" data-cloud="close" aria-label="Close account">×</button></div><p class="account-intro">${user ? `Signed in as <strong>${escape(user.email)}</strong>` : "Use the same account on every device to sync your plans and workout logs."}</p><p class="account-message" role="status">${escape(message)}</p><div id="google-auth-slot">${googleControls()}</div>${user ? `<p class="sync-detail" data-sync-status>${escape(status)}</p><div class="account-actions"><button class="button primary" data-cloud="sync">Sync now</button><button class="button subtle" data-cloud="download">Download a backup</button></div><div class="conflict-actions" ${conflict ? "" : "hidden"}><h3>Two devices changed your journal</h3><p>Neither version has been overwritten. Download your local backup before choosing.</p><button class="button subtle" data-cloud="use-cloud">Use cloud version</button><button class="button subtle" data-cloud="use-local">Replace cloud with this device</button></div><p class="account-help">Changes save automatically. You can safely keep editing when offline; pending changes sync when the server is reachable.</p><p><a class="text-button" href="/connections">Manage connected AI apps →</a></p><div class="modal-footer"><button class="text-button" data-cloud="import">Import guest workouts</button><button class="text-button danger" data-cloud="signout">Sign out</button></div>` : `<form id="auth-form">${mode === "signup" ? profileFields(escape) : ""}<label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>Password<input name="password" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" required maxlength="200"></label><button class="button primary auth-submit" type="submit">${mode === "signup" ? "Create account" : "Sign in"} →</button></form><button class="text-button auth-switch" data-cloud="${mode === "signup" ? "signin" : "signup"}">${mode === "signup" ? "Already have an account? Sign in" : "New to Buff? Create an account"}</button><p class="account-help">Guest workouts stay on this device. Your first cloud journal starts with your device’s workouts. Password reset is not available yet; keep your password somewhere safe.</p>`}</section></div>`;
     void refreshProviders();
     root.dataset.mode = mode;
     root.querySelector("input,button")?.focus();
@@ -236,6 +243,24 @@ export function createCloud({
     b.disabled = true;
     const data = Object.fromEntries(new FormData(form));
     try {
+      if (form.id === "profile-form") {
+        const result = await request("/auth/profile", {
+          method: "POST",
+          body: JSON.stringify(data),
+        });
+        user = result.user;
+        notify(status);
+        if (returnTo) {
+          location.assign(returnTo);
+          return;
+        }
+        if (onAuthenticated && (await onAuthenticated())) {
+          root.innerHTML = "";
+          return;
+        }
+        open();
+        return;
+      }
       const session = await request("/auth/session");
       if (session.authScheme === authScheme) {
         data.password = await passwordProof(data.email, data.password);
@@ -266,6 +291,7 @@ export function createCloud({
     if (!b) return;
     const action = b.dataset.cloud;
     if (action === "close") {
+      if (user?.profileRequired) return;
       root.innerHTML = "";
       return;
     }
@@ -363,7 +389,7 @@ export function createCloud({
     }
   });
   root.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") root.innerHTML = "";
+    if (e.key === "Escape" && !user?.profileRequired) root.innerHTML = "";
     if (e.key === "Tab") {
       const els = [
         ...root.querySelectorAll("button:not([disabled]),input"),
@@ -399,7 +425,7 @@ export function createCloud({
     async refresh() {
       if (user) await loadAccount(user);
     },
-    isSignedIn: () => Boolean(user),
+    isSignedIn: () => Boolean(user) && !user.profileRequired,
     label: () => (user ? `${status} · ${user.email}` : status),
     async start() {
       try {
@@ -431,7 +457,8 @@ export function createCloud({
 
         if (sessionUser) {
           await loadAccount(sessionUser);
-          if (returnTo) location.assign(returnTo);
+          if (user.profileRequired) open();
+          else if (returnTo) location.assign(returnTo);
           else if (message) open("signin", message);
         } else {
           if (!returnTo && location.pathname !== "/")

@@ -1,3 +1,4 @@
+import { accountUser } from "../shared/account-profile.js";
 import { digest } from "./crypto.js";
 export function sessionToken(request) {
   return request.headers
@@ -10,12 +11,13 @@ export function sessionToken(request) {
 export async function identify(request, db) {
   const token = sessionToken(request);
   if (!token || !/^[a-f0-9]{64}$/.test(token)) return null;
-  return db
+  const user = await db
     .prepare(
-      "SELECT users.id,users.email FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?",
+      "SELECT users.id,users.email,users.first_name,users.last_name,users.date_of_birth,users.profile_required FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?",
     )
     .bind(await digest(token), Date.now())
     .first();
+  return accountUser(user);
 }
 export function cookie(request, token, clear = false) {
   return `buff_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${clear ? 0 : 30 * 86400}${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;

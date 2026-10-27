@@ -1,0 +1,4 @@
+ALTER TABLE users ADD COLUMN first_name TEXT;
+ALTER TABLE users ADD COLUMN last_name TEXT;
+ALTER TABLE users ADD COLUMN date_of_birth TEXT;
+ALTER TABLE users ADD COLUMN profile_required INTEGER NOT NULL DEFAULT 0;

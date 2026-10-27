@@ -1,3 +1,4 @@
+import { signupProfile } from "../signup-profile.js";
 import { workoutTool } from "./exercise-navigation.js";
 import { test, expect } from "./auth-fixture.js";
 test("exercise library searches aliases and variations, supports timed exercises and custom names", async ({
@@ -280,6 +281,7 @@ test("personal exercises keep instructions and tracking private, sync to another
     data: {
       email,
       password: await passwordProof(email, "private library password"),
+      ...signupProfile,
       credentialVersion: authScheme,
     },
   });

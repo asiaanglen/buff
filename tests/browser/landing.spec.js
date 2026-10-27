@@ -1,3 +1,4 @@
+import { fillSignupProfile } from "../signup-profile.js";
 import { test, expect } from "@playwright/test";
 import { initialState } from "../../src/model.js";
 test("signed-out visitors only see the landing page, including direct private URLs", async ({
@@ -38,12 +39,19 @@ test("landing page signup leads to the planner, signed-in reloads stay there, an
     page.getByRole("heading", { name: "Create your account" }),
   ).toBeVisible();
   const email = `landing-${Date.now()}@example.com`;
+  await fillSignupProfile(page);
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel(/^Password/).fill("x");
   await page
     .getByRole("button", { name: "Create account →", exact: true })
     .click();
   await expect(page.locator("#account-root")).toContainText(email);
+  const signedUp = await (await page.request.get("/api/auth/session")).json();
+  expect(signedUp.user).toMatchObject({
+    firstName: "Test",
+    lastName: "User",
+    dateOfBirth: "1990-01-15",
+  });
   await page.getByRole("button", { name: "Close account" }).click();
   await expect(
     page.getByRole("heading", { name: "Your week, in motion." }),

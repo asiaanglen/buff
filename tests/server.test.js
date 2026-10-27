@@ -1,3 +1,4 @@
+import { signupProfile } from "./signup-profile.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createApp } from "../server/app.js";
@@ -24,6 +25,7 @@ test("accounts isolate journals, durable revisions prevent lost updates, and ses
       (
         await req("/auth/signup", "POST", {
           email: "a@example.com",
+          ...signupProfile,
           password: "",
         })
       ).status,
@@ -31,6 +33,7 @@ test("accounts isolate journals, durable revisions prevent lost updates, and ses
     );
     const a = await req("/auth/signup", "POST", {
       email: "a@example.com",
+      ...signupProfile,
       password: "x",
     });
     assert.equal(a.status, 200);
@@ -53,6 +56,7 @@ test("accounts isolate journals, durable revisions prevent lost updates, and ses
     );
     const b = await req("/auth/signup", "POST", {
       email: "b@example.com",
+      ...signupProfile,
       password: "another long password",
     });
     const cookieB = b.headers.get("set-cookie").split(";")[0];
@@ -85,6 +89,7 @@ test("accounts isolate journals, durable revisions prevent lost updates, and ses
     );
     const signIn = await req("/auth/signin", "POST", {
       email: "A@example.com",
+      ...signupProfile,
       password: "x",
     });
     assert.equal(signIn.status, 200);
@@ -97,6 +102,7 @@ test("accounts isolate journals, durable revisions prevent lost updates, and ses
       (
         await req("/auth/signin", "POST", {
           email: "a@example.com",
+          ...signupProfile,
           password: "wrong password",
         })
       ).status,
@@ -136,6 +142,7 @@ test("workout history and account sessions survive a database reopen", async () 
       headers: { Origin: base, "Content-Type": "application/json" },
       body: JSON.stringify({
         email: "durable@example.com",
+        ...signupProfile,
         password: "a persistent password",
       }),
     });

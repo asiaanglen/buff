@@ -251,9 +251,20 @@ export async function handleGoogle(
         await db.batch([
           db
             .prepare(
-              "INSERT INTO users(id,email,password,salt) VALUES(?,?,?,?)",
+              "INSERT INTO users(id,email,password,salt,first_name,last_name,profile_required) VALUES(?,?,?,?,?,?,1)",
             )
-            .bind(user.id, email, "google-only:" + randomHex(), randomHex()),
+            .bind(
+              user.id,
+              email,
+              "google-only:" + randomHex(),
+              randomHex(),
+              typeof profile.given_name === "string"
+                ? profile.given_name.trim().slice(0, 80)
+                : null,
+              typeof profile.family_name === "string"
+                ? profile.family_name.trim().slice(0, 80)
+                : null,
+            ),
           db
             .prepare(
               "INSERT INTO google_identities(subject,user_id) VALUES(?,?)",
