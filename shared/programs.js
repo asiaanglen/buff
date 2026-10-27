@@ -87,6 +87,11 @@ export function alignProgram(state, programId, startDate) {
 export function onPlanner(state, workout) {
   return (
     !workout.plannerHidden &&
+    !(
+      state.activeProgramId &&
+      workout.programId &&
+      workout.programId !== state.activeProgramId
+    ) &&
     !(state.programs || []).some(
       (p) => p.id === workout.programId && p.unenrolled,
     )
@@ -115,4 +120,18 @@ export function deleteProgram(state, programId) {
   });
   state.programs = (state.programs || []).filter((p) => p.id !== programId);
   if (state.activeProgramId === programId) delete state.activeProgramId;
+}
+
+export function enrollProgram(state, programId, startDate) {
+  // Validate alignment before changing any enrollment or existing schedule.
+  const program = alignProgram(state, programId, startDate);
+  for (const other of state.programs || []) {
+    if (other.id !== programId) other.unenrolled = true;
+  }
+  delete program.unenrolled;
+  for (const workout of state.workouts) {
+    if (workout.programId === programId) delete workout.plannerHidden;
+  }
+  state.activeProgramId = programId;
+  return program;
 }

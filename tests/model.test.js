@@ -357,3 +357,44 @@ test("unenrollment hides calendar entries while deletion preserves recorded resu
   assert.equal(onPlanner(state, logged), false);
   assert.equal(logged.exercises[0].logs[0].weight, "100");
 });
+
+test("enrolling in another program keeps history and removes other schedules atomically", async () => {
+  const { enrollProgram, onPlanner } = await import("../shared/programs.js");
+  const state = {
+    programs: [
+      { id: "a", name: "A", weeks: 4, startDate: "2026-10-26" },
+      {
+        id: "b",
+        name: "B",
+        weeks: 4,
+        startDate: "2026-10-26",
+        unenrolled: true,
+      },
+    ],
+    activeProgramId: "a",
+    workouts: [
+      {
+        id: "logged",
+        programId: "a",
+        date: "2026-10-26",
+        exercises: [exercise("Squat", 1)],
+      },
+      { id: "next", programId: "b", date: "2026-10-26", exercises: [] },
+    ],
+  };
+  state.workouts[0].exercises[0].logs[0] = {
+    weight: "100",
+    actual: "5",
+    done: true,
+  };
+  const history = structuredClone(state.workouts[0]);
+  assert.throws(() => enrollProgram(state, "b", "invalid"));
+  assert.equal(state.activeProgramId, "a");
+  enrollProgram(state, "b", "2026-10-27");
+  assert.equal(state.activeProgramId, "b");
+  assert.equal(state.programs[0].unenrolled, true);
+  assert.equal(onPlanner(state, state.workouts[0]), false);
+  assert.equal(onPlanner(state, state.workouts[1]), true);
+  assert.deepEqual(state.workouts[0], history);
+  assert.equal(state.workouts[1].date, "2026-10-27");
+});

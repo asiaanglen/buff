@@ -72,7 +72,7 @@ test("plans a custom program, logs a workout, copies a week and safely deletes o
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.reload();
   await navigateTo(page, "programs");
-  await page.getByRole("button", { name: "Open program" }).click();
+  await page.getByRole("button", { name: "View Program" }).click();
   await expect(page.locator(".program-weeks")).toContainText("Week 4");
   await page.getByRole("button", { name: "Edit program", exact: true }).click();
   page.once("dialog", (d) => d.accept());
@@ -170,7 +170,7 @@ test("programs and their workouts sync across two separate devices", async ({
     await auth(b, false);
     await navigateTo(b, "programs");
     await expect(b.locator(".program-card")).toContainText("Synced program");
-    await b.getByRole("button", { name: "Open program" }).click();
+    await b.getByRole("button", { name: "View Program" }).click();
     await b.getByLabel("Go to program week").selectOption("10");
     await expect(b.locator(".workout-card")).toContainText(
       "Synced Week 10 workout",

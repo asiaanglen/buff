@@ -13,7 +13,7 @@ import { newExerciseDialog } from "./personal-exercises.js";
 import { createSharing, sharingRequest, invitationBanner } from "./sharing.js";
 import { pendingInvitation, clearInvitation } from "./invite-token.js";
 import {
-  alignProgram,
+  enrollProgram,
   onPlanner,
   unenrollProgram,
   deleteProgram,
@@ -690,6 +690,15 @@ app.addEventListener("click", (event) => {
   }
   if (a === "start-program" || a === "align-program") {
     const id = b.dataset.program;
+    const current = state.programs.find((p) => p.id === state.activeProgramId);
+    if (
+      current &&
+      current.id !== id &&
+      !confirm(
+        `Switch from "${current.name}" to another program? You can only enroll in one program at a time. Upcoming workouts in your current program will be removed from your calendar. Your exercise history and completed workouts will be saved.`,
+      )
+    )
+      return;
     if (state.programs.some((p) => p.id === id)) {
       if (state.activeProgramId === id && a === "start-program") tab = "home";
       else
@@ -697,6 +706,7 @@ app.addEventListener("click", (event) => {
           type: "start-program",
           programId: id,
           alignOnly: a === "align-program",
+          confirmedProgramId: current?.id,
         };
     }
   }
@@ -872,11 +882,19 @@ app.addEventListener("submit", (event) => {
   }
   if (form.id === "start-program-form") {
     try {
-      const p = alignProgram(state, form.dataset.programId, data.startDate);
-      state.activeProgramId = p.id;
-      delete p.unenrolled;
-      for (const w of state.workouts)
-        if (w.programId === p.id) delete w.plannerHidden;
+      const current = state.programs.find(
+        (p) => p.id === state.activeProgramId,
+      );
+      if (
+        current &&
+        current.id !== form.dataset.programId &&
+        current.id !== modal.confirmedProgramId &&
+        !confirm(
+          `Switch programs? Upcoming workouts in "${current.name}" will be removed from your calendar. Your exercise history and completed workouts will be saved.`,
+        )
+      )
+        return;
+      const p = enrollProgram(state, form.dataset.programId, data.startDate);
       selected = p.startDate;
       calendarMonth = selected.slice(0, 7) + "-01";
       week = weekStart(new Date(p.startDate + "T12:00:00"));

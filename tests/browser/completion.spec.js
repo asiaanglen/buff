@@ -139,7 +139,7 @@ test("completed program workouts collapse, stay grey after reload, and retain ed
   expect(response.ok()).toBeTruthy();
   await page.goto("/");
   await navigateTo(page, "programs");
-  await page.getByRole("button", { name: /Open program/ }).click();
+  await page.getByRole("button", { name: /View Program/ }).click();
   const first = page
     .locator(".workout-card")
     .filter({ hasText: "Checkoff session" });
@@ -161,7 +161,7 @@ test("completed program workouts collapse, stay grey after reload, and retain ed
   await expect(page.locator("#sync-label")).toContainText("Synced");
   await page.reload();
   await navigateTo(page, "programs");
-  await page.getByRole("button", { name: /Open program/ }).click();
+  await page.getByRole("button", { name: /View Program/ }).click();
   await expect(page.locator(".workout-minimized")).toHaveCount(2);
   await first.getByRole("button", { name: "View log", exact: true }).click();
   await expect(

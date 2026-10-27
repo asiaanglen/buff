@@ -289,7 +289,7 @@ test("deleting a program clears its calendar and keeps completed workout history
   const { navigateTo } = await import("./navigation.js");
   await navigateTo(page, "programs");
   await page
-    .getByRole("button", { name: "Open program", exact: false })
+    .getByRole("button", { name: "View Program", exact: false })
     .click();
   await page.getByRole("button", { name: "Edit program", exact: true }).click();
   page.on("dialog", (d) => d.accept());
