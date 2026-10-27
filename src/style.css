@@ -3931,3 +3931,27 @@ body:has(#program-share-dialog[open]) .pwa-help {
   padding: 14px 16px;
   border-radius: 10px;
 }
+
+.calendar-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: auto;
+  min-width: 28px;
+  min-height: 32px;
+  padding: 4px;
+  border-radius: 5px;
+  color: #aa4556;
+  cursor: pointer;
+}
+.calendar-delete:hover,
+.calendar-delete:focus-visible {
+  background: #fae6eb;
+}
+@media (max-width: 700px) {
+  .calendar-delete {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

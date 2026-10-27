@@ -436,7 +436,7 @@ function moveCalendarWorkout(id, date) {
 }
 function moveWorkoutButton(w) {
   return tab === "planner"
-    ? `<button type="button" class="button subtle" data-action="move-workout" data-id="${esc(w.id)}">Move</button><button type="button" class="text-button" data-action="remove-from-planner" data-id="${esc(w.id)}">Remove from planner</button>`
+    ? `<button type="button" class="button subtle" data-action="move-workout" data-id="${esc(w.id)}">Move</button>`
     : "";
 }
 function workoutCard(w) {
@@ -602,6 +602,24 @@ function completeExercises(exercises, done = true) {
   return true;
 }
 app.addEventListener("click", (event) => {
+  const trash = event.target.closest('[data-action="calendar-delete-workout"]');
+  if (trash) {
+    const entry = state.workouts.find((w) => w.id === trash.dataset.id);
+    if (
+      !entry ||
+      !confirm(
+        `Delete "${entry.name}" and all its logged sets and notes? This cannot be undone.`,
+      )
+    )
+      return;
+    state.workouts = state.workouts.filter((w) => w.id !== entry.id);
+    loggingWorkouts.delete(entry.id);
+    openExerciseIds.delete(entry.id);
+    if (active === entry.id) active = null;
+    save();
+    render();
+    return;
+  }
   const day = event.target.closest("[data-day]");
   if (day) {
     selected = day.dataset.day;
@@ -716,20 +734,6 @@ app.addEventListener("click", (event) => {
     selectedProgramId = b.dataset.program;
     selectedProgramWeek = 1;
     tab = "programs";
-  }
-  if (a === "remove-from-planner") {
-    if (
-      !confirm(
-        "Remove this workout from your planner? Your recorded results will be kept.",
-      )
-    )
-      return;
-    const entry = state.workouts.find((w) => w.id === b.dataset.id);
-    if (entry) entry.plannerHidden = true;
-    loggingWorkouts.delete(b.dataset.id);
-    save();
-    render();
-    return;
   }
   if (a === "unenroll-program") {
     if (

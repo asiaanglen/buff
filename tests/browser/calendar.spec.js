@@ -272,7 +272,10 @@ test("unenroll removes a program from both calendar views and can be reversed", 
     state.workouts[0].exercises[0].logs,
   );
   await page
-    .getByRole("button", { name: "Remove from planner", exact: true })
+    .getByRole("button", {
+      name: "Delete workout: Logged strength",
+      exact: true,
+    })
     .first()
     .click();
   await expect(page.locator("[data-calendar-workout]")).toHaveCount(1);
@@ -304,4 +307,29 @@ test("deleting a program clears its calendar and keeps completed workout history
   expect(saved.programs).toHaveLength(0);
   expect(saved.workouts).toHaveLength(1);
   expect(saved.workouts[0].exercises[0].note).toBe("Keep logged note");
+});
+
+test("calendar trash supports cancel and deletes a workout permanently", async ({
+  page,
+  baseURL,
+}) => {
+  await seed(page, baseURL);
+  await expect(
+    page.getByRole("button", { name: "Remove from planner", exact: true }),
+  ).toHaveCount(0);
+  const trash = page.getByRole("button", {
+    name: "Delete workout: Second session",
+    exact: true,
+  });
+  page.once("dialog", (d) => d.dismiss());
+  await trash.click();
+  await expect(trash).toBeVisible();
+  await page.getByRole("button", { name: "Month", exact: true }).click();
+  page.once("dialog", (d) => d.accept());
+  await trash.locator("svg").click();
+  await expect(trash).toHaveCount(0);
+  await expect(page.locator("#sync-label")).toContainText("Synced");
+  await page.reload();
+  const saved = (await (await page.request.get("/api/state")).json()).state;
+  expect(saved.workouts.map((w) => w.id)).toEqual(["calendar-logged"]);
 });
