@@ -307,3 +307,39 @@ test("personal exercises keep instructions and tracking private, sync to another
   ).toHaveCount(0);
   await other.close();
 });
+
+test("planning a workout searches the library and saves selected exercises", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Plan a workout", exact: false })
+    .first()
+    .click();
+  await page
+    .getByLabel("Workout name", { exact: true })
+    .fill("Library search workout");
+  const search = page.getByLabel("Search exercise library");
+  await search.fill("bench");
+  await page.getByRole("button", { name: /^Barbell Bench Press / }).click();
+  await expect(page.locator("#draft-exercises")).toContainText("Bench Press");
+  await search.fill("RDL");
+  await page.getByRole("button", { name: /^Romanian Deadlift / }).click();
+  await search.fill("plank");
+  await page.getByRole("button", { name: /^Plank Core/ }).click();
+  await page
+    .getByRole("button", { name: "Remove Barbell Bench Press", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Create workout", exact: false })
+    .click();
+  const workout = page
+    .locator(".workout-card")
+    .filter({ has: page.getByText("Library search workout", { exact: true }) });
+  await expect(workout).toContainText("Romanian Deadlift");
+  await expect(workout).toContainText("Plank");
+  await expect(workout).not.toContainText("Bench Press");
+  await page.reload();
+  await expect(workout).toContainText("Romanian Deadlift");
+});

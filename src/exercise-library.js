@@ -9,8 +9,10 @@ export function exerciseLibrary() {
 export function renderExerciseResults(root, state, esc) {
   const results = root.querySelector("#exercise-search-results");
   if (!results) return;
-  const form = root.querySelector("#exercise-form");
-  const query = form.elements.name.value.trim();
+  const form = root.querySelector("#exercise-form, #workout-form");
+  const query = (
+    form.elements.exerciseSearch || form.elements.name
+  ).value.trim();
   const status = root.querySelector("#exercise-search-status");
   if (!query || form.dataset.pickedName === query) {
     status.textContent = "";
