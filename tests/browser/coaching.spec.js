@@ -50,9 +50,15 @@ test("coach builds a program, invites by email/text, client joins, coach logs re
     await expect(
       coach.getByRole("heading", { name: "Welcome, Casey." }),
     ).toBeVisible();
-    await coach
-      .getByRole("button", { name: "My programs", exact: true })
-      .click();
+    const navigation = coach.getByRole("navigation", {
+      name: "Coach workspace",
+    });
+    await expect(navigation.getByRole("button")).toHaveText([
+      "Clients",
+      "Programs",
+    ]);
+    await expect(navigation.getByRole("link")).toHaveCount(0);
+    await coach.getByRole("button", { name: "Programs", exact: true }).click();
     await coach
       .getByRole("link", { name: "Build or edit programs", exact: false })
       .click();
@@ -96,9 +102,7 @@ test("coach builds a program, invites by email/text, client joins, coach logs re
     await coach
       .getByRole("link", { name: "Coach dashboard", exact: false })
       .click();
-    await coach
-      .getByRole("button", { name: "My programs", exact: true })
-      .click();
+    await coach.getByRole("button", { name: "Programs", exact: true }).click();
     await coach
       .getByRole("button", { name: "Invite a client", exact: false })
       .click();
@@ -187,9 +191,7 @@ test("coach builds a program, invites by email/text, client joins, coach logs re
     await expect(client.locator(".program-card")).toContainText(
       "Coach strength block",
     );
-    await coach
-      .getByRole("button", { name: "Clients’ programs", exact: true })
-      .click();
+    await coach.getByRole("button", { name: "Clients", exact: true }).click();
     await coach
       .getByRole("button", { name: "Refresh progress", exact: true })
       .click();
