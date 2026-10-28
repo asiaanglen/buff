@@ -434,8 +434,7 @@ function openPersonalExercise() {
   });
 }
 function swapButton(w, e) {
-  const recorded = e.logs.some((log) => log.done);
-  return `<button type="button" class="text-button swap-exercise" data-action="swap-exercise" data-id="${w.id}" data-eid="${e.id}" aria-label="Swap exercise: ${esc(e.name)}" ${recorded ? 'disabled title="This exercise has recorded results; add a replacement to preserve its history."' : ""}>Swap exercise</button>`;
+  return `<button type="button" class="text-button swap-exercise" data-action="swap-exercise" data-id="${w.id}" data-eid="${e.id}" aria-label="Swap exercise: ${esc(e.name)}">Swap exercise</button>`;
 }
 function moveCalendarWorkout(id, date) {
   try {
@@ -515,7 +514,7 @@ function dialog() {
           ? selectedProgramId
           : null),
   );
-  return `<div class="modal-backdrop"><section class="modal ${modal.type === "log" ? "log-modal" : ""}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="eyebrow">YOUR TRAINING JOURNAL</div><h2 id="modal-title">${modal.type === "log" ? esc(w.name) : modal.type === "swap" ? "Swap exercise" : modal.type === "exercise" ? (e ? "Edit exercise" : "Add an exercise") : modal.type === "edit" ? "Edit workout" : "Plan a workout"}</h2></div><button class="icon-button close" data-action="close" aria-label="Close dialog">×</button></div>${modal.type === "log" ? logForm(w) : ["exercise", "swap"].includes(modal.type) ? `<form id="exercise-form" data-picked-name="${esc(e?.name || "")}">${modal.type === "swap" ? '<p class="exercise-swap-message" role="status">Choose a replacement from the library or enter a custom exercise. Sets, targets and superset membership are kept; adjust them if needed.</p>' : ""}<label>Exercise name<input name="name" required maxlength="100" placeholder="Search exercises or enter your own" autocomplete="off" value="${esc(e?.name || "")}"></label>${e && modal.type !== "swap" ? selectedExerciseCard(w, e) : ""}${exerciseLibrary(esc)}<div class="form-grid"><label>Sets<input name="sets" type="number" required min="1" max="30" value="${e?.sets || 3}"></label><label>Track by<select name="mode"><option value="reps" ${e?.mode !== "time" ? "selected" : ""}>Repetitions</option><option value="time" ${e?.mode === "time" ? "selected" : ""}>Time (seconds)</option></select></label><label>Target per set<input name="target" type="number" required min="1" max="10000" value="${e?.target || 10}"></label><label>Planned weight (${state.unit})<input name="weight" type="number" min="0" max="5000" step="0.01" value="${e?.weight || 0}" ${e?.weighted === false ? "readonly" : ""}></label></div><label>Superset group <span class="optional">optional</span><input name="group" maxlength="12" placeholder="e.g. A" value="${esc(e?.group || "")}"><small>Use the same group for exercises you want to alternate.</small></label><div class="modal-footer">${e ? '<button type="button" class="text-button danger" data-action="delete-exercise">Remove exercise</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "swap" ? "Swap exercise" : e ? "Save changes" : "Add exercise"} →</button></div></form>` : `<form id="workout-form">${modal.type !== "edit" ? `<section class="plan-exercise-editor"><h3>Exercises</h3><label>Search exercise library<input name="exerciseSearch" autocomplete="off" maxlength="100" placeholder="e.g. Bench press, squat, RDL"></label>${exerciseLibrary()}<div id="draft-exercises">${(modal.exercises || []).map((item) => `<div data-draft-exercise="${item.id}"><span>${esc(item.name)} · ${item.sets} × ${item.target}${item.mode === "time" ? " sec" : " reps"}</span><button type="button" class="text-button" data-action="remove-draft-exercise" data-eid="${item.id}" aria-label="Remove ${esc(item.name)}">Remove</button></div>`).join("")}</div><small>You can adjust sets, reps and weight after creating the workout.</small></section>` : ""}${workoutProgramFields(w, workoutDate)}<label>Date<input name="date" type="date" required value="${workoutDate}" ${assignedProgram ? `min="${assignedProgram.startDate}" max="${programEnd(assignedProgram)}"` : ""}></label><label>Workout notes <span class="optional">optional</span><textarea name="note" maxlength="500" placeholder="A focus, a reminder, a little motivation…">${esc(modal.type === "edit" ? w.note : "")}</textarea></label>${modal.type === "edit" ? `<section class="plan-exercise-editor"><h3>Exercises</h3>${w.exercises.map((item) => `<div><span>${esc(item.name)}</span><button type="button" class="button subtle" data-action="edit-exercise" data-id="${w.id}" data-eid="${item.id}" aria-label="Edit ${esc(item.name)}">Edit</button></div>`).join("")}<div class="plan-workout-tools"><button type="button" class="text-button" data-action="add-exercise" data-id="${w.id}">+ Add exercise</button><button type="button" class="text-button" data-action="supersets" data-id="${w.id}">Supersets</button></div></section>` : ""}<div class="modal-footer">${modal.type === "edit" ? '<button type="button" class="text-button danger" data-action="delete-workout">Delete workout</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "edit" ? "Save changes" : "Create workout"} →</button></div></form>`}</section></div>`;
+  return `<div class="modal-backdrop"><section class="modal ${modal.type === "log" ? "log-modal" : ""}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="eyebrow">YOUR TRAINING JOURNAL</div><h2 id="modal-title">${modal.type === "log" ? esc(w.name) : modal.type === "swap" ? "Swap exercise" : modal.type === "exercise" ? (e ? "Edit exercise" : "Add an exercise") : modal.type === "edit" ? "Edit workout" : "Plan a workout"}</h2></div><button class="icon-button close" data-action="close" aria-label="Close dialog">×</button></div>${modal.type === "log" ? logForm(w) : ["exercise", "swap"].includes(modal.type) ? `<form id="exercise-form" data-picked-name="${esc(e?.name || "")}">${modal.type === "swap" ? `<p class="exercise-swap-message" role="status">${e?.logs.some((log) => log.done) ? "This exercise has completed sets. Your original exercise and results will be kept, and the replacement will be added with fresh sets." : "Choose a replacement from the library or enter a custom exercise. Sets, targets and superset membership are kept; adjust them if needed."}</p>` : ""}<label>Exercise name<input name="name" required maxlength="100" placeholder="Search exercises or enter your own" autocomplete="off" value="${esc(e?.name || "")}"></label>${e && modal.type !== "swap" ? selectedExerciseCard(w, e) : ""}${exerciseLibrary(esc)}<div class="form-grid"><label>Sets<input name="sets" type="number" required min="1" max="30" value="${e?.sets || 3}"></label><label>Track by<select name="mode"><option value="reps" ${e?.mode !== "time" ? "selected" : ""}>Repetitions</option><option value="time" ${e?.mode === "time" ? "selected" : ""}>Time (seconds)</option></select></label><label>Target per set<input name="target" type="number" required min="1" max="10000" value="${e?.target || 10}"></label><label>Planned weight (${state.unit})<input name="weight" type="number" min="0" max="5000" step="0.01" value="${e?.weight || 0}" ${e?.weighted === false ? "readonly" : ""}></label></div><label>Superset group <span class="optional">optional</span><input name="group" maxlength="12" placeholder="e.g. A" value="${esc(e?.group || "")}"><small>Use the same group for exercises you want to alternate.</small></label><div class="modal-footer">${e ? '<button type="button" class="text-button danger" data-action="delete-exercise">Remove exercise</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "swap" ? (e?.logs.some((log) => log.done) ? "Add replacement" : "Swap exercise") : e ? "Save changes" : "Add exercise"} →</button></div></form>` : `<form id="workout-form">${modal.type !== "edit" ? `<section class="plan-exercise-editor"><h3>Exercises</h3><label>Search exercise library<input name="exerciseSearch" autocomplete="off" maxlength="100" placeholder="e.g. Bench press, squat, RDL"></label>${exerciseLibrary()}<div id="draft-exercises">${(modal.exercises || []).map((item) => `<div data-draft-exercise="${item.id}"><span>${esc(item.name)} · ${item.sets} × ${item.target}${item.mode === "time" ? " sec" : " reps"}</span><button type="button" class="text-button" data-action="remove-draft-exercise" data-eid="${item.id}" aria-label="Remove ${esc(item.name)}">Remove</button></div>`).join("")}</div><small>You can adjust sets, reps and weight after creating the workout.</small></section>` : ""}${workoutProgramFields(w, workoutDate)}<label>Date<input name="date" type="date" required value="${workoutDate}" ${assignedProgram ? `min="${assignedProgram.startDate}" max="${programEnd(assignedProgram)}"` : ""}></label><label>Workout notes <span class="optional">optional</span><textarea name="note" maxlength="500" placeholder="A focus, a reminder, a little motivation…">${esc(modal.type === "edit" ? w.note : "")}</textarea></label>${modal.type === "edit" ? `<section class="plan-exercise-editor"><h3>Exercises</h3>${w.exercises.map((item) => `<div><span>${esc(item.name)}</span><button type="button" class="button subtle" data-action="edit-exercise" data-id="${w.id}" data-eid="${item.id}" aria-label="Edit ${esc(item.name)}">Edit</button></div>`).join("")}<div class="plan-workout-tools"><button type="button" class="text-button" data-action="add-exercise" data-id="${w.id}">+ Add exercise</button><button type="button" class="text-button" data-action="supersets" data-id="${w.id}">Supersets</button></div></section>` : ""}<div class="modal-footer">${modal.type === "edit" ? '<button type="button" class="text-button danger" data-action="delete-workout">Delete workout</button>' : "<span></span>"}<button class="button primary" type="submit">${modal.type === "edit" ? "Save changes" : "Create workout"} →</button></div></form>`}</section></div>`;
 }
 function previousPerformanceHeader(w, e) {
   const history = previousExercisePerformance(state, w, e);
@@ -1041,13 +1040,11 @@ app.addEventListener("submit", (event) => {
     if (!data.name.trim()) return;
     const w = workout(),
       old = w.exercises.find((e) => e.id === modal.eid);
-    if (modal.type === "swap" && old.logs.some((log) => log.done)) {
-      form.querySelector(".exercise-swap-message").textContent =
-        "This exercise has recorded results. Add a new exercise to keep those results with the original movement.";
-      return;
-    }
+    const keepHistory =
+      modal.type === "swap" && old.logs.some((log) => log.done);
     if (
       modal.type === "swap" &&
+      !keepHistory &&
       (old.logs.some((log) => log.weight !== "" || log.actual !== "") ||
         old.note) &&
       !confirm(
@@ -1079,7 +1076,10 @@ app.addEventListener("submit", (event) => {
       e.weighted = old.weighted;
       if (old.customExerciseId) e.customExerciseId = old.customExerciseId;
     }
-    if (old) {
+    if (keepHistory) {
+      w.exercises.splice(w.exercises.indexOf(old) + 1, 0, e);
+      openExerciseIds.set(w.id, new Set([e.id]));
+    } else if (old) {
       e.id = old.id;
       if (modal.type !== "swap") {
         if (old.note !== undefined) e.note = old.note;
@@ -1255,12 +1255,7 @@ app.addEventListener("change", (event) => {
     ?.querySelector(".exercise-set-progress");
   if (progressLabel)
     progressLabel.textContent = `${e.logs.filter((log) => log.done).length}/${e.sets} sets logged`;
-  for (const button of logRoot().querySelectorAll(
-    '[data-action="swap-exercise"]',
-  )) {
-    if (button.dataset.eid === e.id)
-      button.disabled = e.logs.some((log) => log.done);
-  }
+
   save();
   if (
     input.dataset.field === "done" &&

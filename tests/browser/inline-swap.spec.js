@@ -1,6 +1,7 @@
 import { editPlannedExercise } from "./exercise-navigation.js";
 import { exercise, key } from "../../src/model.js";
 import { test, expect } from "./auth-fixture.js";
+test.use({ hasTouch: true });
 test("exercise dropdown logs in place and opens the library only for swapping, retaining instructions", async ({
   page,
 }) => {
@@ -108,13 +109,41 @@ test("exercise dropdown logs in place and opens the library only for swapping, r
   await page
     .getByLabel("Incline Dumbbell Bench Press set 1 completed", { exact: true })
     .check();
-  // Recorded results cannot be reassigned to a different movement.
-  await expect(
-    replacement.getByRole("button", {
+  // Touch users can open the library even with completed sets; history is retained.
+  await replacement
+    .getByRole("button", {
       name: "Swap exercise: Incline Dumbbell Bench Press",
       exact: true,
-    }),
-  ).toBeDisabled();
+    })
+    .tap();
+  await expect(page.locator(".exercise-swap-message")).toContainText(
+    "original exercise and results will be kept",
+  );
+  await page.getByLabel("Exercise name", { exact: true }).fill("front squat");
+  await page
+    .getByRole("button", {
+      name: "Front Squat Legs · Barbell · Reps",
+      exact: true,
+    })
+    .tap();
+  await page
+    .getByRole("button", { name: "Add replacement →", exact: true })
+    .tap();
+  await expect
+    .poll(async () => {
+      const saved = await (await page.request.get("/api/state")).json();
+      const entries = saved.state.workouts.flatMap((w) => w.exercises);
+      const original = entries.find(
+        (e) => e.name === "Incline Dumbbell Bench Press",
+      );
+      const added = entries.find((e) => e.name === "Front Squat");
+      return (
+        original?.logs[0].done &&
+        original.logs[0].weight === "35" &&
+        added?.logs.every((l) => !l.done && l.actual === "" && l.weight === "")
+      );
+    })
+    .toBe(true);
   await expect(page.locator(".exercise-library")).toHaveCount(0);
   await page.screenshot({
     path: "/tmp/buff-inline-workout-mobile.png",
