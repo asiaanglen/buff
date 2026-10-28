@@ -1,3 +1,4 @@
+import { coachingApi } from "./coaching.js";
 import { usageSetup } from "./usage-setup.js";
 import {
   monitoredDatabase,
@@ -99,6 +100,7 @@ async function api(request, env) {
     return usagePage(request, env, true);
   if (path === "/api/usage/events" && method === "POST")
     return reportSyncFailure(request, env);
+  if (path.startsWith("/api/coaching")) return coachingApi(request, env);
   if (path.startsWith("/api/program-shares")) return sharingApi(request, env);
   if (path === "/api/auth/providers" && method === "GET") {
     const enabled = googleConfigured(env),

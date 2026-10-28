@@ -1,0 +1,331 @@
+.coach-portal {
+  background: #f8f9fc;
+}
+.coach-shell {
+  max-width: 1180px;
+  padding: 0 28px;
+  margin: auto;
+}
+.coach-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--line);
+}
+.coach-top .brand {
+  margin: 0;
+  gap: 8px;
+  font-size: 30px;
+  color: var(--purple);
+}
+.coach-top .brand small {
+  font:
+    600 10px "DM Sans Variable",
+    sans-serif;
+  letter-spacing: 1.4px;
+  margin-left: 12px;
+  color: #777383;
+}
+.coach-top-actions,
+.coach-actions,
+.coach-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.coach-top-actions a,
+.coach-footer a {
+  color: var(--purple);
+}
+.coach-portal .coach-main {
+  margin: 0;
+  padding: 36px 0 56px;
+  width: 100%;
+}
+.coach-portal h1 {
+  font-size: clamp(28px, 5vw, 46px);
+  line-height: 1.15;
+  margin: 12px 0 16px;
+}
+.coach-portal h2 {
+  font-size: 22px;
+  margin: 8px 0 14px;
+}
+.coach-portal h3 {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+.coach-portal p {
+  font-size: 14px;
+  color: #777080;
+  margin: 10px 0 18px;
+  line-height: 1.65;
+}
+.coach-portal .button {
+  min-height: 44px;
+  text-decoration: none;
+  white-space: normal;
+}
+.coach-hero {
+  max-width: 780px;
+  padding: 44px 0;
+}
+.coach-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+  gap: 20px;
+  margin: 24px 0;
+}
+.coach-panel,
+.coach-empty,
+.coach-workout {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 24px;
+}
+.coach-panel .button {
+  margin: 12px 0;
+}
+.coach-panel progress {
+  width: 100%;
+  accent-color: var(--purple);
+  height: 12px;
+}
+.coach-heading {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.coach-tabs {
+  margin: 24px 0;
+}
+.coach-client {
+  margin: 36px 0;
+}
+.coach-client > p {
+  margin: 0;
+}
+.coach-pending {
+  margin-top: 50px;
+}
+.coach-pending .coach-panel {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.coach-invite {
+  max-width: 700px;
+  margin: 0 auto;
+}
+.coach-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  line-height: 1.6;
+  padding: 18px;
+  background: #f7f4ff;
+  border-radius: 12px;
+}
+.coach-consent input {
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  margin: 2px 0;
+  padding: 0;
+}
+.coach-workout {
+  margin: 16px 0;
+  padding: 0;
+  overflow: hidden;
+}
+.coach-workout summary {
+  padding: 22px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  background: #faf9fd;
+}
+.coach-workout summary small {
+  display: block;
+  margin-top: 6px;
+  color: #777080;
+}
+.coach-workout summary::after {
+  content: "+";
+  font-size: 24px;
+  color: var(--purple);
+}
+.coach-workout[open] summary::after {
+  content: "−";
+}
+.coach-log {
+  padding: 22px;
+}
+.coach-log fieldset {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  margin: 0 0 24px;
+  min-width: 0;
+}
+.coach-log legend {
+  font-weight: 700;
+  font-size: 17px;
+  padding: 0 5px;
+}
+.coach-set,
+.coach-set-head {
+  display: grid;
+  grid-template-columns: 30px minmax(70px, 1fr) minmax(70px, 1fr) 42px;
+  gap: 12px;
+  align-items: center;
+  margin: 10px 0;
+}
+.coach-set-head {
+  font-weight: 600;
+}
+.coach-set input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  margin: 0;
+  min-height: 44px;
+}
+.coach-set input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  margin: auto;
+  accent-color: var(--purple);
+}
+.coach-log label {
+  margin-top: 18px;
+}
+.coach-log textarea {
+  margin-top: 8px;
+  min-height: 64px;
+}
+.coach-error,
+.coach-notice {
+  padding: 16px;
+  border-radius: 10px;
+  background: #fff0f1;
+  color: #a3384d !important;
+}
+.coach-notice {
+  background: #edf7ef;
+  color: #36704b !important;
+}
+.coach-footer {
+  border-top: 1px solid var(--line);
+  padding: 24px 0;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  color: #8b8592;
+}
+.coach-help {
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: #f1eef9;
+}
+.coach-builder-banner {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 16px;
+  background: #f1eef9;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+.coach-builder-banner a {
+  font-weight: 600;
+  color: var(--purple);
+}
+@media (max-width: 600px) {
+  .coach-shell {
+    padding: 0 16px;
+  }
+  .coach-top .brand small {
+    display: none;
+  }
+  .coach-heading,
+  .coach-pending .coach-panel {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .coach-top-actions {
+    gap: 10px;
+  }
+  .coach-hero {
+    padding: 24px 0;
+  }
+  .coach-panel {
+    padding: 20px;
+  }
+  .coach-log {
+    padding: 14px;
+  }
+  .coach-log fieldset {
+    padding: 12px;
+  }
+  .coach-set,
+  .coach-set-head {
+    grid-template-columns: 24px minmax(60px, 1fr) minmax(60px, 1fr) 32px;
+    gap: 8px;
+  }
+  .coach-set input {
+    font-size: 16px;
+    padding: 8px;
+  }
+  .coach-workout summary {
+    padding: 18px;
+  }
+}
+
+.coach-portal :is(h1, h2, h3, p, legend),
+.coach-footer span {
+  overflow-wrap: anywhere;
+}
+.coach-log legend {
+  max-width: 100%;
+}
+.coach-heading .eyebrow {
+  display: block;
+  margin: 16px 0 6px;
+}
+.coach-main label:not(.coach-consent) {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+.coach-main input:not([type="checkbox"]),
+.coach-main textarea,
+#coach-invite-dialog input,
+.coach-share-result textarea {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #ded9ea;
+  border-radius: 10px;
+  background: #fff;
+  color: #32283f;
+  padding: 12px;
+  font: inherit;
+}
+.coach-main :is(input, textarea):focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+}
+.coach-set input:not([type="checkbox"]) {
+  padding: 10px;
+}

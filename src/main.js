@@ -42,6 +42,7 @@ import "@fontsource-variable/manrope";
 import "./style.css";
 import "./workout-log.css";
 import "./themes.css";
+import "./coach.css";
 import {
   uid,
   weekStart,
@@ -265,11 +266,15 @@ function render() {
   if (signedIn !== lastRenderSignedIn) {
     window.scrollTo(0, 0);
     tab =
-      signedIn && inviteSuccess
+      signedIn &&
+      (new URL(location.href).searchParams.has("coach") ||
+        new URL(location.href).searchParams.get("tab") === "programs")
         ? "programs"
-        : signedIn && state.activeProgramId
-          ? "home"
-          : "planner";
+        : signedIn && inviteSuccess
+          ? "programs"
+          : signedIn && state.activeProgramId
+            ? "home"
+            : "planner";
   }
   lastRenderSignedIn = signedIn;
   if (!cloud.isSignedIn()) {
@@ -329,7 +334,7 @@ function render() {
     .join(
       "",
     )}</select></div><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">${esc(sidebarIdentity().initial)}</span><div><strong title="${esc(sidebarIdentity().name)}">${esc(sidebarIdentity().name)}</strong><small>Personal training journal</small></div></div></aside>
-<main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "home" ? "Home" : tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Completed workouts"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content"><div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div><div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div></div>
+<main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "home" ? "Home" : tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Completed workouts"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content">${new URL(location.href).searchParams.has("coach") ? `<div class="coach-builder-banner"><a href="/coach">← Coach dashboard</a><span>Your program templates. Client progress stays in the coach dashboard.</span></div>` : ""}<div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div><div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div></div>
 ${inviteToken ? renderInvitation() : ""}${inviteSuccess ? `<div class="notice invitation-success" role="status">${esc(inviteSuccess)}</div>` : ""}
 ${cloud.journalUsage().warning ? '<div class="notice journal-storage-warning" role="status">Your workout history is approaching the 1 MB sync limit. Download a backup from Account before removing older workouts to make room.</div>' : ""}
 ${storageError ? '<div class="notice">Device storage is unavailable or was reset. Your changes may not persist after closing this page.</div>' : ""}

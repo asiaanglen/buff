@@ -56,6 +56,8 @@ export function safeGoogleReturn(value, origin) {
       u.origin === origin &&
       (u.pathname === "/" ||
         u.pathname === "/app" ||
+        u.pathname === "/coach" ||
+        u.pathname === "/coach.html" ||
         u.pathname === "/connections" ||
         u.pathname === "/usage" ||
         u.pathname === "/usage/setup" ||
@@ -71,7 +73,9 @@ function finish(request, target, error, cookie) {
   let destination;
   if (
     new URL(target, origin).pathname === "/" ||
-    new URL(target, origin).pathname === "/app"
+    new URL(target, origin).pathname === "/app" ||
+    new URL(target, origin).pathname === "/coach" ||
+    new URL(target, origin).pathname === "/coach.html"
   )
     destination = new URL(target, origin);
   else

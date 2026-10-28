@@ -5,6 +5,8 @@ import { authScheme, passwordProof } from "./credentials.js";
 // Same-origin sessions stay in HttpOnly cookies; workout caches are scoped to each account.
 export function createCloud({
   getState,
+  preservePath = false,
+  authContext = "",
   onThemeChange,
   setState,
   canApply,
@@ -254,7 +256,9 @@ export function createCloud({
         ? "/?invite=" + invite
         : location.pathname === "/app"
           ? "/app"
-          : "/");
+          : preservePath
+            ? location.pathname + location.search
+            : "/");
     return `<a class="google-button" href="/api/auth/google/start?return_to=${encodeURIComponent(target)}"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M43.6 24.5c0-1.5-.1-2.9-.4-4.3H24v8.2h11a9.4 9.4 0 0 1-4.1 6.2V40h6.7c3.9-3.6 6-8.9 6-15.5Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9L31 34c-1.8 1.2-4.1 1.9-7 1.9-5.3 0-9.8-3.6-11.4-8.4H5.7V33A20.4 20.4 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.5a12.3 12.3 0 0 1 0-7v-5.6H5.7a20 20 0 0 0 0 18.2l6.9-5.6Z"/><path fill="#EA4335" d="M24 12.1c3 0 5.6 1 7.7 3l5.8-5.8A19.5 19.5 0 0 0 24 4 20.4 20.4 0 0 0 5.7 15l6.9 5.5c1.6-4.8 6.1-8.4 11.4-8.4Z"/></svg>Continue with Google</a><div class="auth-divider">or use email</div>`;
   }
   async function refreshProviders() {
@@ -283,7 +287,7 @@ export function createCloud({
       root.querySelector("input")?.focus();
       return;
     }
-    root.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title"><div class="modal-header"><div><div class="eyebrow">YOUR WORKOUTS, EVERYWHERE</div><h2 id="account-title">${user ? "Your account" : mode === "signup" ? "Create your account" : "Sign in to Buff"}</h2></div><button class="icon-button close" data-cloud="close" aria-label="Close account">×</button></div><p class="account-intro">${user ? `Signed in as <strong>${escape(user.email)}</strong>` : "Use the same account on every device to sync your plans and workout logs."}</p><p class="account-message" role="status">${escape(message)}</p><div id="google-auth-slot">${googleControls()}</div>${user ? `<p class="sync-detail" data-sync-status>${escape(status)}</p><div class="account-actions"><button class="button subtle" data-cloud="edit-profile">Edit profile</button><button class="button primary" data-cloud="sync">Sync now</button><button class="button subtle" data-cloud="download">Download a backup</button></div><section class="theme-picker"><div><span class="theme-sparkle" aria-hidden="true">✧</span><h3>Make it yours</h3><p>A little personality for every rep.</p></div><label for="account-theme">App theme</label><select id="account-theme"><option value="classic" ${getState().theme !== "muscle-mami" ? "selected" : ""}>Buff Classic</option><option value="muscle-mami" ${getState().theme === "muscle-mami" ? "selected" : ""}>Muscle Mami ♡</option></select><small>Saves to your account and syncs across devices.</small></section><div class="conflict-actions" ${conflict ? "" : "hidden"}><h3>Two devices changed your journal</h3><p>Neither version has been overwritten. Download your local backup before choosing.</p><button class="button subtle" data-cloud="use-cloud">Use cloud version</button><button class="button subtle" data-cloud="use-local">Replace cloud with this device</button></div><p class="account-help">Changes save automatically. You can safely keep editing when offline; pending changes sync when the server is reachable.</p><p><a class="text-button" href="/connections">Manage connected AI apps →</a></p>${user.isUsageOwner ? '<p><a class="text-button" href="/usage">Usage dashboard →</a></p>' : ""}${journalUsage().warning ? '<p class="account-help journal-storage-warning" role="status">Your workout history is approaching the 1 MB sync limit. Download a backup before removing older workouts to make room.</p>' : ""}<div class="modal-footer"><button class="text-button" data-cloud="import">Import guest workouts</button><button class="text-button danger" data-cloud="signout">Sign out</button></div>` : `<form id="auth-form">${mode === "signup" ? profileFields(escape) : ""}<label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>Password<input name="password" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" required maxlength="200"></label><button class="button primary auth-submit" type="submit">${mode === "signup" ? "Create account" : "Sign in"} →</button></form><button class="text-button auth-switch" data-cloud="${mode === "signup" ? "signin" : "signup"}">${mode === "signup" ? "Already have an account? Sign in" : "New to Buff? Create an account"}</button><p class="account-help">Guest workouts stay on this device. Your first cloud journal starts with your device’s workouts. Password reset is not available yet; keep your password somewhere safe.</p>`}</section></div>`;
+    root.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title"><div class="modal-header"><div><div class="eyebrow">YOUR WORKOUTS, EVERYWHERE</div><h2 id="account-title">${user ? "Your account" : mode === "signup" ? (authContext === "coach" ? "Create your coach account" : "Create your account") : authContext === "coach" ? "Coach sign in" : "Sign in to Buff"}</h2></div><button class="icon-button close" data-cloud="close" aria-label="Close account">×</button></div><p class="account-intro">${user ? `Signed in as <strong>${escape(user.email)}</strong>` : "Use the same account on every device to sync your plans and workout logs."}</p><p class="account-message" role="status">${escape(message)}</p><div id="google-auth-slot">${googleControls()}</div>${user ? `<p class="sync-detail" data-sync-status>${escape(status)}</p><div class="account-actions"><button class="button subtle" data-cloud="edit-profile">Edit profile</button><button class="button primary" data-cloud="sync">Sync now</button><button class="button subtle" data-cloud="download">Download a backup</button></div><section class="theme-picker"><div><span class="theme-sparkle" aria-hidden="true">✧</span><h3>Make it yours</h3><p>A little personality for every rep.</p></div><label for="account-theme">App theme</label><select id="account-theme"><option value="classic" ${getState().theme !== "muscle-mami" ? "selected" : ""}>Buff Classic</option><option value="muscle-mami" ${getState().theme === "muscle-mami" ? "selected" : ""}>Muscle Mami ♡</option></select><small>Saves to your account and syncs across devices.</small></section><div class="conflict-actions" ${conflict ? "" : "hidden"}><h3>Two devices changed your journal</h3><p>Neither version has been overwritten. Download your local backup before choosing.</p><button class="button subtle" data-cloud="use-cloud">Use cloud version</button><button class="button subtle" data-cloud="use-local">Replace cloud with this device</button></div><p class="account-help">Changes save automatically. You can safely keep editing when offline; pending changes sync when the server is reachable.</p><p><a class="text-button" href="/coach">Coach portal →</a></p><p><a class="text-button" href="/coach?view=access">Manage coaching access →</a></p><p><a class="text-button" href="/connections">Manage connected AI apps →</a></p>${user.isUsageOwner ? '<p><a class="text-button" href="/usage">Usage dashboard →</a></p>' : ""}${journalUsage().warning ? '<p class="account-help journal-storage-warning" role="status">Your workout history is approaching the 1 MB sync limit. Download a backup before removing older workouts to make room.</p>' : ""}<div class="modal-footer"><button class="text-button" data-cloud="import">Import guest workouts</button><button class="text-button danger" data-cloud="signout">Sign out</button></div>` : `<form id="auth-form">${mode === "signup" ? profileFields(escape) : ""}<label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>Password<input name="password" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" required maxlength="200"></label><button class="button primary auth-submit" type="submit">${mode === "signup" ? "Create account" : "Sign in"} →</button></form><button class="text-button auth-switch" data-cloud="${mode === "signup" ? "signin" : "signup"}">${mode === "signup" ? "Already have an account? Sign in" : "New to Buff? Create an account"}</button><p class="account-help">Guest workouts stay on this device. Your first cloud journal starts with your device’s workouts. Password reset is not available yet; keep your password somewhere safe.</p>`}</section></div>`;
     void refreshProviders();
     root.dataset.mode = mode;
     root.querySelector("input,button")?.focus();
@@ -477,7 +481,11 @@ export function createCloud({
         await busy;
         await request("/auth/signout", { method: "POST", body: "{}" });
         user = null;
-        history.replaceState(null, "", "/");
+        history.replaceState(
+          null,
+          "",
+          preservePath ? location.pathname + location.search : "/",
+        );
         dirty = false;
         conflict = false;
         revision = 0;
@@ -538,6 +546,15 @@ export function createCloud({
     async refresh() {
       if (user) await loadAccount(user);
     },
+    account: () =>
+      user
+        ? {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+          }
+        : null,
     isSignedIn: () => Boolean(user) && !user.profileRequired,
     label: () => (user ? `${status} · ${user.email}` : status),
     async start() {
@@ -574,8 +591,12 @@ export function createCloud({
           else if (returnTo) location.assign(returnTo);
           else if (message) open("signin", message);
         } else {
-          if (!returnTo && location.pathname !== "/")
-            history.replaceState(null, "", "/");
+          if (!preservePath && !returnTo && location.pathname !== "/")
+            history.replaceState(
+              null,
+              "",
+              preservePath ? location.pathname + location.search : "/",
+            );
           if (returnTo || message) open("signin", message);
         }
       } catch {

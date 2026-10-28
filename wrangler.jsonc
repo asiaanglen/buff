@@ -20,6 +20,8 @@
       "/.well-known/*",
       "/approvals/*",
       "/connections",
+      "/coach",
+      "/coach/*",
       "/usage",
       "/usage/*",
     ],

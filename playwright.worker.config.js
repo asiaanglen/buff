@@ -3,6 +3,7 @@ export default defineConfig({
   testDir: "./tests/browser",
   testMatch: [
     "workout.spec.js",
+    "coaching.spec.js",
     "sync.spec.js",
     "worker-api.spec.js",
     "signup-profile.spec.js",
