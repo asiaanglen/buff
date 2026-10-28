@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { searchExercises } from "../shared/exercises.js";
+import { searchExercises, exerciseCatalog } from "../shared/exercises.js";
 test("exercise search handles common aliases and punctuation while keeping variations distinct", () => {
   assert.ok(
     searchExercises({ query: "RDL" }).exercises.some(
@@ -93,4 +93,27 @@ test("cable kickbacks and split squats have their own searchable library entries
     exerciseByName("Split Squat").id,
     exerciseByName("Bulgarian Split Squat").id,
   );
+});
+
+test("every catalog exercise has a valid sourced YouTube default, including aliases", async () => {
+  const { exerciseVideos, libraryExerciseVideo } =
+    await import("../shared/exercise-videos.js");
+  const { youtubeId } = await import("../shared/youtube.js");
+  assert.equal(Object.keys(exerciseVideos).length, exerciseCatalog.length);
+  for (const exercise of exerciseCatalog) {
+    const video = libraryExerciseVideo(exercise.name);
+    assert.ok(video, exercise.name);
+    assert.ok(youtubeId(video.url), exercise.name);
+    assert.ok(video.title.trim());
+    assert.equal(new URL(video.source).hostname, "www.bing.com");
+    for (const alias of exercise.aliases)
+      assert.equal(libraryExerciseVideo(alias)?.url, video.url);
+  }
+  assert.equal(libraryExerciseVideo("My entirely custom exercise"), undefined);
+  assert.match(exerciseVideos["barbell-bench-press"].creator, /megsquats/i);
+  assert.match(
+    exerciseVideos["single-leg-romanian-deadlift"].creator,
+    /Girls Gone Strong/,
+  );
+  assert.match(exerciseVideos["barbell-lunge"].note, /barbell-specific/);
 });

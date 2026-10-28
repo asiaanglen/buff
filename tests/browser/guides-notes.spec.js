@@ -173,6 +173,12 @@ test("YouTube demonstrations save privately, load only on play and close cleanly
     .click();
   const dialog = page.locator("#exercise-video-dialog");
   await expect(dialog).toBeVisible();
+  await expect(
+    dialog.getByLabel("YouTube video link", { exact: true }),
+  ).toHaveValue("https://www.youtube.com/watch?v=ultWZbUMPL8");
+  await expect(
+    dialog.getByRole("button", { name: "Play demonstration", exact: false }),
+  ).toBeVisible();
   await expect(dialog.locator("iframe")).toHaveCount(0);
   await expect(
     dialog.getByRole("link", { name: "Find a video on YouTube", exact: false }),
@@ -224,4 +230,21 @@ test("YouTube demonstrations save privately, load only on play and close cleanly
   } finally {
     await other.close();
   }
+  await page
+    .getByRole("button", { name: "YouTube demonstration", exact: false })
+    .first()
+    .click();
+  await dialog.getByLabel("YouTube video link", { exact: true }).fill("");
+  await dialog.getByRole("button", { name: "Save video", exact: true }).click();
+  await expect(dialog.locator(".video-source")).toContainText("CrossFit");
+  await dialog
+    .getByRole("button", { name: "Play demonstration", exact: false })
+    .click();
+  await expect(dialog.locator("iframe")).toHaveAttribute(
+    "src",
+    "https://www.youtube-nocookie.com/embed/ultWZbUMPL8",
+  );
+  await expect(
+    dialog.getByRole("link", { name: "Open on YouTube", exact: false }),
+  ).toBeVisible();
 });

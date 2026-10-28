@@ -4012,3 +4012,14 @@ body:has(#program-share-dialog[open]) .pwa-help {
   display: block;
   overflow-wrap: anywhere;
 }
+.exercise-video-dialog .video-source {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.exercise-video-dialog .video-variation {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff5e6;
+  color: #765020;
+}
