@@ -4001,3 +4001,14 @@ body:has(#program-share-dialog[open]) .pwa-help {
 .video-privacy {
   font-size: 12px;
 }
+
+.profile .avatar {
+  flex-shrink: 0;
+}
+.profile > div {
+  min-width: 0;
+}
+.profile strong {
+  display: block;
+  overflow-wrap: anywhere;
+}

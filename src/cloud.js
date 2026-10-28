@@ -522,6 +522,10 @@ export function createCloud({
     save,
     open,
     journalUsage,
+    profile: () => ({
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+    }),
     async flush() {
       clearTimeout(timer);
       await sync();

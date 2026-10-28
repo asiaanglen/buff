@@ -230,6 +230,28 @@ function programDialog() {
 let initializing = true;
 let startupError = false;
 let lastRenderSignedIn = false;
+function sidebarIdentity() {
+  const profile = cloud.profile();
+  const first = profile.firstName.trim();
+  return {
+    name:
+      [first, profile.lastName.trim()].filter(Boolean).join(" ") ||
+      "Your account",
+    initial:
+      Array.from(first || profile.lastName.trim())[0]?.toLocaleUpperCase() ||
+      "?",
+  };
+}
+function updateSidebarIdentity() {
+  const identity = sidebarIdentity();
+  const avatar = app.querySelector(".profile .avatar");
+  const name = app.querySelector(".profile strong");
+  if (avatar) avatar.textContent = identity.initial;
+  if (name) {
+    name.textContent = identity.name;
+    name.title = identity.name;
+  }
+}
 function render() {
   document.documentElement.dataset.theme =
     state?.theme === "muscle-mami" && cloud.isSignedIn()
@@ -307,7 +329,7 @@ function render() {
     )
     .join(
       "",
-    )}</select></div><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">Y</span><div><strong>Your workspace</strong><small>Personal training journal</small></div></div></aside>
+    )}</select></div><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">${esc(sidebarIdentity().initial)}</span><div><strong title="${esc(sidebarIdentity().name)}">${esc(sidebarIdentity().name)}</strong><small>Personal training journal</small></div></div></aside>
 <main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "home" ? "Home" : tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Completed workouts"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content"><div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div><div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div></div>
 ${inviteToken ? renderInvitation() : ""}${inviteSuccess ? `<div class="notice invitation-success" role="status">${esc(inviteSuccess)}</div>` : ""}
 ${cloud.journalUsage().warning ? '<div class="notice journal-storage-warning" role="status">Your workout history is approaching the 1 MB sync limit. Download a backup from Account before removing older workouts to make room.</div>' : ""}
@@ -1297,6 +1319,7 @@ const cloud = createCloud({
     ),
   onAuthenticated: processInvitation,
   onStatus: (label) => {
+    updateSidebarIdentity();
     const el = document.querySelector("#sync-label");
     if (el) el.textContent = label;
   },
