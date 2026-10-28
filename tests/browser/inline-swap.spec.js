@@ -215,3 +215,101 @@ test("older text-only program exercises are recognized and can be swapped from t
   expect(saved.workouts[0].exercises[0].libraryId).toBe("front-squat");
   expect(saved.workouts[0].exercises[0].sets).toBe(4);
 });
+
+for (const includeFuture of [true, false]) {
+  test(`program exercise swap asks about future workouts; ${includeFuture ? "accepting updates" : "declining preserves"} the future plan`, async ({
+    page,
+    baseURL,
+  }) => {
+    const today = key(new Date());
+    const later = new Date(today + "T12:00:00");
+    later.setDate(later.getDate() + 3);
+    const laterDate = key(later);
+    const state = {
+      version: 1,
+      unit: "lbs",
+      activeProgramId: "p",
+      programs: [
+        {
+          id: "p",
+          name: "Future swap program",
+          startDate: today,
+          weeks: 4,
+          note: "",
+        },
+      ],
+      workouts: [
+        {
+          id: "current",
+          programId: "p",
+          date: today,
+          name: "Current session",
+          note: "",
+          exercises: [exercise("Back Squat", 3, 8, "reps", 95)],
+        },
+        {
+          id: "future",
+          programId: "p",
+          date: laterDate,
+          name: "Later session",
+          note: "",
+          exercises: [exercise("Back Squat", 4, 6, "reps", 115, "A")],
+        },
+      ],
+    };
+    expect(
+      (
+        await page.request.put("/api/state", {
+          headers: { Origin: baseURL },
+          data: { state, revision: 0 },
+        })
+      ).ok(),
+    ).toBeTruthy();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await page
+      .getByRole("button", { name: "Start workout", exact: false })
+      .first()
+      .click();
+    await page
+      .getByRole("button", { name: "Swap exercise: Back Squat", exact: true })
+      .tap();
+    await page.getByLabel("Exercise name", { exact: true }).fill("front squat");
+    await page
+      .getByRole("button", {
+        name: "Front Squat Legs · Barbell · Reps",
+        exact: true,
+      })
+      .tap();
+    let prompted = false;
+    page.once("dialog", async (dialog) => {
+      prompted = true;
+      expect(dialog.message()).toContain("future exercise");
+      expect(dialog.message()).toContain("in this program");
+      if (includeFuture) await dialog.accept();
+      else await dialog.dismiss();
+    });
+    await page
+      .getByRole("button", { name: "Swap exercise →", exact: true })
+      .tap();
+    expect(prompted).toBe(true);
+    await expect
+      .poll(async () => {
+        const saved = await (await page.request.get("/api/state")).json();
+        return saved.state.workouts.find((w) => w.id === "current").exercises[0]
+          .name;
+      })
+      .toBe("Front Squat");
+    const saved = await (await page.request.get("/api/state")).json();
+    const future = saved.state.workouts.find((w) => w.id === "future")
+      .exercises[0];
+    expect(future.name).toBe(includeFuture ? "Front Squat" : "Back Squat");
+    expect(future.sets).toBe(4);
+    expect(future.target).toBe(6);
+    expect(future.weight).toBe(115);
+    expect(future.group).toBe("A");
+    expect(
+      future.logs.every((l) => !l.done && l.weight === "" && l.actual === ""),
+    ).toBe(true);
+  });
+}

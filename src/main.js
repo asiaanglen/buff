@@ -1,4 +1,8 @@
 import {
+  futureSwapTargets,
+  swapFutureExercises,
+} from "../shared/exercise-swaps.js";
+import {
   monthCalendar,
   weekCalendar,
   moveWorkoutDialog,
@@ -1089,6 +1093,18 @@ app.addEventListener("submit", (event) => {
       }
       w.exercises[w.exercises.indexOf(old)] = e;
     } else w.exercises.push(e);
+    if (modal.type === "swap" && w.programId) {
+      const today = key(new Date());
+      const future = futureSwapTargets(state, w, old, today);
+      if (
+        future.length &&
+        confirm(
+          `Also replace ${old.name} with ${e.name} in ${future.length} future exercise${future.length === 1 ? "" : "s"} in this program? Only matching exercises without recorded entries or notes will change. Each workout keeps its planned sets, weight, and superset; reps/time targets are kept unless the tracking type changes.`,
+        )
+      ) {
+        swapFutureExercises(state, w, old, e, today);
+      }
+    }
     const order = new Map();
     w.exercises.forEach((e) => {
       const k = e.group || e.id;

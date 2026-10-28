@@ -398,3 +398,96 @@ test("enrolling in another program keeps history and removes other schedules ato
   assert.deepEqual(state.workouts[0], history);
   assert.equal(state.workouts[1].date, "2026-10-27");
 });
+
+import {
+  futureSwapTargets,
+  swapFutureExercises,
+} from "../shared/exercise-swaps.js";
+test("future swaps affect matching untouched exercises in the same program and preserve each workout's progression", () => {
+  const original = exercise("Barbell Back Squat", 3, 8, "reps", 95);
+  const current = {
+    id: "current",
+    programId: "p",
+    date: "2026-10-28",
+    exercises: [original],
+  };
+  const later = (id, date, programId = "p") => ({
+    id,
+    date,
+    programId,
+    exercises: [exercise("Back Squat", 4, 6, "reps", 115, "A")],
+  });
+  const valid = later("future", "2026-11-02");
+  const actual = later("draft", "2026-11-03");
+  actual.exercises[0].logs[0].actual = 3;
+  const notes = later("notes", "2026-11-04");
+  notes.exercises[0].note = "Keep my session";
+  const completed = later("completed", "2026-11-05");
+  completed.exercises[0].logs[0] = { weight: 115, actual: 6, done: true };
+  const state = {
+    workouts: [
+      current,
+      later("past", "2026-10-27"),
+      later("same-day", "2026-10-28"),
+      later("other", "2026-11-02", "other"),
+      actual,
+      notes,
+      completed,
+      valid,
+    ],
+  };
+  const before = structuredClone(state);
+  const replacement = exercise("Front Squat", 2, 10, "reps", 65);
+  assert.equal(
+    futureSwapTargets(state, current, original, "2026-10-28").length,
+    1,
+  );
+  assert.equal(
+    swapFutureExercises(state, current, original, replacement, "2026-10-28"),
+    1,
+  );
+  assert.deepEqual(state.workouts.slice(0, -1), before.workouts.slice(0, -1));
+  const e = valid.exercises[0];
+  assert.equal(e.name, "Front Squat");
+  assert.equal(e.libraryId, "front-squat");
+  assert.equal(e.id, before.workouts.at(-1).exercises[0].id);
+  assert.equal(e.sets, 4);
+  assert.equal(e.target, 6);
+  assert.equal(e.weight, 115);
+  assert.equal(e.group, "A");
+  assert.deepEqual(e.logs, before.workouts.at(-1).exercises[0].logs);
+  assert.equal(
+    swapFutureExercises(
+      state,
+      { ...current, programId: null },
+      original,
+      replacement,
+      "2026-10-28",
+    ),
+    0,
+  );
+});
+
+test("future swaps embed custom definitions and adjust timed targets without leaking old exercise metadata", () => {
+  const current = { id: "current", programId: "p", date: "2026-10-28" };
+  const original = exercise("Back Squat");
+  const future = exercise("Back Squat", 3, 8, "reps", 135);
+  const state = {
+    workouts: [
+      { id: "later", programId: "p", date: "2026-10-29", exercises: [future] },
+    ],
+  };
+  const replacement = {
+    ...exercise("My stretch", 1, 30, "time", 0),
+    customExerciseId: "personal",
+    instructions: "Hold this position.",
+    weighted: false,
+  };
+  swapFutureExercises(state, current, original, replacement, "2026-10-28");
+  assert.equal(future.target, 30);
+  assert.equal(future.weight, 0);
+  assert.equal(future.mode, "time");
+  assert.equal(future.libraryId, undefined);
+  assert.equal(future.customExerciseId, "personal");
+  assert.equal(future.instructions, replacement.instructions);
+});
