@@ -418,3 +418,119 @@ test("coach log validation cannot mutate plans or unrelated exercises; a pending
   );
   assert.equal((await call(null, "/invites/" + link.token)).status, 404);
 });
+
+test("coaches can edit only their assigned client's plan with revisions, library validation, and recorded history preserved", async () => {
+  const { db, users, privateState, call, invite } = await setup();
+  const link = await invite();
+  const joined = await call(
+    "client",
+    "/invites/" + link.token + "/accept",
+    "POST",
+    { startDate: "2026-11-02", allowCoachLogging: true },
+  );
+  const path = "/assignments/" + joined.body.assignmentId;
+  let detail = (await call("coach", path)).body;
+  const workout = detail.workouts[0];
+  const endpoint = path + "/workouts/" + workout.id;
+  const original = workout.exercises[0];
+  const input = {
+    revision: detail.revision,
+    editPlan: true,
+    date: "2026-11-05",
+    note: "Moved for client schedule",
+    exercises: [
+      {
+        id: original.id,
+        definitionId: "library:front-squat",
+        sets: 4,
+        target: 8,
+        weight: 95,
+        mode: "reps",
+        group: "A",
+      },
+      {
+        definitionId: "library:plank",
+        sets: 2,
+        target: 45,
+        weight: 0,
+        mode: "time",
+        group: "A",
+      },
+    ],
+  };
+  assert.equal((await call("coach2", endpoint, "PATCH", input)).status, 404);
+  let saved = await call("coach", endpoint, "PATCH", input);
+  assert.equal(saved.status, 200, JSON.stringify(saved.body));
+  let edited = saved.body.workouts[0];
+  assert.equal(edited.date, input.date);
+  assert.equal(edited.exercises[0].name, "Front Squat");
+  assert.equal(edited.exercises[0].libraryId, "front-squat");
+  assert.equal(edited.exercises[0].logs.length, 4);
+  assert.equal(edited.exercises[1].name, "Plank");
+  assert.equal((await call("coach", endpoint, "PATCH", input)).status, 409);
+  const stored = JSON.parse(
+    db.raw
+      .prepare("SELECT data FROM journals WHERE user_id=?")
+      .get(users.client.id).data,
+  );
+  assert.deepEqual(stored.workouts[0], privateState.workouts[0]);
+  const first = edited.exercises[0];
+  const logged = await call("coach", endpoint, "PATCH", {
+    revision: saved.body.revision,
+    exercises: [
+      {
+        id: first.id,
+        logs: first.logs.map((l, i) =>
+          i === 0 ? { weight: 95, actual: 8, done: true } : l,
+        ),
+        note: "Keep this history",
+      },
+    ],
+  });
+  assert.equal(logged.status, 200);
+  const base = {
+    ...input,
+    revision: logged.body.revision,
+    exercises: logged.body.workouts[0].exercises.map((e) => ({
+      id: e.id,
+      sets: e.sets,
+      target: e.target,
+      weight: e.weight,
+      mode: e.mode,
+      group: e.group,
+    })),
+  };
+  const swap = structuredClone(base);
+  swap.exercises[0].definitionId = "library:back-squat";
+  assert.equal((await call("coach", endpoint, "PATCH", swap)).status, 400);
+  const remove = structuredClone(base);
+  remove.exercises.shift();
+  assert.equal((await call("coach", endpoint, "PATCH", remove)).status, 400);
+  assert.equal(
+    (await call("coach", endpoint, "PATCH", { ...base, date: "2027-01-01" }))
+      .status,
+    400,
+  );
+  const foreign = structuredClone(base);
+  foreign.exercises[1].definitionId = "custom:someone-elses-exercise";
+  assert.equal((await call("coach", endpoint, "PATCH", foreign)).status, 400);
+  // Reorder and update targets without rewriting actuals or session notes.
+  base.exercises.reverse();
+  base.exercises[1].target = 10;
+  saved = await call("coach", endpoint, "PATCH", base);
+  assert.equal(saved.status, 200);
+  const kept = saved.body.workouts[0].exercises[1];
+  assert.equal(kept.target, 10);
+  assert.deepEqual(kept.logs[0], { weight: 95, actual: 8, done: true });
+  assert.equal(kept.note, "Keep this history");
+  await call("client", "/access/" + joined.body.assignmentId, "DELETE");
+  assert.equal(
+    (
+      await call("coach", endpoint, "PATCH", {
+        ...base,
+        revision: saved.body.revision,
+      })
+    ).status,
+    404,
+  );
+});

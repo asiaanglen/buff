@@ -204,6 +204,72 @@ test("coach builds a program, invites by email/text, client joins, coach logs re
       .click();
     await coach.locator(".coach-workout summary").first().click();
     await coach
+      .getByRole("button", { name: "Move / edit workout", exact: true })
+      .click();
+    const editor = coach.locator(".coach-plan-dialog");
+    await coach.setViewportSize({ width: 320, height: 844 });
+    expect(
+      await editor.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
+    ).toBe(true);
+    const oldDate = await editor
+      .getByLabel("Workout date", { exact: true })
+      .inputValue();
+    const movedDate = new Date(oldDate + "T12:00:00Z");
+    movedDate.setUTCDate(movedDate.getUTCDate() + 1);
+    const newDate = movedDate.toISOString().slice(0, 10);
+    await editor.getByLabel("Workout date", { exact: true }).fill(newDate);
+    const squat = editor.locator("fieldset").first();
+    await squat
+      .getByRole("button", { name: "Swap exercise", exact: true })
+      .click();
+    await squat
+      .getByLabel("Search exercise library", { exact: true })
+      .fill("Front Squat");
+    await squat
+      .getByLabel("Search exercise library", { exact: true })
+      .press("Tab");
+    await squat.getByLabel("Target per set", { exact: true }).fill("6");
+    await squat.getByLabel("Superset group", { exact: true }).fill("A");
+    await editor
+      .getByRole("button", { name: "Save client workout", exact: true })
+      .click();
+    await expect(editor).toHaveCount(0);
+    await expect(coach.getByRole("status")).toContainText(
+      "Workout plan updated",
+    );
+    const clientState = await (
+      await client.request.get(baseURL + "/api/state")
+    ).json();
+    const assigned = clientState.state.workouts.find((w) =>
+      w.exercises.some((e) => e.name === "Front Squat"),
+    );
+    expect(assigned.date).toBe(newDate);
+    expect(assigned.exercises[0].target).toBe(6);
+    expect(assigned.exercises[0].group).toBe("A");
+    // Swap back before the existing results/history checks.
+    await coach
+      .getByRole("button", { name: "Move / edit workout", exact: true })
+      .click();
+    await editor
+      .locator("fieldset")
+      .first()
+      .getByRole("button", { name: "Swap exercise", exact: true })
+      .click();
+    await editor
+      .locator("fieldset")
+      .first()
+      .getByLabel("Search exercise library", { exact: true })
+      .fill("Back Squat");
+    await editor
+      .locator("fieldset")
+      .first()
+      .getByLabel("Search exercise library", { exact: true })
+      .press("Tab");
+    await editor
+      .getByRole("button", { name: "Save client workout", exact: true })
+      .click();
+    await expect(editor).toHaveCount(0);
+    await coach
       .getByLabel("Back Squat set 1 weight", { exact: true })
       .fill("135");
     await coach.getByLabel("Back Squat set 1 reps", { exact: true }).fill("8");

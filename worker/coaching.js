@@ -1,3 +1,4 @@
+import { exerciseCatalog } from "../shared/exercises.js";
 import { identify } from "./session.js";
 import { digest, randomHex } from "./crypto.js";
 import {
@@ -7,6 +8,7 @@ import {
 import { inPounds } from "../shared/weights.js";
 import {
   applyCoachLog,
+  applyCoachPlan,
   personName,
   programProgress,
 } from "../shared/coaching.js";
@@ -490,7 +492,25 @@ export async function coachingApi(request, env) {
         );
       let next;
       try {
-        next = applyCoachLog(current.state, a.program_id, detail[2], input);
+        if (input.editPlan === true) {
+          const own = await journal(db, user.id);
+          const definitions = [
+            ...exerciseCatalog.map((e) => ({ ...e, key: "library:" + e.id })),
+            ...(own.state.customExercises || []).map((e) => ({
+              ...e,
+              custom: true,
+              key: "custom:" + e.id,
+            })),
+          ];
+          next = applyCoachPlan(
+            current.state,
+            a.program_id,
+            detail[2],
+            input,
+            definitions,
+          );
+        } else
+          next = applyCoachLog(current.state, a.program_id, detail[2], input);
       } catch (e) {
         return json({ error: e.message }, 400);
       }

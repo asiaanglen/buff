@@ -1,3 +1,4 @@
+import { editClientWorkout } from "./coach-editor.js";
 import { createCloud } from "./cloud.js";
 import { smsLink } from "./sharing.js";
 import { programWeek } from "../shared/programs.js";
@@ -184,10 +185,10 @@ function invitation() {
       esc(error || "Loading invitation…"),
       '<a class="button subtle" href="/">Back to Buff</a><button class="text-button" data-cmd="dismiss-invite">Dismiss invitation</button>',
     );
-  return `<section class="coach-hero"><span class="eyebrow">YOUR NEXT PROGRAM, WITH SUPPORT</span><h1>${esc(inviteInfo.coachName)} invited you to train.</h1><p>Join Buff to add this program to your library and work with your coach.</p></section><section class="coach-panel coach-invite"><span class="tag">${inviteInfo.weeks} WEEKS · ${inviteInfo.workoutCount} WORKOUTS</span><h2>${esc(inviteInfo.programName)}</h2><form id="coach-join-form"><label>Week 1 start date<input type="date" name="startDate" required value="${consentDraft()?.startDate || today()}"></label><label class="coach-consent"><input type="checkbox" name="consent" required><span>I allow <strong>${esc(inviteInfo.coachName)}</strong> to see my name, email, and progress for this program, and enter or update my workout results and exercise notes for me.</span></label><p>You can end this access in Account → Manage coaching access. Your other programs, personal details, and workouts stay private. This adds a program to your library; starting it remains your choice.</p>${inviteInfo.emailRestricted ? "<p>Use the email address your coach invited.</p>" : ""}${cloud.isSignedIn() ? `<p>Joining as <strong>${esc(cloud.account()?.email)}</strong></p><button class="button primary" type="submit">Accept invitation & add program →</button>` : '<div class="coach-actions"><button class="button primary" name="auth" value="signup" type="submit">Create account & join</button><button class="button subtle" name="auth" value="signin" type="submit">Sign in & join</button></div>'}</form><button class="text-button" data-cmd="dismiss-invite">Dismiss invitation</button></section>`;
+  return `<section class="coach-hero"><span class="eyebrow">YOUR NEXT PROGRAM, WITH SUPPORT</span><h1>${esc(inviteInfo.coachName)} invited you to train.</h1><p>Join Buff to add this program to your library and work with your coach.</p></section><section class="coach-panel coach-invite"><span class="tag">${inviteInfo.weeks} WEEKS · ${inviteInfo.workoutCount} WORKOUTS</span><h2>${esc(inviteInfo.programName)}</h2><form id="coach-join-form"><label>Week 1 start date<input type="date" name="startDate" required value="${consentDraft()?.startDate || today()}"></label><label class="coach-consent"><input type="checkbox" name="consent" required><span>I allow <strong>${esc(inviteInfo.coachName)}</strong> to see my name, email, and progress for this program, reschedule my workouts, edit exercises and targets, and enter or update my workout results and exercise notes for me.</span></label><p>You can end this access in Account → Manage coaching access. Your other programs, personal details, and workouts stay private. This adds a program to your library; starting it remains your choice.</p>${inviteInfo.emailRestricted ? "<p>Use the email address your coach invited.</p>" : ""}${cloud.isSignedIn() ? `<p>Joining as <strong>${esc(cloud.account()?.email)}</strong></p><button class="button primary" type="submit">Accept invitation & add program →</button>` : '<div class="coach-actions"><button class="button primary" name="auth" value="signup" type="submit">Create account & join</button><button class="button subtle" name="auth" value="signin" type="submit">Sign in & join</button></div>'}</form><button class="text-button" data-cmd="dismiss-invite">Dismiss invitation</button></section>`;
 }
 function access() {
-  return `<div class="coach-heading"><div><span class="eyebrow">YOU CONTROL YOUR CONNECTIONS</span><h1>Your coaching access</h1><p>Ending access stops future coach viewing and updates. Your programs and recorded results stay in your account.</p></div></div><div class="coach-grid">${connections.map((a) => `<article class="coach-panel"><h2>${esc(a.program_name)}</h2><p>Coach: ${esc(a.coach_name)}</p><p>${a.revoked ? "Access ended" : "Coach can view and log results for this program."}</p>${!a.revoked ? `<button class="button subtle" data-cmd="revoke-access" data-id="${a.id}">End coach access</button>` : ""}</article>`).join("") || empty("No coaching connections yet.", "Accept an invitation from a coach to get started.")}</div>`;
+  return `<div class="coach-heading"><div><span class="eyebrow">YOU CONTROL YOUR CONNECTIONS</span><h1>Your coaching access</h1><p>Ending access stops future coach viewing and updates. Your programs and recorded results stay in your account.</p></div></div><div class="coach-grid">${connections.map((a) => `<article class="coach-panel"><h2>${esc(a.program_name)}</h2><p>Coach: ${esc(a.coach_name)}</p><p>${a.revoked ? "Access ended" : "Coach can view and edit this program’s workouts, exercises, and results."}</p>${!a.revoked ? `<button class="button subtle" data-cmd="revoke-access" data-id="${a.id}">End coach access</button>` : ""}</article>`).join("") || empty("No coaching connections yet.", "Accept an invitation from a coach to get started.")}</div>`;
 }
 function clientCards() {
   const groups = new Map();
@@ -224,10 +225,10 @@ function pending() {
 }
 function logForm(w) {
   const progress = programProgress([w]);
-  return `<details class="coach-workout" name="client-workout" ${openWorkout === w.id ? "open" : ""}><summary><span><strong>Week ${programWeek(selected.program, w.date)} · ${esc(w.name)}</strong><small>${esc(date(w.date))}</small></span><span>${progress.completed ? "Completed ✓" : `${progress.setsDone}/${progress.sets} sets`}</span></summary><form class="coach-log" data-workout="${esc(w.id)}">${w.exercises.map((e, index) => `<fieldset data-exercise="${esc(e.id)}"><legend>${index + 1}. ${esc(e.name)}${e.group ? ` · Superset ${esc(e.group)}` : ""}</legend><p>Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "seconds" : "reps"}${e.weight ? ` at ${e.weight} lbs` : ""}</p><div class="coach-set-head"><span>Set</span><span>Lbs</span><span>${e.mode === "time" ? "Seconds" : "Reps"}</span><span>Done</span></div>${e.logs.map((l, i) => `<div class="coach-set" data-log><span>${i + 1}</span><input type="number" min="0" max="5000" step="0.01" data-weight aria-label="${esc(e.name)} set ${i + 1} weight" value="${esc(l.weight)}" placeholder="${e.weight}"><input type="number" min="0" max="10000" step="0.01" data-actual aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" value="${esc(l.actual)}" placeholder="${e.target}"><input type="checkbox" data-done aria-label="${esc(e.name)} set ${i + 1} completed" ${l.done ? "checked" : ""}></div>`).join("")}<label for="coach-note-${esc(e.id)}">Notes for ${esc(e.name)}</label><textarea id="coach-note-${esc(e.id)}" data-note maxlength="1000" rows="2">${esc(e.note || "")}</textarea></fieldset>`).join("")}<p class="form-error" role="alert"></p><div class="coach-actions"><button type="submit" class="button primary">Save workout progress</button><button type="submit" class="button subtle" data-complete="true">Mark workout complete</button></div><p>Changes save to ${esc(selected.clientName)}’s program and appear in their exercise history. Marking complete fills blank results with the planned targets.</p></form></details>`;
+  return `<details class="coach-workout" name="client-workout" ${openWorkout === w.id ? "open" : ""}><summary><span><strong>Week ${programWeek(selected.program, w.date)} · ${esc(w.name)}</strong><small>${esc(date(w.date))}</small></span><span>${progress.completed ? "Completed ✓" : `${progress.setsDone}/${progress.sets} sets`}</span></summary><div class="coach-actions"><button type="button" class="button subtle" data-cmd="edit-client-workout" data-id="${esc(w.id)}">Move / edit workout</button></div><form class="coach-log" data-workout="${esc(w.id)}">${w.exercises.map((e, index) => `<fieldset data-exercise="${esc(e.id)}"><legend>${index + 1}. ${esc(e.name)}${e.group ? ` · Superset ${esc(e.group)}` : ""}</legend><p>Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "seconds" : "reps"}${e.weight ? ` at ${e.weight} lbs` : ""}</p><div class="coach-set-head"><span>Set</span><span>Lbs</span><span>${e.mode === "time" ? "Seconds" : "Reps"}</span><span>Done</span></div>${e.logs.map((l, i) => `<div class="coach-set" data-log><span>${i + 1}</span><input type="number" min="0" max="5000" step="0.01" data-weight aria-label="${esc(e.name)} set ${i + 1} weight" value="${esc(l.weight)}" placeholder="${e.weight}"><input type="number" min="0" max="10000" step="0.01" data-actual aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" value="${esc(l.actual)}" placeholder="${e.target}"><input type="checkbox" data-done aria-label="${esc(e.name)} set ${i + 1} completed" ${l.done ? "checked" : ""}></div>`).join("")}<label for="coach-note-${esc(e.id)}">Notes for ${esc(e.name)}</label><textarea id="coach-note-${esc(e.id)}" data-note maxlength="1000" rows="2">${esc(e.note || "")}</textarea></fieldset>`).join("")}<p class="form-error" role="alert"></p><div class="coach-actions"><button type="submit" class="button primary">Save workout progress</button><button type="submit" class="button subtle" data-complete="true">Mark workout complete</button></div><p>Changes save to ${esc(selected.clientName)}’s program and appear in their exercise history. Marking complete fills blank results with the planned targets.</p></form></details>`;
 }
 function detail() {
-  return `<div class="coach-heading"><div><button class="text-button" data-cmd="back">← All clients</button><span class="eyebrow">CLIENT PROGRAM</span><h1>${esc(selected.clientName)}</h1><h2>${esc(selected.program.name)}</h2><p>${selected.progress.completed}/${selected.progress.workouts} workouts completed · ${selected.progress.setsDone}/${selected.progress.sets} sets logged</p><p>Connection updated: ${dateTime(selected.updated)}</p></div><button class="button subtle" data-cmd="refresh-client">Refresh client progress</button></div><p class="coach-help">You can view and log results only for this accepted program. Save each workout before moving to another. If the client makes changes, refresh their progress before saving.</p>${
+  return `<div class="coach-heading"><div><button class="text-button" data-cmd="back">← All clients</button><span class="eyebrow">CLIENT PROGRAM</span><h1>${esc(selected.clientName)}</h1><h2>${esc(selected.program.name)}</h2><p>${selected.progress.completed}/${selected.progress.workouts} workouts completed · ${selected.progress.setsDone}/${selected.progress.sets} sets logged</p><p>Connection updated: ${dateTime(selected.updated)}</p></div><button class="button subtle" data-cmd="refresh-client">Refresh client progress</button></div><p class="coach-help">You can reschedule workouts, edit exercises, and log results for this accepted program. Use Move / edit workout to change dates, swap or reorder exercises, and adjust sets, targets, or supersets. Save each workout before moving to another. If the client makes changes, refresh their progress before saving.</p>${
     [...selected.workouts]
       .sort((a, b) => a.date.localeCompare(b.date))
       .map(logForm)
@@ -359,6 +360,37 @@ app.addEventListener("click", async (event) => {
       return render();
     }
     if (cmd === "invite") return await invite(button.dataset.id);
+    if (cmd === "edit-client-workout") {
+      if (dirty) {
+        alert("Save your workout progress before editing the plan.");
+        return;
+      }
+      const w = selected.workouts.find((w) => w.id === button.dataset.id);
+      const result = await editClientWorkout(
+        w,
+        selected.program,
+        state.customExercises || [],
+        (input) =>
+          api(
+            "/assignments/" +
+              selected.id +
+              "/workouts/" +
+              encodeURIComponent(w.id),
+            {
+              method: "PATCH",
+              body: JSON.stringify({ ...input, revision: selected.revision }),
+            },
+          ),
+      );
+      if (result) {
+        selected = { ...selected, ...result };
+        openWorkout = w.id;
+        notice = "Workout plan updated for " + selected.clientName + ".";
+        render();
+      }
+      return;
+    }
+
     if (cmd === "refresh") {
       await cloud.refresh();
       return load();

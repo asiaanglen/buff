@@ -312,6 +312,9 @@
 .coach-main input:not([type="checkbox"]),
 .coach-main textarea,
 #coach-invite-dialog input,
+.coach-plan-dialog input,
+.coach-plan-dialog select,
+.coach-plan-dialog textarea,
 .coach-share-result textarea {
   width: 100%;
   min-height: 44px;
@@ -328,4 +331,37 @@
 }
 .coach-set input:not([type="checkbox"]) {
   padding: 10px;
+}
+
+.coach-plan-dialog fieldset {
+  border: 1px solid var(--border, #e5dfed);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 20px 0;
+  min-width: 0;
+}
+.coach-plan-dialog label {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+.coach-plan-dialog input,
+.coach-plan-dialog select,
+.coach-plan-dialog textarea {
+  width: 100%;
+  min-height: 44px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.coach-plan-dialog [hidden] {
+  display: none !important;
+}
+
+@media (max-width: 480px) {
+  .coach-plan-dialog .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .coach-plan-dialog {
+    padding: 18px;
+  }
 }
