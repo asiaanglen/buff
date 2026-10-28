@@ -139,6 +139,20 @@ test("coach builds a program, invites by email/text, client joins, coach logs re
     await share
       .getByRole("button", { name: "Close invitation", exact: true })
       .click();
+    // A returning client may choose Create account from their invitation.
+    const existing = await client.request.post(baseURL + "/api/auth/signup", {
+      headers: { Origin: baseURL },
+      data: {
+        firstName: "Alex",
+        lastName: "Client",
+        dateOfBirth: "1990-01-01",
+        email: clientEmail,
+        password: await passwordProof(clientEmail, "coach test password"),
+        credentialVersion: authScheme,
+      },
+    });
+    expect(existing.ok()).toBeTruthy();
+    await b.clearCookies();
     await client.goto(inviteUrl);
     await expect(
       client.getByRole("heading", {
@@ -151,6 +165,24 @@ test("coach builds a program, invites by email/text, client joins, coach logs re
       .getByRole("button", { name: "Create account & join", exact: true })
       .click();
     await profile(client, clientEmail, "Alex", "Client");
+    await expect(
+      client.getByRole("heading", { name: "Sign in to Buff", exact: true }),
+    ).toBeVisible();
+    await expect(client.getByLabel("Email", { exact: true })).toHaveValue(
+      clientEmail,
+    );
+    await expect(client.locator(".account-message")).toContainText(
+      "invitation",
+    );
+    await expect(client.getByLabel("Password", { exact: true })).toHaveValue(
+      "",
+    );
+    await client
+      .getByLabel("Password", { exact: true })
+      .fill("coach test password");
+    await client
+      .getByRole("button", { name: "Sign in →", exact: true })
+      .click();
     await expect(client).toHaveURL(/tab=programs/);
     await expect(client.locator(".program-card")).toContainText(
       "Coach strength block",

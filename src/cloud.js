@@ -375,7 +375,21 @@ export function createCloud({
       }
       open();
     } catch (e) {
-      root.querySelector(".account-message").textContent = e.message;
+      if (
+        form.id === "auth-form" &&
+        root.dataset.mode === "signup" &&
+        e.status === 409
+      ) {
+        const email = form.elements.email.value;
+        open(
+          "signin",
+          "An account may already exist for this email. Sign in to continue. If you opened an invitation, it will still be waiting for you.",
+        );
+        root.querySelector('[name="email"]').value = email;
+        root.querySelector('[name="password"]').focus();
+      } else {
+        root.querySelector(".account-message").textContent = e.message;
+      }
     } finally {
       b.disabled = false;
     }
