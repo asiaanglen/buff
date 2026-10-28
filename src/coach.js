@@ -274,7 +274,7 @@ async function invite(id) {
   const dialog = document.createElement("dialog");
   dialog.id = "coach-invite-dialog";
   dialog.className = "exercise-guide-dialog";
-  dialog.innerHTML = `<div class="modal-header"><h2>Invite a client</h2><button class="icon-button" type="button" aria-label="Close invitation">×</button></div><p>${esc(p.name)} · Each client receives their own copy and chooses whether to grant coaching access.</p><form><label>Client email <span class="optional">optional for text invitations</span><input type="email" name="email" maxlength="254" placeholder="client@example.com"></label><p>If supplied, only an account with this email can accept. Leave it blank to let the recipient of your text accept.</p><p class="form-error" role="alert"></p><button class="button primary" type="submit">Create invitation</button></form><section class="coach-share-result" hidden></section>`;
+  dialog.innerHTML = `<div class="modal-header"><h2>Invite a client</h2><button class="icon-button" type="button" aria-label="Close invitation">×</button></div><p>${esc(p.name)} · Each client receives their own copy and chooses whether to grant coaching access.</p><form><p>Create a private invitation link, then copy it into an email or share it by text. Each link can be accepted by one client.</p><p class="form-error" role="alert"></p><button class="button primary" type="submit">Create invitation</button></form><section class="coach-share-result" hidden></section>`;
   dialog.querySelector('[aria-label="Close invitation"]').onclick = () =>
     dialog.close();
   dialog.addEventListener(
@@ -297,7 +297,6 @@ async function invite(id) {
         method: "POST",
         body: JSON.stringify({
           programId: id,
-          email: dialog.querySelector("[name=email]").value,
         }),
       });
       shareResult = result;

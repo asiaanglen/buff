@@ -103,7 +103,7 @@ test("coach builds a program, invites by email/text, client joins, coach logs re
       .getByRole("button", { name: "Invite a client", exact: false })
       .click();
     const share = coach.locator("#coach-invite-dialog");
-    await share.getByLabel("Client email", { exact: false }).fill(clientEmail);
+    await expect(share.locator("input[type=email]")).toHaveCount(0);
     await share
       .getByRole("button", { name: "Create invitation", exact: true })
       .click();
