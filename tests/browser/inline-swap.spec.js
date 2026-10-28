@@ -34,6 +34,13 @@ test("exercise dropdown logs in place and opens the library only for swapping, r
       exact: true,
     }),
   ).toHaveCount(0);
+  // Leaving an actual-results field fires change before the swap click on phones.
+  await page
+    .getByLabel("Barbell bench press set 1 weight", { exact: true })
+    .fill("45");
+  await page
+    .getByLabel("Barbell bench press set 1 reps", { exact: true })
+    .fill("6");
   await accordion
     .getByRole("button", {
       name: "Swap exercise: Barbell bench press",
@@ -56,6 +63,10 @@ test("exercise dropdown logs in place and opens the library only for swapping, r
   await expect(page.getByLabel("Target per set", { exact: true })).toHaveValue(
     "8",
   );
+  page.once("dialog", (dialog) => {
+    expect(dialog.message()).toContain("Uncompleted set entries");
+    dialog.accept();
+  });
   await page
     .getByRole("button", { name: "Swap exercise →", exact: true })
     .click();
@@ -65,6 +76,19 @@ test("exercise dropdown logs in place and opens the library only for swapping, r
       exact: true,
     }),
   ).toBeVisible();
+  await expect
+    .poll(async () => {
+      const savedState = await (await page.request.get("/api/state")).json();
+      const swapped = savedState.state.workouts
+        .flatMap((w) => w.exercises)
+        .find((e) => e.name === "Incline Dumbbell Bench Press");
+      return (
+        swapped?.logs.every(
+          (l) => l.weight === "" && l.actual === "" && !l.done,
+        ) || false
+      );
+    })
+    .toBe(true);
   const replacement = page.locator(".exercise-accordion").filter({
     has: page.getByRole("heading", {
       name: "Incline Dumbbell Bench Press",

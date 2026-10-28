@@ -434,9 +434,7 @@ function openPersonalExercise() {
   });
 }
 function swapButton(w, e) {
-  const recorded = e.logs.some(
-    (log) => log.done || log.weight !== "" || log.actual !== "",
-  );
+  const recorded = e.logs.some((log) => log.done);
   return `<button type="button" class="text-button swap-exercise" data-action="swap-exercise" data-id="${w.id}" data-eid="${e.id}" aria-label="Swap exercise: ${esc(e.name)}" ${recorded ? 'disabled title="This exercise has recorded results; add a replacement to preserve its history."' : ""}>Swap exercise</button>`;
 }
 function moveCalendarWorkout(id, date) {
@@ -1043,14 +1041,20 @@ app.addEventListener("submit", (event) => {
     if (!data.name.trim()) return;
     const w = workout(),
       old = w.exercises.find((e) => e.id === modal.eid);
-    if (
-      modal.type === "swap" &&
-      old.logs.some((log) => log.done || log.weight !== "" || log.actual !== "")
-    ) {
+    if (modal.type === "swap" && old.logs.some((log) => log.done)) {
       form.querySelector(".exercise-swap-message").textContent =
         "This exercise has recorded results. Add a new exercise to keep those results with the original movement.";
       return;
     }
+    if (
+      modal.type === "swap" &&
+      (old.logs.some((log) => log.weight !== "" || log.actual !== "") ||
+        old.note) &&
+      !confirm(
+        "Swap this exercise? Uncompleted set entries and exercise notes will be cleared for the replacement.",
+      )
+    )
+      return;
     const definition = personalExercise(state, data.name);
     if (
       !definition &&
@@ -1077,10 +1081,12 @@ app.addEventListener("submit", (event) => {
     }
     if (old) {
       e.id = old.id;
-      if (old.note !== undefined) e.note = old.note;
-      e.logs = e.logs.map((l, i) =>
-        old.mode === e.mode ? old.logs[i] || l : l,
-      );
+      if (modal.type !== "swap") {
+        if (old.note !== undefined) e.note = old.note;
+        e.logs = e.logs.map((l, i) =>
+          old.mode === e.mode ? old.logs[i] || l : l,
+        );
+      }
       w.exercises[w.exercises.indexOf(old)] = e;
     } else w.exercises.push(e);
     const order = new Map();
@@ -1253,9 +1259,7 @@ app.addEventListener("change", (event) => {
     '[data-action="swap-exercise"]',
   )) {
     if (button.dataset.eid === e.id)
-      button.disabled = e.logs.some(
-        (log) => log.done || log.weight !== "" || log.actual !== "",
-      );
+      button.disabled = e.logs.some((log) => log.done);
   }
   save();
   if (
