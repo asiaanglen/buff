@@ -166,7 +166,6 @@ The workout log includes an expandable **Workout history** section directly bene
 
 Use **Supersets** within **Edit plan** or at the bottom of a started workout to group two or more existing exercises. Create multiple named groups, choose an existing group to edit its members or name, or remove a group while keeping its exercises. Exercises in another group are disabled until you remove or edit that group. Group changes preserve all recorded sets and exercise notes and sync with the account. The log shows a heading for each superset with an alternating-set reminder. The **Done logging** button has been removed: results save automatically; use **Collapse workout** to fold its fields or **Mark as complete** to finish the workout.
 
-
 ## Phone-friendly inline logging and swaps
 
 On phones, exercise previews use larger cards instead of a compressed table, navigation and actions have larger tap targets, and log inputs use 16px text. Swipe the weekly schedule horizontally to see other days. The install badge hides while using forms or logging so it does not cover controls.
@@ -174,7 +173,6 @@ On phones, exercise previews use larger cards instead of a compressed table, nav
 Choose **Start workout** to begin logging within the workout card. Then tap an exercise heading to expand its sets and results. Only one exercise is expanded within a workout; opening another automatically folds the previous one without clearing its values. **Start workout** opens the first exercise's fields and **Collapse workout** folds them. No separate workout logging screen or **Done logging** button is shown. Guides and session notes remain available in the expanded exercise. Workout history and the same inline logger also work from Completed workouts.
 
 Choose **Swap exercise** to open the library and select a replacement or enter a custom movement. The replacement keeps the planned sets, targets, weight and superset membership unless you adjust them; selecting a different tracking mode supplies a suitable initial target. Existing logged results cannot be reassigned to another movement: swapping is disabled for that exercise once results are entered, while other unlogged exercises remain swappable. Normal exercise dropdowns do not show the library. Adding an exercise still supports library search, and ordinary plan editing shows the selected movement's guide without opening the library.
-
 
 ## Connected AI apps
 
@@ -184,16 +182,13 @@ Startup shows a branded loading screen while the session and journal are checked
 
 On phones, use the **Go to** dropdown at the top to switch between Home, Programs, Weekly planner and Completed workouts. Desktop navigation keeps its sidebar buttons. Before starting, exercise previews show only names, set counts, target reps/time and weight. After starting, exercise headings expand or fold their fields and show logged-set counts.
 
-
 MCP-created exercises now store an optional `libraryId` when a catalog name or alias matches. MCP exercise inputs also accept `library_id` from `search_exercises` for explicit selection; invalid IDs and conflicting known names are rejected before approval. Recognized timed exercises use timed tracking when no mode is supplied. The Edit exercise dialog shows the selected library entry with its guide and a Swap exercise control, including for older text-only exercises that match a catalog name. Custom movements remain supported. Cable Kickback (glutes, low cable with ankle strap) and Split Squat (both feet on the floor) are included with instructions and plural search aliases.
-
 
 Workout actions now say **Start workout** (or **Resume workout** after results have been entered). Exercise accordions use exclusive groups plus a JavaScript fallback to keep only one exercise expanded per workout. Set values and notes remain in place when an exercise folds, and any hidden invalid field is opened if bulk completion needs it corrected.
 
 ## Focused mobile workout layout
 
 Expanded phone workouts use a light, uncluttered panel with a large rep/time target, the exercise name and swap action, inline instruction cues, an Add note field, and a five-column set table: Set, Previous, Lbs, Reps/Sec, and completion. Previous values come from the matching completed set in the latest earlier session; missing values show a dash. Notes stay with the exercise session and current targets still prefill actual-entry fields. Common movements have shorter inline cues. Expanded workouts show instructions directly without a How to button; full guides remain available in the exercise library and plan editor. Desktop styling stays light. The layout is verified at 320px and 390px, including the Home and Completed workouts contexts.
-
 
 Before **Start workout**, the exercise list is a read-only preview with no per-exercise logging, swap, guide or edit buttons. **Edit plan** provides the exercise management controls, including adding exercises and managing supersets. Once started, the light workout editor opens the first exercise and keeps only one exercise expanded at a time. The former **Log sets** controls have been removed.
 
@@ -267,9 +262,3 @@ Browser tests seed an isolated fake owner in their local D1 database. That fixtu
 ### App themes
 
 Open **Account → App theme** to choose **Buff Classic** or **Muscle Mami**, an optional blush, rose and berry theme with heart accents. The choice saves in the account’s journal, works offline, and syncs to other devices. Signing out returns the public site to Classic. Themes change appearance only.
-
-### YouTube exercise demonstrations
-
-Open **YouTube demonstration** beside expanded exercise instructions or in a library guide, then tap **Play demonstration** to watch the default. To choose a different video, **Find a video on YouTube** searches for that exercise and proper form; paste the selected video’s share link and choose **Save video**. Personal choices are private to the account and sync with the journal. New personal exercises also accept an optional YouTube video link. All 155 shared catalog exercises have default YouTube associations in `shared/exercise-videos.js`. Female-led demonstrations were prioritized where a suitable source could be identified. The UI credits the source, identifies women-focused sources, labels other defaults as general demonstrations without a verified female demonstrator, and shows notes for general technique demonstrations, related variations, progression tutorials, and follow-along cardio sessions. Women-focused does not guarantee that every person appearing or coaching in a video is female. A sticky × at the top right closes the player and stops playback. Personal video choices take priority over library defaults; clearing a personal choice restores the default. Source matching uses indexed titles and descriptions, and does not guarantee current playback availability.
-
-Players load only after **Play demonstration**, use `youtube-nocookie.com`, and stop when the dialog closes. An **Open on YouTube** fallback is available for videos that disable embedding. Only HTTPS YouTube watch, Shorts, live, embed, and youtu.be video links are accepted and normalized; unrelated URLs, executable URLs and channel/search links are rejected. Clear the saved link and save to remove a demonstration. Buff does not download or host the videos; YouTube controls availability, ads and playback.

@@ -3955,53 +3955,6 @@ body:has(#program-share-dialog[open]) .pwa-help {
     min-height: 44px;
   }
 }
-.exercise-video-button {
-  margin: 8px 0 16px;
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-}
-.exercise-video-button > span {
-  color: #c82f46;
-  font-size: 22px;
-}
-.exercise-video-dialog {
-  max-width: 640px;
-  width: calc(100% - 28px);
-}
-.exercise-video-dialog form {
-  margin: 22px 0;
-}
-.exercise-video-dialog small {
-  display: block;
-  color: #716777;
-  line-height: 1.5;
-}
-.exercise-video-dialog p {
-  margin: 12px 0;
-}
-.exercise-video-player {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12px;
-  margin: 18px 0;
-}
-.exercise-video-player iframe {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border: 0;
-  border-radius: 12px;
-  background: #18131b;
-}
-.video-play {
-  min-height: 70px;
-}
-.video-privacy {
-  font-size: 12px;
-}
-
 .profile .avatar {
   flex-shrink: 0;
 }
@@ -4011,31 +3964,4 @@ body:has(#program-share-dialog[open]) .pwa-help {
 .profile strong {
   display: block;
   overflow-wrap: anywhere;
-}
-.exercise-video-dialog .video-source {
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
-.exercise-video-dialog .video-variation {
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #fff5e6;
-  color: #765020;
-}
-
-.exercise-video-dialog .video-close {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  float: right;
-  width: 44px;
-  height: 44px;
-  margin: -12px -12px 0 12px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 12px #34253514;
-  color: #6d5367;
-  font-size: 28px;
-  line-height: 1;
 }
