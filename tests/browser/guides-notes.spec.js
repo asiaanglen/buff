@@ -130,3 +130,98 @@ test("guides open from the library, plan and workout log without losing edits; n
   );
   await other.close();
 });
+
+test("YouTube demonstrations save privately, load only on play and close cleanly", async ({
+  page,
+  browser,
+  baseURL,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("https://www.youtube-nocookie.com/**", (route) =>
+    route.fulfill({ contentType: "text/html", body: "Video fixture" }),
+  );
+  expect(
+    (
+      await page.request.put("/api/state", {
+        headers: { Origin: baseURL },
+        data: {
+          revision: 0,
+          state: {
+            version: 1,
+            unit: "lbs",
+            workouts: [
+              {
+                id: "video-test",
+                name: "Video session",
+                date: key(new Date()),
+                note: "",
+                exercises: [exercise("Back Squat", 1)],
+              },
+            ],
+          },
+        },
+      })
+    ).ok(),
+  ).toBeTruthy();
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Start workout", exact: false })
+    .click();
+  await page
+    .getByRole("button", { name: "YouTube demonstration", exact: false })
+    .first()
+    .click();
+  const dialog = page.locator("#exercise-video-dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator("iframe")).toHaveCount(0);
+  await expect(
+    dialog.getByRole("link", { name: "Find a video on YouTube", exact: false }),
+  ).toHaveAttribute("href", /youtube.com\/results\?search_query=/);
+  await dialog
+    .getByLabel("YouTube video link", { exact: true })
+    .fill("https://attacker.test/watch?v=rT7DgCr-3pg");
+  await dialog.getByRole("button", { name: "Save video", exact: true }).click();
+  await expect(dialog.getByRole("alert")).toContainText(
+    "Enter a YouTube video link",
+  );
+  await dialog
+    .getByLabel("YouTube video link", { exact: true })
+    .fill("https://youtu.be/rT7DgCr-3pg?t=10");
+  await dialog.getByRole("button", { name: "Save video", exact: true }).click();
+  await expect(dialog.locator("iframe")).toHaveCount(0);
+  await dialog
+    .getByRole("button", { name: "Play demonstration", exact: false })
+    .click();
+  await expect(dialog.locator("iframe")).toHaveAttribute(
+    "src",
+    "https://www.youtube-nocookie.com/embed/rT7DgCr-3pg",
+  );
+  await dialog
+    .getByRole("button", { name: "Close video", exact: true })
+    .click();
+  await expect(page.locator("iframe")).toHaveCount(0);
+  await expect(page.locator("#sync-label")).toContainText("Synced");
+  const other = await browser.newContext({
+    storageState: { cookies: await page.context().cookies(), origins: [] },
+  });
+  try {
+    const device = await other.newPage();
+    await device.goto(baseURL);
+    await expect(device.locator("#sync-label")).toContainText("Synced");
+    const state = await device.evaluate(
+      () =>
+        JSON.parse(
+          localStorage.getItem(
+            Object.keys(localStorage).find((k) =>
+              k.startsWith("buff-account-"),
+            ),
+          ),
+        ).state,
+    );
+    expect(Object.values(state.exerciseVideos)).toContain(
+      "https://www.youtube.com/watch?v=rT7DgCr-3pg",
+    );
+  } finally {
+    await other.close();
+  }
+});

@@ -1,3 +1,4 @@
+import { exerciseVideoButton } from "./exercise-videos.js";
 import {
   exerciseCatalog,
   searchExercises,
@@ -64,7 +65,7 @@ export function showExerciseGuide(id, esc) {
     dialog.setAttribute("aria-labelledby", "exercise-guide-title");
     document.body.append(dialog);
   }
-  dialog.innerHTML = `<div class="eyebrow">EXERCISE GUIDE</div><h2 id="exercise-guide-title">${esc(exercise.name)}</h2><p>${esc(exercise.category)} · ${esc(exercise.equipment)}</p><h3>How to do it</h3><ol>${exercise.instructions.steps.map((step) => `<li>${esc(step)}</li>`).join("")}</ol><h3>Form cue</h3>${exercise.instructions.cues.map((cue) => `<p>${esc(cue)}</p>`).join("")}<button type="button" class="button primary" id="close-exercise-guide">Close instructions</button>`;
+  dialog.innerHTML = `<div class="eyebrow">EXERCISE GUIDE</div><h2 id="exercise-guide-title">${esc(exercise.name)}</h2><p>${esc(exercise.category)} · ${esc(exercise.equipment)}</p>${exerciseVideoButton(exercise.name, esc)}<h3>How to do it</h3><ol>${exercise.instructions.steps.map((step) => `<li>${esc(step)}</li>`).join("")}</ol><h3>Form cue</h3>${exercise.instructions.cues.map((cue) => `<p>${esc(cue)}</p>`).join("")}<button type="button" class="button primary" id="close-exercise-guide">Close instructions</button>`;
   dialog
     .querySelector("#close-exercise-guide")
     .addEventListener("click", () => dialog.close());

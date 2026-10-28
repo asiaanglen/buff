@@ -1,3 +1,4 @@
+import { youtubeId } from "./youtube.js";
 import { programError, programWeek, validDate } from "./programs.js";
 export function validState(s) {
   const text = (v, n) => typeof v === "string" && v.length <= n;
@@ -41,6 +42,7 @@ export function validState(s) {
         !text(e.name, 100) ||
         !e.name.trim() ||
         !text(e.instructions, 3000) ||
+        (e.videoUrl !== undefined && !youtubeId(e.videoUrl)) ||
         !e.instructions.trim() ||
         !["reps", "time"].includes(e.mode) ||
         typeof e.weighted !== "boolean"
@@ -48,6 +50,18 @@ export function validState(s) {
         return false;
       customIds.add(e.id);
     }
+  }
+  if (s.exerciseVideos !== undefined) {
+    if (
+      !s.exerciseVideos ||
+      typeof s.exerciseVideos !== "object" ||
+      Array.isArray(s.exerciseVideos) ||
+      Object.keys(s.exerciseVideos).length > 1000 ||
+      Object.entries(s.exerciseVideos).some(
+        ([name, url]) => !name.trim() || name.length > 100 || !youtubeId(url),
+      )
+    )
+      return false;
   }
   const programs = new Map();
   for (const p of s.programs || []) {
@@ -99,6 +113,7 @@ export function validState(s) {
         (e.note !== undefined && !text(e.note, 1000)) ||
         (e.customExerciseId !== undefined && !text(e.customExerciseId, 100)) ||
         (e.instructions !== undefined && !text(e.instructions, 3000)) ||
+        (e.videoUrl !== undefined && !youtubeId(e.videoUrl)) ||
         (e.weighted !== undefined && typeof e.weighted !== "boolean") ||
         !["time", "reps"].includes(e.mode) ||
         !Number.isInteger(e.sets) ||

@@ -74,3 +74,52 @@ test("personal definitions validate, reject duplicate names, and share only exer
   invalid.customExercises[0].weighted = "false";
   assert.equal(validState(invalid), false);
 });
+
+test("YouTube links normalize safely and reject executable or unrelated URLs", async () => {
+  const { youtubeUrl } = await import("../shared/youtube.js");
+  for (const url of [
+    "https://youtu.be/rT7DgCr-3pg?t=30",
+    "https://www.youtube.com/watch?v=rT7DgCr-3pg&list=ignored",
+    "https://www.youtube.com/shorts/rT7DgCr-3pg",
+  ]) {
+    assert.equal(
+      youtubeUrl(url),
+      "https://www.youtube.com/watch?v=rT7DgCr-3pg",
+    );
+  }
+  for (const url of [
+    "javascript:alert(1)",
+    "https://youtube.com.attacker.test/watch?v=rT7DgCr-3pg",
+    "https://attacker.test",
+    "https://youtube.com/watch?v=bad",
+    "http://youtube.com/watch?v=rT7DgCr-3pg",
+    "https://me@youtube.com/watch?v=rT7DgCr-3pg",
+  ])
+    assert.equal(youtubeUrl(url), null);
+  const state = { version: 1, unit: "lbs", workouts: [] };
+  const item = addPersonalExercise(state, {
+    name: "Test video exercise",
+    instructions: "Move carefully.",
+    mode: "reps",
+    weighted: true,
+    videoUrl: "https://youtu.be/rT7DgCr-3pg",
+  });
+  assert.equal(
+    applyDefinition(exercise(item.name), item).videoUrl,
+    item.videoUrl,
+  );
+  assert.equal(
+    validState({
+      ...state,
+      exerciseVideos: { "test exercise": item.videoUrl },
+    }),
+    true,
+  );
+  assert.equal(
+    validState({
+      ...state,
+      exerciseVideos: { "test exercise": "https://attacker.test" },
+    }),
+    false,
+  );
+});

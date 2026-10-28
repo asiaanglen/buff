@@ -267,3 +267,9 @@ Browser tests seed an isolated fake owner in their local D1 database. That fixtu
 ### App themes
 
 Open **Account → App theme** to choose **Buff Classic** or **Muscle Mami**, an optional blush, rose and berry theme with heart accents. The choice saves in the account’s journal, works offline, and syncs to other devices. Signing out returns the public site to Classic. Themes change appearance only.
+
+### YouTube exercise demonstrations
+
+Open **YouTube demonstration** beside expanded exercise instructions or in a library guide. **Find a video on YouTube** searches for that exercise and proper form; paste the selected video’s share link and choose **Save video**. Choices are private to the account and sync with the journal. New personal exercises also accept an optional YouTube video link. No videos are preselected for the shared catalog.
+
+Players load only after **Play demonstration**, use `youtube-nocookie.com`, and stop when the dialog closes. An **Open on YouTube** fallback is available for videos that disable embedding. Only HTTPS YouTube watch, Shorts, live, embed, and youtu.be video links are accepted and normalized; unrelated URLs, executable URLs and channel/search links are rejected. Clear the saved link and save to remove a demonstration. Buff does not download or host the videos; YouTube controls availability, ads and playback.

@@ -3955,3 +3955,49 @@ body:has(#program-share-dialog[open]) .pwa-help {
     min-height: 44px;
   }
 }
+.exercise-video-button {
+  margin: 8px 0 16px;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+.exercise-video-button > span {
+  color: #c82f46;
+  font-size: 22px;
+}
+.exercise-video-dialog {
+  max-width: 640px;
+  width: calc(100% - 28px);
+}
+.exercise-video-dialog form {
+  margin: 22px 0;
+}
+.exercise-video-dialog small {
+  display: block;
+  color: #716777;
+  line-height: 1.5;
+}
+.exercise-video-dialog p {
+  margin: 12px 0;
+}
+.exercise-video-player {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin: 18px 0;
+}
+.exercise-video-player iframe {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 12px;
+  background: #18131b;
+}
+.video-play {
+  min-height: 70px;
+}
+.video-privacy {
+  font-size: 12px;
+}

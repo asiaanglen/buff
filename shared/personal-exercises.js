@@ -1,3 +1,4 @@
+import { youtubeUrl } from "./youtube.js";
 import { exerciseByName } from "./exercises.js";
 export const personalExercise = (state, name) =>
   (state.customExercises || []).find(
@@ -8,6 +9,7 @@ export function applyDefinition(exercise, definition) {
   exercise.customExerciseId = definition.id;
   exercise.instructions = definition.instructions;
   exercise.weighted = definition.weighted;
+  if (definition.videoUrl) exercise.videoUrl = definition.videoUrl;
   if (!definition.weighted) exercise.weight = 0;
   delete exercise.libraryId;
   return exercise;
@@ -24,6 +26,9 @@ export function addPersonalExercise(state, input) {
     typeof input.weighted !== "boolean"
   )
     throw Error("Enter a name, instructions and tracking options.");
+  const video = input.videoUrl?.trim() ? youtubeUrl(input.videoUrl) : null;
+  if (input.videoUrl?.trim() && !video)
+    throw Error("Enter a valid YouTube video link.");
   if (exerciseByName(name) || personalExercise(state, name))
     throw Error(
       "An exercise with this name already exists. Choose it from the suggestions.",
@@ -36,6 +41,7 @@ export function addPersonalExercise(state, input) {
     instructions,
     mode: input.mode,
     weighted: input.weighted,
+    ...(video ? { videoUrl: video } : {}),
   };
   const entries = [...(state.customExercises || []), definition];
   if (

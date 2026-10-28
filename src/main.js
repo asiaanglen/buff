@@ -1,3 +1,4 @@
+import { exerciseVideoButton, setupExerciseVideos } from "./exercise-videos.js";
 import {
   monthCalendar,
   weekCalendar,
@@ -534,7 +535,7 @@ function exerciseLog(w, e, index) {
     </summary>
     <div class="exercise-log-body">
       ${steps.length ? `<ul class="exercise-inline-instructions" aria-label="${esc(e.name)} instructions">${steps.map((step) => `<li>${esc(step)}</li>`).join("")}</ul>` : ""}
-      <div class="exercise-guide-link"><button type="button" class="text-button" data-action="edit-exercise" data-id="${w.id}" data-eid="${e.id}" aria-label="Edit ${esc(e.name)}">Edit exercise</button></div>
+      ${exerciseVideoButton(e.name, esc)}<div class="exercise-guide-link"><button type="button" class="text-button" data-action="edit-exercise" data-id="${w.id}" data-eid="${e.id}" aria-label="Edit ${esc(e.name)}">Edit exercise</button></div>
       <p class="log-target-description">Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p>
       <label class="exercise-notes"><span class="visually-hidden">Notes for ${esc(e.name)}</span><textarea aria-label="Notes for ${esc(e.name)}" data-exercise-note="${esc(e.id)}" maxlength="1000" rows="1" placeholder="Add note…">${esc(e.note || "")}</textarea></label>
       ${previousPerformanceHeader(w, e)}
@@ -1044,6 +1045,7 @@ app.addEventListener("submit", (event) => {
     if (definition) applyDefinition(e, definition);
     else if (old && old.name === e.name && old.instructions) {
       e.instructions = old.instructions;
+      if (old.videoUrl) e.videoUrl = old.videoUrl;
       e.weighted = old.weighted;
       if (old.customExerciseId) e.customExerciseId = old.customExerciseId;
     }
@@ -1290,7 +1292,9 @@ const cloud = createCloud({
     !calendarDrag.isDragging() &&
     !modal &&
     !app.querySelector(".inline-workout-log") &&
-    !document.querySelector("#program-share-dialog[open]"),
+    !document.querySelector(
+      "#program-share-dialog[open], #exercise-video-dialog[open]",
+    ),
   onAuthenticated: processInvitation,
   onStatus: (label) => {
     const el = document.querySelector("#sync-label");
@@ -1327,3 +1331,4 @@ async function startApp() {
 startApp();
 
 setupPwa();
+setupExerciseVideos({ getState: () => state, save, esc });
