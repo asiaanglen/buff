@@ -116,4 +116,9 @@ test("every catalog exercise has a valid sourced YouTube default, including alia
     /Girls Gone Strong/,
   );
   assert.match(exerciseVideos["barbell-lunge"].note, /barbell-specific/);
+  assert.match(exerciseVideos["pull-up"].title, /Pull-Ups for Women/);
+  assert.equal(
+    exerciseVideos["pull-up"].url,
+    "https://www.youtube.com/watch?v=YX9DF9xXquU",
+  );
 });

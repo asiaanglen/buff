@@ -37,6 +37,7 @@ export const exerciseVideos = {
     creator: "CrossFit · Julie Foucher",
     source: "https://www.bing.com/search?format=rss&q=%22sumo%20deadlift%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "barbell-hip-thrust": {
     url: "https://www.youtube.com/watch?v=lnNIQU8T7zE",
@@ -128,6 +129,7 @@ export const exerciseVideos = {
     source:
       "https://www.bing.com/videos/search?q=%22Single-leg%20Romanian%20Deadlift%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "leg-press": {
     url: "https://www.youtube.com/watch?v=LiwTxuToQCM",
@@ -152,12 +154,13 @@ export const exerciseVideos = {
     reviewedAt: "2026-10-28",
   },
   "seated-leg-curl": {
-    url: "https://www.youtube.com/watch?v=G5iP_YcDQdE",
-    title: "How to do a Seated Leg Curl | Proper Form & Technique | NASM",
-    creator: "National Academy of Sports Medicine (NASM)",
-    source:
-      "https://www.bing.com/search?format=rss&q=%22seated%20leg%20curl%22",
+    url: "https://www.youtube.com/watch?v=POoK3tmzzf0",
+    title:
+      "Grow Stronger Hamstrings 🔥 Seated Leg Curl Workout for Women #LegDay #HamstringWorkout #LegWorkout",
+    creator: "Fit With Felicia",
+    source: "https://www.bing.com/videos/search?q=%22Seated%20Leg%20Curl%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "lying-leg-curl": {
     url: "https://www.youtube.com/watch?v=9xY9SN7daGM",
@@ -218,6 +221,7 @@ export const exerciseVideos = {
     creator: "Well+Good · Charlee Atkins",
     source: "https://www.bing.com/search?format=rss&q=%22glute%20bridge%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "single-leg-glute-bridge": {
     url: "https://www.youtube.com/watch?v=_K_di6h2-Wg",
@@ -226,6 +230,7 @@ export const exerciseVideos = {
     source:
       "https://www.bing.com/search?format=rss&q=%22single-leg%20glute%20bridge%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "nordic-hamstring-curl": {
     url: "https://www.youtube.com/watch?v=_e9vFU9-tkc",
@@ -248,13 +253,15 @@ export const exerciseVideos = {
     creator: "Well+Good · Sashah Handal",
     source: "https://www.bing.com/search?format=rss&q=%22squat%20jumps%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "lateral-lunge": {
-    url: "https://www.youtube.com/watch?v=D2P1GHkspCo",
-    title: "How to Properly Perform a Lateral Lunge (For Beginners)",
-    creator: "Janay Mason",
+    url: "https://www.youtube.com/watch?v=6HLBu2Vt72Y",
+    title: "Fix Your Lateral Lunge",
+    creator: "Women’s Strength Academy NYC",
     source: "https://www.bing.com/videos/search?q=%22Lateral%20Lunge%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "wall-sit": {
     url: "https://www.youtube.com/watch?v=-cdph8hv0O0",
@@ -271,12 +278,12 @@ export const exerciseVideos = {
     reviewedAt: "2026-10-28",
   },
   "pull-up": {
-    url: "https://www.youtube.com/watch?v=rrLbkcQ2kW4",
-    title:
-      "How to do your first pull up | Calisthenics for beginners | How to do pull ups | Pull up tutorial",
-    creator: "Yuvraj LOY",
+    url: "https://www.youtube.com/watch?v=YX9DF9xXquU",
+    title: "Pull-Ups for Women | Strength Has No Dress Code",
+    creator: "KBSTRONGER Kettlebell",
     source: "https://www.bing.com/videos/search?q=%22Pull-up%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "neutral-grip-pull-up": {
     url: "https://www.youtube.com/watch?v=qnsGg0VZTUA",
@@ -295,13 +302,13 @@ export const exerciseVideos = {
     reviewedAt: "2026-10-28",
   },
   "wide-grip-pull-up": {
-    url: "https://www.youtube.com/watch?v=rrLbkcQ2kW4",
-    title:
-      "How to do your first pull up | Calisthenics for beginners | How to do pull ups | Pull up tutorial",
-    creator: "Yuvraj LOY",
+    url: "https://www.youtube.com/watch?v=YX9DF9xXquU",
+    title: "Pull-Ups for Women | Strength Has No Dress Code",
+    creator: "KBSTRONGER Kettlebell",
     source: "https://www.bing.com/videos/search?q=%22Pull-up%22",
     reviewedAt: "2026-10-28",
     note: "General pull-up technique demonstration. For this variation, use the moderately wider overhand grip described in Buff’s instructions.",
+    selection: "women-focused",
   },
   "assisted-pull-up": {
     url: "https://www.youtube.com/watch?v=I3Tq13KAAZw",
@@ -326,12 +333,12 @@ export const exerciseVideos = {
     reviewedAt: "2026-10-28",
   },
   "t-bar-row": {
-    url: "https://www.youtube.com/watch?v=6wH5XVwBtbo",
-    title:
-      "How to PROPERLY T-Bar Row For Muscle Gain #backworkout #fitnessjourney #gymmotivation",
-    creator: "Colossus Fitness",
+    url: "https://www.youtube.com/watch?v=JZeN0vAayUk",
+    title: "Her T-Bar Row Form is Outstanding",
+    creator: "HW Motivation",
     source: "https://www.bing.com/videos/search?q=%22T-bar%20Row%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "single-arm-dumbbell-row": {
     url: "https://www.youtube.com/watch?v=geSFJ48VHuA",
@@ -432,6 +439,7 @@ export const exerciseVideos = {
     source:
       "https://www.bing.com/videos/search?q=%22Dumbbell%20Bench%20Press%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "incline-barbell-bench-press": {
     url: "https://www.youtube.com/watch?v=2rBfrIvMZb0",
@@ -526,11 +534,14 @@ export const exerciseVideos = {
     reviewedAt: "2026-10-28",
   },
   "chest-dip": {
-    url: "https://www.youtube.com/watch?v=wjUmnZH528Y",
-    title: "How To Do Dips - Chest & Triceps Exercise",
-    creator: "",
-    source: "https://www.bing.com/search?format=rss&q=%22dips%20exercise%22",
+    url: "https://www.youtube.com/watch?v=c7KLBSvHLi8",
+    title:
+      "7 Exercises to Get Dips: If you struggle with dips you are NOT alone!!",
+    creator: "Competitive Female Training",
+    source: "https://www.bing.com/videos/search?q=%22dips%20exercise%22",
     reviewedAt: "2026-10-28",
+    note: "Dip progression tutorial: use the parallel-bar technique and torso position described in Buff’s instructions.",
+    selection: "women-focused",
   },
   "machine-chest-press": {
     url: "https://www.youtube.com/watch?v=ssZGW6xCVpM",
@@ -774,11 +785,14 @@ export const exerciseVideos = {
     reviewedAt: "2026-10-28",
   },
   "triceps-dip": {
-    url: "https://www.youtube.com/watch?v=wjUmnZH528Y",
-    title: "How To Do Dips - Chest & Triceps Exercise",
-    creator: "",
-    source: "https://www.bing.com/search?format=rss&q=%22dips%20exercise%22",
+    url: "https://www.youtube.com/watch?v=c7KLBSvHLi8",
+    title:
+      "7 Exercises to Get Dips: If you struggle with dips you are NOT alone!!",
+    creator: "Competitive Female Training",
+    source: "https://www.bing.com/videos/search?q=%22dips%20exercise%22",
     reviewedAt: "2026-10-28",
+    note: "Dip progression tutorial: use the parallel-bar technique and torso position described in Buff’s instructions.",
+    selection: "women-focused",
   },
   "russian-twists": {
     url: "https://www.youtube.com/watch?v=H4tMFJoyAd8",
@@ -860,6 +874,7 @@ export const exerciseVideos = {
     source:
       "https://www.bing.com/search?format=rss&q=%22mountain%20climbers%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "heel-tap": {
     url: "https://www.youtube.com/watch?v=w2Um9ULrcBI",
@@ -889,6 +904,7 @@ export const exerciseVideos = {
     source:
       "https://www.bing.com/search?format=rss&q=%22hollow%20body%20hold%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "superman-hold": {
     url: "https://www.youtube.com/watch?v=LZoWdePF1NQ",
@@ -943,11 +959,13 @@ export const exerciseVideos = {
     reviewedAt: "2026-10-28",
   },
   "kettlebell-clean": {
-    url: "https://www.youtube.com/watch?v=tvZ50scjwAo",
-    title: "How to do a kettlebell clean",
-    creator: "Pat Damiano",
-    source: "https://www.bing.com/videos/search?q=%22Kettlebell%20Clean%22",
+    url: "https://www.youtube.com/watch?v=mgICWco0HWg",
+    title:
+      "The Kettlebell Clean: How to Safely Perform This Total Body-Sculptor",
+    creator: "Helya Glen",
+    source: "https://www.bing.com/search?format=rss&q=%22kettlebell%20clean%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "kettlebell-snatch": {
     url: "https://www.youtube.com/watch?v=x0iUyMjbEo8",
@@ -984,6 +1002,7 @@ export const exerciseVideos = {
     creator: "Juggernaut Training Systems",
     source: "https://www.bing.com/videos/search?q=%22Clean%20and%20Jerk%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   snatch: {
     url: "https://www.youtube.com/watch?v=ygoz0ANCcto",
@@ -1027,6 +1046,7 @@ export const exerciseVideos = {
     creator: "Nicole Zapoli",
     source: "https://www.bing.com/videos/search?q=%22Farmer%27s%20Carry%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "suitcase-carry": {
     url: "https://www.youtube.com/watch?v=CtrXZ8rGR8E",
@@ -1041,6 +1061,7 @@ export const exerciseVideos = {
     creator: "Well+Good · Charlee Atkins",
     source: "https://www.bing.com/search?format=rss&q=%22burpee%22",
     reviewedAt: "2026-10-28",
+    selection: "women-focused",
   },
   "medicine-ball-slam": {
     url: "https://www.youtube.com/watch?v=YFORkljMrEQ",
@@ -1101,6 +1122,7 @@ export const exerciseVideos = {
     source: "https://www.bing.com/videos/search?q=%22indoor%20cycling%22",
     reviewedAt: "2026-10-28",
     note: "Follow-along indoor cycling session; adjust the duration and resistance to match your plan.",
+    selection: "women-focused",
   },
   "rowing-machine": {
     url: "https://www.youtube.com/watch?v=8NQmi-yYqN4",

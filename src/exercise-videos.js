@@ -27,7 +27,7 @@ export function setupExerciseVideos({ getState, save, esc }) {
     dialog.id = "exercise-video-dialog";
     dialog.className = "exercise-guide-dialog exercise-video-dialog";
     dialog.setAttribute("aria-labelledby", "exercise-video-title");
-    dialog.innerHTML = `<div class="eyebrow">EXERCISE DEMONSTRATION</div><h2 id="exercise-video-title">${esc(name)}</h2><div class="exercise-video-player"></div>${library ? `<p class="video-source">Library demonstration: ${esc(library.title)}${library.creator ? ` · ${esc(library.creator)}` : ""}</p>` : ""}<p class="video-variation" hidden></p><p>Choose a demonstration that matches this exercise and equipment.</p><p><a class="button subtle" target="_blank" rel="noopener noreferrer" href="https://www.youtube.com/results?search_query=${encodeURIComponent(name + " proper form exercise tutorial")}">Find a video on YouTube ↗</a></p><form><label>YouTube video link<input name="videoUrl" type="url" maxlength="1000" placeholder="https://www.youtube.com/watch?v=…" value="${esc(existing)}"></label><small>Paste a video’s share link to save it for this exercise. This choice is private to your account. Clear the link to use the library default.</small><p class="form-error" role="alert"></p><button class="button primary" type="submit">Save video</button></form><p class="video-privacy">YouTube loads only when you choose Play. Videos may contain ads or be unavailable; you can always open them on YouTube.</p><button type="button" class="button subtle" data-video-close>Close video</button>`;
+    dialog.innerHTML = `<button type="button" class="icon-button video-close" data-video-close aria-label="Close video" title="Close video">×</button><div class="eyebrow">EXERCISE DEMONSTRATION</div><h2 id="exercise-video-title">${esc(name)}</h2><div class="exercise-video-player"></div>${library ? `<p class="video-source">Library demonstration: ${esc(library.title)}${library.creator ? ` · ${esc(library.creator)}` : ""}</p>` : ""}<p class="video-selection" hidden></p><p class="video-variation" hidden></p><p>Choose a demonstration that matches this exercise and equipment.</p><p><a class="button subtle" target="_blank" rel="noopener noreferrer" href="https://www.youtube.com/results?search_query=${encodeURIComponent(name + " proper form exercise tutorial")}">Find a video on YouTube ↗</a></p><form><label>YouTube video link<input name="videoUrl" type="url" maxlength="1000" placeholder="https://www.youtube.com/watch?v=…" value="${esc(existing)}"></label><small>Paste a video’s share link to save it for this exercise. This choice is private to your account. Clear the link to use the library default.</small><p class="form-error" role="alert"></p><button class="button primary" type="submit">Save video</button></form><p class="video-privacy">YouTube loads only when you choose Play. Videos may contain ads or be unavailable; you can always open them on YouTube.</p>`;
     const player = dialog.querySelector(".exercise-video-player");
     const showVideo = (url) => {
       const id = youtubeId(url);
@@ -37,6 +37,14 @@ export function setupExerciseVideos({ getState, save, esc }) {
           library && id === youtubeId(library.url)
             ? `Library demonstration: ${library.title}${library.creator ? ` · ${library.creator}` : ""}`
             : "Your saved video";
+      const selection = dialog.querySelector(".video-selection");
+      if (selection) {
+        selection.hidden = !library || id !== youtubeId(library.url);
+        selection.textContent =
+          library?.selection === "women-focused"
+            ? "Women-focused source"
+            : "General demonstration · female demonstrator not verified";
+      }
       const variation = dialog.querySelector(".video-variation");
       if (variation) {
         variation.textContent =

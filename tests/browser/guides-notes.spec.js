@@ -173,6 +173,15 @@ test("YouTube demonstrations save privately, load only on play and close cleanly
     .click();
   const dialog = page.locator("#exercise-video-dialog");
   await expect(dialog).toBeVisible();
+  const closeVideo = dialog.getByRole("button", {
+    name: "Close video",
+    exact: true,
+  });
+  await expect(closeVideo).toHaveText("×");
+  await expect(closeVideo).toBeInViewport();
+  await expect(dialog.locator(".video-selection")).toContainText(
+    "General demonstration",
+  );
   await expect(
     dialog.getByLabel("YouTube video link", { exact: true }),
   ).toHaveValue("https://www.youtube.com/watch?v=ultWZbUMPL8");
@@ -202,6 +211,10 @@ test("YouTube demonstrations save privately, load only on play and close cleanly
     "src",
     "https://www.youtube-nocookie.com/embed/rT7DgCr-3pg",
   );
+  await dialog.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  await expect(closeVideo).toBeInViewport();
   await dialog
     .getByRole("button", { name: "Close video", exact: true })
     .click();

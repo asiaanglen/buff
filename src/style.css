@@ -4023,3 +4023,19 @@ body:has(#program-share-dialog[open]) .pwa-help {
   background: #fff5e6;
   color: #765020;
 }
+
+.exercise-video-dialog .video-close {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  float: right;
+  width: 44px;
+  height: 44px;
+  margin: -12px -12px 0 12px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 12px #34253514;
+  color: #6d5367;
+  font-size: 28px;
+  line-height: 1;
+}
