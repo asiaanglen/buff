@@ -107,13 +107,28 @@ test("coach builds a program, invites by email/text, client joins, coach logs re
     await share
       .getByRole("button", { name: "Create invitation", exact: true })
       .click();
-    expect(
-      (
-        await share
-          .getByRole("link", { name: "Share by email", exact: true })
-          .getAttribute("href")
-      ).startsWith("mailto:" + clientEmail + "?"),
-    ).toBe(true);
+    await expect(
+      share.getByRole("link", { name: "Share by email", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      share.getByText("To invite by email, copy the invitation above", {
+        exact: false,
+      }),
+    ).toBeVisible();
+    await coach
+      .context()
+      .grantPermissions(["clipboard-read", "clipboard-write"]);
+    await share
+      .getByRole("button", { name: "Copy invitation", exact: true })
+      .click();
+    await expect(share.getByRole("status")).toHaveText(
+      "Invitation copied. Paste it into an email to your client.",
+    );
+    expect(await coach.evaluate(() => navigator.clipboard.readText())).toBe(
+      await share
+        .getByLabel("Invitation message", { exact: true })
+        .inputValue(),
+    );
     await expect(
       share.getByRole("link", { name: "Share by text", exact: true }),
     ).toHaveAttribute("href", /^sms:/);

@@ -304,12 +304,12 @@ async function invite(id) {
       const message = `${result.coachName} invited you to train with them on Buff! Join ${result.programName} here:\n${result.url}\nAccept the invitation to add the program and share your progress with your coach.`;
       const output = dialog.querySelector(".coach-share-result");
       output.hidden = false;
-      output.innerHTML = `<h3>Your client’s invitation is ready</h3><label for="coach-invitation-message">Invitation message</label><textarea id="coach-invitation-message" readonly rows="6">${esc(message)}</textarea><div class="coach-actions"><a class="button primary" href="mailto:${esc(encodeURIComponent(result.email || "").replace(/%40/g, "@"))}?subject=${encodeURIComponent("Your Buff program: " + result.programName)}&body=${encodeURIComponent(message)}">Share by email</a><a class="button subtle" href="${smsLink(message)}">Share by text</a><button type="button" class="button subtle" data-copy>Copy invitation</button>${navigator.share ? '<button type="button" class="button subtle" data-native>Share…</button>' : ""}</div><p class="coach-copy-status" role="status"></p><p>Your email or Messages app opens with the invitation filled in. Choose your client and send it. Each link is for one client and expires after 30 days.</p>`;
+      output.innerHTML = `<h3>Your client’s invitation is ready</h3><label for="coach-invitation-message">Invitation message</label><textarea id="coach-invitation-message" readonly rows="6">${esc(message)}</textarea><div class="coach-actions"><button type="button" class="button primary" data-copy>Copy invitation</button><a class="button subtle" href="${smsLink(message)}">Share by text</a>${navigator.share ? '<button type="button" class="button subtle" data-native>Share…</button>' : ""}</div><p class="coach-copy-status" role="status"></p><p>To invite by email, copy the invitation above and paste it into an email to your client. Share by text opens Messages with the invitation filled in; choose a contact and send it. Each link is for one client and expires after 30 days.</p>`;
       output.querySelector("[data-copy]").onclick = async () => {
         try {
           await navigator.clipboard.writeText(message);
           output.querySelector(".coach-copy-status").textContent =
-            "Invitation copied.";
+            "Invitation copied. Paste it into an email to your client.";
         } catch {
           output.querySelector("textarea").select();
           output.querySelector(".coach-copy-status").textContent =
