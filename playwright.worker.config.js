@@ -22,6 +22,7 @@ export default defineConfig({
     "supersets.spec.js",
     "mobile-ui.spec.js",
     "inline-swap.spec.js",
+    "exercise-timer.spec.js",
     "connect-ai.spec.js",
     "add-sets.spec.js",
     "loading.spec.js",

@@ -166,6 +166,10 @@ The workout log includes an expandable **Workout history** section directly bene
 
 Use **Supersets** within **Edit plan** or at the bottom of a started workout to group two or more existing exercises. Create multiple named groups, choose an existing group to edit its members or name, or remove a group while keeping its exercises. Exercises in another group are disabled until you remove or edit that group. Group changes preserve all recorded sets and exercise notes and sync with the account. The log shows a heading for each superset with an alternating-set reminder. The **Done logging** button has been removed: results save automatically; use **Collapse workout** to fold its fields or **Mark as complete** to finish the workout.
 
+## Timed exercise countdowns
+
+After **Start workout**, expand a timed exercise to use its **Set timer**, initialized from the target duration in seconds. **Start**, **Pause**, and **Reset** control the countdown; **Start again** repeats a finished timer for the next set. The timer uses a deadline so delayed browser updates and switching away do not add extra time. It survives workout redraws and accordion changes in the current session. Starting another exercise timer pauses the previous one. At zero, **Time’s up** appears; the user still checks off their set. Timers stay on the current device, reset on reload or account changes, and never write workout results automatically.
+
 ## Phone-friendly inline logging and swaps
 
 On phones, exercise previews use larger cards instead of a compressed table, navigation and actions have larger tap targets, and log inputs use 16px text. Swipe the weekly schedule horizontally to see other days. The install badge hides while using forms or logging so it does not cover controls.

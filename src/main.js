@@ -1,3 +1,4 @@
+import { createExerciseTimers } from "./exercise-timer.js";
 import {
   futureSwapTargets,
   swapFutureExercises,
@@ -96,6 +97,7 @@ let plannerView = "week",
   calendarMessage = "",
   calendarError = false;
 const app = document.querySelector("#app");
+const exerciseTimers = createExerciseTimers(app);
 const calendarDrag = setupCalendarDrag(app, moveCalendarWorkout);
 const loggingWorkouts = new Set();
 const openExerciseIds = new Map();
@@ -257,6 +259,7 @@ function updateSidebarIdentity() {
   }
 }
 function render() {
+  exerciseTimers.reconcile(state);
   document.documentElement.dataset.theme =
     state?.theme === "muscle-mami" && cloud.isSignedIn()
       ? "muscle-mami"
@@ -561,6 +564,7 @@ function exerciseLog(w, e, index) {
       <span class="exercise-expand-label"><span class="exercise-set-progress">${e.logs.filter((log) => log.done).length}/${e.sets} sets logged</span></span>
     </summary>
     <div class="exercise-log-body">
+      ${exerciseTimers.markup(w, e, esc)}
       ${steps.length ? `<ul class="exercise-inline-instructions" aria-label="${esc(e.name)} instructions">${steps.map((step) => `<li>${esc(step)}</li>`).join("")}</ul>` : ""}
       <div class="exercise-guide-link"><button type="button" class="text-button" data-action="edit-exercise" data-id="${w.id}" data-eid="${e.id}" aria-label="Edit ${esc(e.name)}">Edit exercise</button></div>
       <p class="log-target-description">Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p>
@@ -1320,6 +1324,7 @@ const cloud = createCloud({
   },
   getState: () => state,
   setState: (next) => {
+    exerciseTimers.clear();
     state = inPounds(next);
     calendarMessage = "";
     calendarError = false;

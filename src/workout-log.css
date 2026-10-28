@@ -495,3 +495,46 @@
     font-size: 13px;
   }
 }
+
+.exercise-countdown {
+  border: 1px solid var(--line, #e7e1ef);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 0 0 20px;
+  background: #f5f1fb;
+  background: color-mix(in srgb, var(--purple) 7%, #fff);
+}
+.timer-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.timer-heading > span {
+  font-size: 13px;
+  font-weight: 650;
+}
+.timer-heading output {
+  font-size: 36px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.timer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.timer-controls .button {
+  min-height: 44px;
+  padding: 10px 18px;
+}
+.exercise-countdown [data-timer-status] {
+  margin: 12px 0 0;
+  font-size: 13px;
+}
+.exercise-countdown.timer-finished {
+  border-color: var(--purple, #795bd3);
+}
