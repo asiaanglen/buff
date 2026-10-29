@@ -10,6 +10,18 @@ test("mobile uses one page dropdown and clearly labeled set logging accordions",
       exact: true,
     });
     await expect(menu).toBeVisible();
+    await expect(page.locator(".sidebar .mobile-navigation")).toHaveCount(0);
+    await expect(page.locator(".topbar .mobile-navigation")).toBeVisible();
+    await expect(page.locator(".desktop-breadcrumb")).toBeHidden();
+    const menuBox = await menu.boundingBox();
+    const accountBox = await page
+      .getByRole("button", {
+        name: "Account and cross-device sync",
+        exact: true,
+      })
+      .boundingBox();
+    expect(Math.abs(menuBox.y - accountBox.y)).toBeLessThan(8);
+    expect(menuBox.x).toBeLessThan(accountBox.x);
     await expect(menu).toHaveValue("planner");
     await expect(page.locator(".sidebar nav")).toBeHidden();
     await expect(menu.locator("option")).toHaveCount(4);
@@ -44,6 +56,7 @@ test("mobile uses one page dropdown and clearly labeled set logging accordions",
     await expect(
       accordion.locator('[data-field="weight"]').first(),
     ).toBeHidden();
+
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

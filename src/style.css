@@ -4062,3 +4062,48 @@ body:has(#program-share-dialog[open]) .pwa-help {
   border-radius: 50%;
   font-size: 26px;
 }
+
+@media (max-width: 600px) {
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 12px 16px;
+    align-items: center;
+  }
+  .topbar .desktop-breadcrumb {
+    display: none;
+  }
+  .topbar .mobile-navigation {
+    display: flex;
+    width: 100%;
+    max-width: 240px;
+    min-width: 0;
+    flex-basis: auto;
+  }
+  .topbar .mobile-navigation label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .topbar .mobile-navigation select {
+    min-width: 0;
+    max-width: 100%;
+    min-height: 46px;
+    padding: 10px 26px 10px 12px;
+  }
+  .topbar .local-badge {
+    max-width: none;
+    width: max-content;
+    margin-left: 0;
+    justify-self: end;
+    white-space: nowrap;
+    padding: 8px 0 8px 4px;
+  }
+  .topbar .local-badge #sync-label {
+    display: none;
+  }
+}
