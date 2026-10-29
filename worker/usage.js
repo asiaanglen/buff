@@ -1,3 +1,4 @@
+import { trackAccountActivity } from "./admin-activity.js";
 import { identify } from "./session.js";
 const actors = new Map();
 let lastCleanup = "";
@@ -103,6 +104,7 @@ export function monitoredDatabase(
   const excluded =
     path.startsWith("/api/admin/") ||
     path.startsWith("/usage") ||
+    path === "/admin" ||
     path === "/api/health";
   const rate = Math.max(
     0.01,
@@ -174,6 +176,7 @@ export function monitoredDatabase(
     exec: (...args) => db.exec(...args),
   };
   async function finish(response) {
+    if (actor) await trackAccountActivity(db, actor, now());
     if (excluded) return;
     const status = response?.status || 500;
     if (status >= 500)

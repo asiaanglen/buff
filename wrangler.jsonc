@@ -20,6 +20,7 @@
       "/.well-known/*",
       "/approvals/*",
       "/connections",
+      "/admin",
       "/feedback",
       "/feedback/*",
       "/coach",

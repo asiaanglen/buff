@@ -1,3 +1,4 @@
+import { adminPage } from "./admin.js";
 import { feedbackPage } from "./feedback.js";
 import { coachingApi } from "./coaching.js";
 import { usageSetup } from "./usage-setup.js";
@@ -97,6 +98,7 @@ async function api(request, env) {
       (env.PUBLIC_ORIGIN || new URL(request.url).origin)
   )
     return failure("Request origin is not allowed.", 403);
+  if (path === "/api/admin/dashboard") return adminPage(request, env, true);
   if (path === "/api/admin/usage" && method === "GET")
     return usagePage(request, env, true);
   if (path === "/api/usage/events" && method === "POST")
@@ -366,6 +368,8 @@ async function api(request, env) {
 }
 const app = {
   async fetch(request, env) {
+    if (new URL(request.url).pathname === "/admin")
+      return adminPage(request, env);
     if (
       ["/feedback", "/feedback/inbox", "/feedback/thanks"].includes(
         new URL(request.url).pathname,

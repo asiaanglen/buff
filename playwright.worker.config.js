@@ -5,6 +5,7 @@ export default defineConfig({
     "workout.spec.js",
     "coaching.spec.js",
     "feedback.spec.js",
+    "admin.spec.js",
     "sync.spec.js",
     "worker-api.spec.js",
     "signup-profile.spec.js",
