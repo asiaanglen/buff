@@ -1,3 +1,4 @@
+import { brandLogo } from "./brand.js";
 import { createExerciseTimers } from "./exercise-timer.js";
 import {
   futureSwapTargets,
@@ -328,7 +329,7 @@ function render() {
   }).length;
   const total = weekly.reduce((n, w) => n + progress(w).total, 0);
   const done = weekly.reduce((n, w) => n + progress(w).done, 0);
-  app.innerHTML = `<aside class="sidebar"><a class="brand" href="/" aria-label="Buff home"><span class="brand-icon">b.</span>buff<span class="brand-dot">.</span></a><div class="workspace-label">YOUR WORKSPACE</div><nav><button data-tab="home" class="nav-item ${tab === "home" ? "active" : ""}"><span>⌂</span> Home</button><button data-tab="programs" class="nav-item ${tab === "programs" ? "active" : ""}"><span>▤</span> Programs</button><button data-tab="planner" class="nav-item ${tab === "planner" ? "active" : ""}"><span>▦</span> Weekly planner</button><button data-tab="history" class="nav-item ${tab === "history" ? "active" : ""}"><span>◷</span> Completed workouts</button></nav><div class="mobile-navigation"><label for="mobile-page-select">Go to</label><select id="mobile-page-select" aria-label="Go to page">${[
+  app.innerHTML = `<aside class="sidebar"><a class="brand" href="/" aria-label="Buff home">${brandLogo()}</a><div class="workspace-label">YOUR WORKSPACE</div><nav><button data-tab="home" class="nav-item ${tab === "home" ? "active" : ""}"><span>⌂</span> Home</button><button data-tab="programs" class="nav-item ${tab === "programs" ? "active" : ""}"><span>▤</span> Programs</button><button data-tab="planner" class="nav-item ${tab === "planner" ? "active" : ""}"><span>▦</span> Weekly planner</button><button data-tab="history" class="nav-item ${tab === "history" ? "active" : ""}"><span>◷</span> Completed workouts</button></nav><div class="mobile-navigation"><label for="mobile-page-select">Go to</label><select id="mobile-page-select" aria-label="Go to page">${[
     ["home", "Home"],
     ["programs", "Programs"],
     ["planner", "Weekly planner"],

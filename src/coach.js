@@ -1,3 +1,4 @@
+import { brandLogo } from "./brand.js";
 import { editClientWorkout } from "./coach-editor.js";
 import { createCloud } from "./cloud.js";
 import { smsLink } from "./sharing.js";
@@ -173,7 +174,7 @@ const cloud = createCloud({
   },
 });
 function header() {
-  return `<header class="coach-top"><a class="brand" href="/coach">b. <span>buff.</span><small>FOR COACHES</small></a><div class="coach-top-actions"><a href="/">My Buff</a>${cloud.isSignedIn() ? '<button type="button" class="button subtle" data-cmd="account">Account</button>' : ""}</div></header>`;
+  return `<header class="coach-top"><a class="brand" href="/coach" aria-label="Buff coach portal">${brandLogo(true)}<small>FOR COACHES</small></a><div class="coach-top-actions"><a href="/">My Buff</a>${cloud.isSignedIn() ? '<button type="button" class="button subtle" data-cmd="account">Account</button>' : ""}</div></header>`;
 }
 function empty(title, text, action = "") {
   return `<section class="coach-empty"><h2>${title}</h2><p>${text}</p>${action}</section>`;

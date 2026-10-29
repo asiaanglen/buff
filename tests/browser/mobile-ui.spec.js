@@ -67,6 +67,15 @@ test("Muscle Mami theme is optional, persists across devices and switches back t
   await page
     .getByRole("button", { name: "Close account", exact: true })
     .click();
+  await expect(page.locator(".brand-muscle-mami")).toBeVisible();
+  await expect(page.locator(".brand-classic")).toBeHidden();
+  await expect
+    .poll(() =>
+      page
+        .locator(".brand-muscle-mami")
+        .evaluate((image) => image.complete && image.naturalWidth > 0),
+    )
+    .toBe(true);
   await expect(page.locator("#sync-label")).toContainText("Synced");
   expect(
     (await (await page.request.get("/api/state")).json()).state.theme,
@@ -104,6 +113,8 @@ test("Muscle Mami theme is optional, persists across devices and switches back t
     .click();
   await page.getByLabel("App theme").selectOption("classic");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "classic");
+  await expect(page.locator(".brand-classic")).toBeVisible();
+  await expect(page.locator(".brand-muscle-mami")).toBeHidden();
   await page
     .getByRole("button", { name: "Close account", exact: true })
     .click();

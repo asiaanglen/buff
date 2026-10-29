@@ -170,3 +170,26 @@
   flex: 1 0 100%;
   order: -1;
 }
+
+.brand-classic {
+  display: inline-flex;
+  align-items: center;
+  gap: inherit;
+}
+.brand-muscle-mami {
+  display: none;
+  width: 168px;
+  height: auto;
+  flex-shrink: 0;
+}
+:root[data-theme="muscle-mami"] .brand > .brand-classic {
+  display: none;
+}
+:root[data-theme="muscle-mami"] .brand > .brand-muscle-mami {
+  display: block;
+}
+@media (max-width: 900px) {
+  .brand-muscle-mami {
+    width: 126px;
+  }
+}
