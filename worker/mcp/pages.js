@@ -1,3 +1,4 @@
+import { connectionGuide } from "./connection-guide.js";
 import { journalCompleted } from "../usage.js";
 import { identify, sessionToken } from "../session.js";
 import { randomHex, digest } from "../crypto.js";
@@ -169,6 +170,6 @@ export async function connectionsPage(request, env) {
   }
   return page(
     "Connected apps",
-    `<p>Signed in as <strong>${esc(user.email)}</strong>. Disconnecting revokes this app’s access to your workout journal.</p>${items.join("") || "<p>No apps are connected.</p>"}`,
+    `<p>Signed in as <strong>${esc(user.email)}</strong>. Disconnecting revokes this app’s access to your workout journal.</p>${connectionGuide(new URL(request.url).origin)}<section id="connected-apps"><h2>Your connected apps</h2>${items.join("") || "<p>No apps are connected.</p>"}</section>`,
   );
 }

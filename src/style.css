@@ -3965,3 +3965,62 @@ body:has(#program-share-dialog[open]) .pwa-help {
   display: block;
   overflow-wrap: anywhere;
 }
+
+.ai-program-callout {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  margin: 0 0 24px;
+  border: 1px solid var(--purple);
+  border-radius: 18px;
+  background: #f4f0ff;
+  background: color-mix(in srgb, var(--purple) 9%, white);
+  color: var(--purple);
+  text-decoration: none;
+  box-shadow: 0 5px 18px #30204009;
+}
+.ai-program-callout > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.ai-program-callout strong {
+  display: block;
+  font-size: 17px;
+  line-height: 1.4;
+}
+.ai-program-callout small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.ai-callout-icon {
+  font-size: 30px;
+}
+.ai-program-callout:focus-visible {
+  outline: 3px solid var(--purple);
+  outline-offset: 3px;
+}
+.timer-add-time {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.timer-add-time button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+}
+@media (max-width: 480px) {
+  .ai-program-callout {
+    gap: 10px;
+    padding: 16px;
+  }
+  .ai-program-callout strong {
+    font-size: 16px;
+  }
+}

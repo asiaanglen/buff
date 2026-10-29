@@ -36,7 +36,7 @@ export function createExerciseTimers(root) {
         ? "Time’s up! Check off your set when you’re ready."
         : timer.deadline !== null
           ? "Counting down"
-          : remaining(timer) < timer.duration
+          : timer.started
             ? "Paused"
             : "Ready";
       const message = element.querySelector("[data-timer-status]");
@@ -59,10 +59,18 @@ export function createExerciseTimers(root) {
       button.closest("[data-countdown]").dataset.countdown,
     );
     if (!timer) return;
-    if (button.dataset.timerControl === "reset") {
+    if (button.dataset.timerControl === "add") {
+      const extra = Number(button.dataset.extraSeconds) * 1000;
+      if (![15000, 30000, 60000].includes(extra)) return;
+      if (timer.deadline !== null)
+        timer.deadline = Date.now() + remaining(timer) + extra;
+      else timer.remaining += extra;
+      timer.finished = false;
+    } else if (button.dataset.timerControl === "reset") {
       timer.deadline = null;
       timer.remaining = timer.duration;
       timer.finished = false;
+      timer.started = false;
     } else if (timer.deadline !== null) {
       timer.remaining = remaining(timer);
       timer.deadline = null;
@@ -76,6 +84,7 @@ export function createExerciseTimers(root) {
       }
       if (timer.remaining === 0) timer.remaining = timer.duration;
       timer.finished = false;
+      timer.started = true;
       timer.deadline = Date.now() + timer.remaining;
       if (interval === null) interval = setInterval(update, 200);
     }
@@ -101,10 +110,11 @@ export function createExerciseTimers(root) {
           remaining: exercise.target * 1000,
           deadline: null,
           finished: false,
+          started: false,
         };
         timers.set(id, timer);
       }
-      return `<section class="exercise-countdown ${timer.finished ? "timer-finished" : ""}" data-countdown="${esc(id)}" aria-label="${esc(exercise.name)} set timer"><div class="timer-heading"><span>Set timer · ${exercise.target} seconds</span><output role="timer" aria-label="${esc(exercise.name)} countdown" aria-live="off">${display(remaining(timer))}</output></div><div class="timer-controls"><button type="button" class="button primary" data-timer-control="toggle" aria-label="${timer.deadline !== null ? "Pause" : "Start"} ${esc(exercise.name)} timer">${timer.deadline !== null ? "Pause" : timer.finished ? "Start again" : "Start"}</button><button type="button" class="button subtle" data-timer-control="reset" aria-label="Reset ${esc(exercise.name)} timer">Reset</button></div><p data-timer-status role="status">${timer.finished ? "Time’s up! Check off your set when you’re ready." : timer.deadline !== null ? "Counting down" : remaining(timer) < timer.duration ? "Paused" : "Ready"}</p></section>`;
+      return `<section class="exercise-countdown ${timer.finished ? "timer-finished" : ""}" data-countdown="${esc(id)}" aria-label="${esc(exercise.name)} set timer"><div class="timer-heading"><span>Set timer · ${exercise.target} seconds</span><output role="timer" aria-label="${esc(exercise.name)} countdown" aria-live="off">${display(remaining(timer))}</output></div><div class="timer-controls"><button type="button" class="button primary" data-timer-control="toggle" aria-label="${timer.deadline !== null ? "Pause" : "Start"} ${esc(exercise.name)} timer">${timer.deadline !== null ? "Pause" : timer.finished ? "Start again" : "Start"}</button><button type="button" class="button subtle" data-timer-control="reset" aria-label="Reset ${esc(exercise.name)} timer">Reset</button></div><div class="timer-add-time" aria-label="Add time">${[15, 30, 60].map((seconds) => `<button type="button" class="text-button" data-timer-control="add" data-extra-seconds="${seconds}" aria-label="Add ${seconds} seconds to ${esc(exercise.name)} timer">+${seconds === 60 ? "1 min" : seconds + " sec"}</button>`).join("")}</div><p data-timer-status role="status">${timer.finished ? "Time’s up! Check off your set when you’re ready." : timer.deadline !== null ? "Counting down" : timer.started ? "Paused" : "Ready"}</p></section>`;
     },
     reconcile(state) {
       for (const [key, timer] of timers) {

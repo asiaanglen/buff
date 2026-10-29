@@ -89,6 +89,8 @@ Files are parsed locally in your browser. Only the resulting program and workout
 
 The authenticated MCP endpoint is **https://buff.asiaanglen.workers.dev/mcp**. It supports reading programs/history, planning workouts, editing targets and logging sets. Write tools produce an exact preview with a link for your approval in Buff; they cannot directly apply changes. Read-only access is also available.
 
+Both regular and coach **Programs** screens show **Learn how to create programs with AI here**, linking to **Connected apps**. That page includes current ChatGPT and Claude setup steps, a selectable MCP URL, required permissions, approval instructions, troubleshooting, and copyable prompts for personal programs, coach templates, exercise edits, and progression.
+
 See [MCP setup and tool reference](docs/mcp.md) to connect a custom app in ChatGPT using OAuth. Your personal ChatGPT app connection still requires you to add and authorize it. Disconnect clients under **Account → Manage connected AI apps**.
 
 ## Workout programs
@@ -168,7 +170,7 @@ Use **Supersets** within **Edit plan** or at the bottom of a started workout to 
 
 ## Timed exercise countdowns
 
-After **Start workout**, expand a timed exercise to use its **Set timer**, initialized from the target duration in seconds. **Start**, **Pause**, and **Reset** control the countdown; **Start again** repeats a finished timer for the next set. The timer uses a deadline so delayed browser updates and switching away do not add extra time. It survives workout redraws and accordion changes in the current session. Starting another exercise timer pauses the previous one. At zero, **Time’s up** appears; the user still checks off their set. Timers stay on the current device, reset on reload or account changes, and never write workout results automatically.
+After **Start workout**, expand a timed exercise to use its **Set timer**, initialized from the target duration in seconds. **Start**, **Pause**, and **Reset** control the countdown. **+15 sec**, **+30 sec**, and **+1 min** add time before, during, or after the countdown without changing the planned target; Reset returns to the original target. **Start again** repeats a finished timer for the next set. The timer uses a deadline so delayed browser updates and switching away do not add extra time. It survives workout redraws and accordion changes in the current session. Starting another exercise timer pauses the previous one. At zero, **Time’s up** appears; the user still checks off their set. Timers stay on the current device, reset on reload or account changes, and never write workout results automatically.
 
 ## Phone-friendly inline logging and swaps
 

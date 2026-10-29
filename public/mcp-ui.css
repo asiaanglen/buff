@@ -114,3 +114,79 @@ small {
     font-size: 24px;
   }
 }
+
+.ai-guide {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #e9e2f0;
+}
+.ai-guide section {
+  margin: 28px 0;
+  scroll-margin-top: 20px;
+}
+.guide-tag {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f1ebff;
+  color: #6651bb;
+  font-size: 12px;
+  font-weight: 750;
+}
+.guide-jumps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 18px 0;
+}
+.guide-endpoint,
+.guide-prompt textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #ded5eb;
+  border-radius: 10px;
+  background: #faf8ff;
+  color: #302a40;
+  padding: 12px;
+  font: inherit;
+  margin-top: 8px;
+}
+.guide-endpoint {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+}
+.ai-guide li {
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+.ai-guide ol,
+.ai-guide ul {
+  padding-left: 23px;
+}
+.ai-guide h3 {
+  font-size: 19px;
+  margin-bottom: 12px;
+}
+.guide-approval {
+  padding: 18px;
+  background: #f5f1fd;
+  border-radius: 12px;
+}
+.guide-prompt {
+  margin: 20px 0;
+}
+.guide-prompt textarea {
+  resize: vertical;
+  min-height: 150px;
+  line-height: 1.6;
+}
+#ai-program-guide {
+  scroll-margin-top: 20px;
+}
+@media (max-width: 500px) {
+  .guide-prompt textarea {
+    font-size: 16px;
+    min-height: 230px;
+  }
+}
