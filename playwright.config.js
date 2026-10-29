@@ -8,6 +8,7 @@ export default defineConfig({
     "coaching.spec.js",
     "feedback.spec.js",
     "admin.spec.js",
+    "avatar.spec.js",
   ],
   use: {
     baseURL: "http://127.0.0.1:5173",

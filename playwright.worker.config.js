@@ -6,6 +6,7 @@ export default defineConfig({
     "coaching.spec.js",
     "feedback.spec.js",
     "admin.spec.js",
+    "avatar.spec.js",
     "sync.spec.js",
     "worker-api.spec.js",
     "signup-profile.spec.js",

@@ -9,7 +9,9 @@ export function testD1() {
       let args = [];
       return {
         bind(...values) {
-          args = values;
+          args = values.map((value) =>
+            value instanceof ArrayBuffer ? new Uint8Array(value) : value,
+          );
           return this;
         },
         async first() {

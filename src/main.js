@@ -1,3 +1,4 @@
+import { avatarUrl } from "./profile-picture.js";
 import { brandLogo } from "./brand.js";
 import { createExerciseTimers } from "./exercise-timer.js";
 import {
@@ -99,6 +100,14 @@ let plannerView = "week",
   calendarError = false;
 const app = document.querySelector("#app");
 const exerciseTimers = createExerciseTimers(app);
+app.addEventListener(
+  "error",
+  (event) => {
+    if (event.target.matches?.(".profile .avatar img"))
+      event.target.closest(".avatar").textContent = sidebarIdentity().initial;
+  },
+  true,
+);
 const calendarDrag = setupCalendarDrag(app, moveCalendarWorkout);
 const loggingWorkouts = new Set();
 const openExerciseIds = new Map();
@@ -244,6 +253,7 @@ function sidebarIdentity() {
     name:
       [first, profile.lastName.trim()].filter(Boolean).join(" ") ||
       "Your account",
+    picture: avatarUrl(profile.avatarVersion),
     initial:
       Array.from(first || profile.lastName.trim())[0]?.toLocaleUpperCase() ||
       "?",
@@ -253,7 +263,18 @@ function updateSidebarIdentity() {
   const identity = sidebarIdentity();
   const avatar = app.querySelector(".profile .avatar");
   const name = app.querySelector(".profile strong");
-  if (avatar) avatar.textContent = identity.initial;
+  if (avatar) {
+    if (identity.picture) {
+      if (avatar.querySelector("img")?.getAttribute("src") !== identity.picture)
+        avatar.innerHTML = `<img src="${identity.picture}" alt="${esc(identity.name)} profile picture">`;
+      avatar.querySelector("img").alt = identity.name + " profile picture";
+    } else avatar.textContent = identity.initial;
+    const image = avatar.querySelector("img");
+    if (image)
+      image.onerror = () => {
+        avatar.textContent = identity.initial;
+      };
+  }
   if (name) {
     name.textContent = identity.name;
     name.title = identity.name;
@@ -341,7 +362,7 @@ function render() {
     )
     .join(
       "",
-    )}</select></div><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">${esc(sidebarIdentity().initial)}</span><div><strong title="${esc(sidebarIdentity().name)}">${esc(sidebarIdentity().name)}</strong><small>Personal training journal</small></div></div></aside>
+    )}</select></div><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">${sidebarIdentity().picture ? `<img src="${sidebarIdentity().picture}" alt="${esc(sidebarIdentity().name)} profile picture">` : esc(sidebarIdentity().initial)}</span><div><strong title="${esc(sidebarIdentity().name)}">${esc(sidebarIdentity().name)}</strong><small>Personal training journal</small></div></div></aside>
 <main><header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "home" ? "Home" : tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Completed workouts"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content">${new URL(location.href).searchParams.has("coach") ? `<div class="coach-builder-banner"><a href="/coach">← Coach dashboard</a><span>Your program templates. Client progress stays in the coach dashboard.</span></div>` : ""}<div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div><div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div></div>
 ${tab === "programs" ? '<a class="ai-program-callout" href="/connections#ai-program-guide"><span class="ai-callout-icon" aria-hidden="true">✧</span><span><strong>Learn how to create programs with AI here</strong><small>Connect ChatGPT or Claude and turn your goals into a program.</small></span><span aria-hidden="true">↗</span></a>' : ""}
 ${inviteToken ? renderInvitation() : ""}${inviteSuccess ? `<div class="notice invitation-success" role="status">${esc(inviteSuccess)}</div>` : ""}

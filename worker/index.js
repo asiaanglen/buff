@@ -1,3 +1,4 @@
+import { avatarApi, withAvatar } from "./avatar.js";
 import { adminPage } from "./admin.js";
 import { feedbackPage } from "./feedback.js";
 import { coachingApi } from "./coaching.js";
@@ -42,9 +43,13 @@ async function createSession(request, db, user) {
     .bind(await digest(token), user.id, Date.now() + 30 * 86400000)
     .run();
   db.usage?.actor(user.id);
-  return json({ user: await ownerUser(db, user), authScheme }, 200, {
-    "Set-Cookie": cookie(request, token),
-  });
+  return json(
+    { user: await ownerUser(db, await withAvatar(db, user)), authScheme },
+    200,
+    {
+      "Set-Cookie": cookie(request, token),
+    },
+  );
 }
 async function readBody(request) {
   const reader = request.body?.getReader();
@@ -132,9 +137,13 @@ async function api(request, env) {
       ? json({ ok: true, storage: "d1" })
       : failure("Database migrations have not been applied.", 503);
   }
+  if (path === "/api/auth/avatar") return avatarApi(request, env);
   if (path === "/api/auth/session" && method === "GET")
     return json({
-      user: await ownerUser(db, await identify(request, db)),
+      user: await ownerUser(
+        db,
+        await withAvatar(db, await identify(request, db)),
+      ),
       authScheme,
     });
   if (

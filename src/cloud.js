@@ -1,3 +1,7 @@
+import {
+  prepareProfilePicture,
+  profilePictureEditor,
+} from "./profile-picture.js";
 import { profileFields, profileEditor } from "./account-profile.js";
 import { pendingInvitation } from "./invite-token.js";
 import { importGuest } from "./model.js";
@@ -332,7 +336,7 @@ export function createCloud({
           method: "POST",
           body: JSON.stringify(data),
         });
-        user = result.user;
+        user = { ...user, ...result.user };
         notify(status);
         open("signin", "Profile updated.");
         return;
@@ -394,7 +398,36 @@ export function createCloud({
       b.disabled = false;
     }
   });
-  root.addEventListener("change", (event) => {
+  root.addEventListener("change", async (event) => {
+    if (event.target.matches("[data-avatar-input]")) {
+      const input = event.target;
+      if (!input.files?.[0]) return;
+      input.disabled = true;
+      const pictureOwner = user?.id;
+      const message = root.querySelector(".account-message");
+      message.textContent = "Uploading profile picture…";
+      try {
+        const image = await prepareProfilePicture(input.files[0]);
+        if (!user || user.id !== pictureOwner) return;
+        const result = await request("/auth/avatar", {
+          method: "PUT",
+          headers: { "Content-Type": "image/jpeg" },
+          body: image,
+        });
+        if (!user || user.id !== pictureOwner) return;
+        user.avatarVersion = result.avatarVersion;
+        notify(status);
+        const editor = root.querySelector(".profile-picture-editor");
+        if (editor) editor.outerHTML = profilePictureEditor(escape, user);
+        if (root.contains(message))
+          message.textContent = "Profile picture updated.";
+      } catch (error) {
+        if (root.contains(message)) message.textContent = error.message;
+      } finally {
+        input.disabled = false;
+      }
+      return;
+    }
     if (event.target.id === "account-theme" && user)
       onThemeChange?.(event.target.value);
   });
@@ -413,6 +446,19 @@ export function createCloud({
     }
     b.disabled = true;
     try {
+      if (action === "remove-avatar") {
+        if (!confirm("Remove your profile picture?")) return;
+        const pictureOwner = user?.id;
+        await request("/auth/avatar", { method: "DELETE" });
+        if (!user || user.id !== pictureOwner) return;
+        user.avatarVersion = null;
+        notify(status);
+        const editor = root.querySelector(".profile-picture-editor");
+        if (editor) editor.outerHTML = profilePictureEditor(escape, user);
+        const message = root.querySelector(".account-message");
+        if (message) message.textContent = "Profile picture removed.";
+        return;
+      }
       if (action === "edit-profile") {
         const session = await request("/auth/session");
         if (!session.user)
@@ -547,6 +593,7 @@ export function createCloud({
     profile: () => ({
       firstName: user?.firstName || "",
       lastName: user?.lastName || "",
+      avatarVersion: user?.avatarVersion || null,
     }),
     async flush() {
       clearTimeout(timer);
