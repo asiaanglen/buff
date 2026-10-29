@@ -351,9 +351,13 @@ test("coach builds a program, invites by email/text, client joins, coach logs re
         exact: true,
       })
       .click();
-    await client
-      .getByRole("link", { name: "Manage coaching access", exact: false })
-      .click();
+    await expect(
+      client.getByRole("link", {
+        name: "Manage coaching access",
+        exact: false,
+      }),
+    ).toHaveCount(0);
+    await client.goto(baseURL + "/coach?view=access");
     client.once("dialog", (dialog) => dialog.accept());
     await client
       .getByRole("button", { name: "End coach access", exact: true })
