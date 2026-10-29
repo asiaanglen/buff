@@ -6,6 +6,7 @@ export default defineConfig({
     "mcp.spec.js",
     "usage.spec.js",
     "coaching.spec.js",
+    "feedback.spec.js",
   ],
   use: {
     baseURL: "http://127.0.0.1:5173",

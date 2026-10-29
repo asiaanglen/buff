@@ -190,3 +190,49 @@ small {
     min-height: 230px;
   }
 }
+
+.feedback-form label {
+  display: block;
+  margin: 20px 0 8px;
+  font-weight: 650;
+}
+.feedback-form :is(select, textarea) {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #ded5eb;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
+  color: #302a40;
+  font: inherit;
+}
+.feedback-form textarea {
+  resize: vertical;
+}
+.feedback-form .feedback-diagnostics {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 400;
+}
+.feedback-diagnostics input {
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.feedback-report {
+  padding: 24px 0;
+  border-bottom: 1px solid #e9e2f0;
+  overflow-wrap: anywhere;
+}
+.feedback-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 16px;
+  background: #faf8ff;
+  border-radius: 10px;
+}
+@media (max-width: 500px) {
+  .feedback-form :is(select, textarea) {
+    font-size: 16px;
+  }
+}

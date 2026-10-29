@@ -1,3 +1,4 @@
+import { feedbackPage } from "./feedback.js";
 import { coachingApi } from "./coaching.js";
 import { usageSetup } from "./usage-setup.js";
 import {
@@ -365,6 +366,12 @@ async function api(request, env) {
 }
 const app = {
   async fetch(request, env) {
+    if (
+      ["/feedback", "/feedback/inbox", "/feedback/thanks"].includes(
+        new URL(request.url).pathname,
+      )
+    )
+      return feedbackPage(request, env);
     if (new URL(request.url).pathname === "/usage/setup")
       return usageSetup(request, env);
     if (new URL(request.url).pathname === "/usage")

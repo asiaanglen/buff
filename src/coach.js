@@ -265,7 +265,7 @@ function render() {
   else if (selected) content = detail();
   else
     content = `<div class="coach-heading"><div><span class="eyebrow">BUFF FOR COACHES</span><h1>Welcome, ${esc(cloud.profile().firstName || "coach")}.</h1><p>${page === "programs" ? "Create and manage your programs, then share them with clients." : "Monitor your clients’ progress and manage their assigned workouts."}</p></div><button class="button subtle" data-cmd="refresh">Refresh progress</button></div><nav class="coach-tabs" aria-label="Coach workspace"><button class="button ${page === "clients" ? "primary" : "subtle"}" data-cmd="clients">Clients</button><button class="button ${page === "programs" ? "primary" : "subtle"}" data-cmd="programs">Programs</button></nav>${page === "programs" ? programs() + pending() : clientCards()}`;
-  app.innerHTML = `<div class="coach-shell">${header()}<main class="coach-main">${error ? `<p class="coach-error" role="alert">${esc(error)}</p>` : ""}${notice ? `<p class="coach-notice" role="status">${esc(notice)}</p>` : ""}${content}</main><footer class="coach-footer"><a href="/">Back to Buff</a><span id="sync-label">${esc(cloud.label())}</span></footer></div>`;
+  app.innerHTML = `<div class="coach-shell">${header()}<main class="coach-main">${error ? `<p class="coach-error" role="alert">${esc(error)}</p>` : ""}${notice ? `<p class="coach-notice" role="status">${esc(notice)}</p>` : ""}${content}</main><footer class="coach-footer"><a href="/">Back to Buff</a><a href="/feedback">Give feedback / Report a bug</a><span id="sync-label">${esc(cloud.label())}</span></footer></div>`;
 }
 async function invite(id) {
   await cloud.flush();

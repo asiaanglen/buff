@@ -4,6 +4,7 @@ export default defineConfig({
   testMatch: [
     "workout.spec.js",
     "coaching.spec.js",
+    "feedback.spec.js",
     "sync.spec.js",
     "worker-api.spec.js",
     "signup-profile.spec.js",
