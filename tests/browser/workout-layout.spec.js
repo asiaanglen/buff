@@ -47,8 +47,8 @@ test("mobile workout reference layout shows instructions, notes and previous res
       .getByRole("button", { name: "Start workout", exact: false })
       .click();
     const panel = page.locator(".exercise-accordion[open]");
-    await expect(panel.locator(".exercise-target-display")).toHaveText(
-      "5 reps",
+    await expect(panel.locator(".exercise-plan-target")).toHaveText(
+      "Target: 4 sets × 5 reps · 135 lbs",
     );
     await expect(
       panel.getByRole("list", { name: "Back Squat instructions", exact: true }),
@@ -81,6 +81,8 @@ test("mobile workout reference layout shows instructions, notes and previous res
       path: `/tmp/buff-reference-exercise-${width}.png`,
     });
   }
+  await page.getByLabel("Back Squat set 1 weight", { exact: true }).fill("135");
+  await page.getByLabel("Back Squat set 1 reps", { exact: true }).fill("5");
   await page.getByLabel("Back Squat set 1 completed", { exact: true }).check();
   await expect(
     page.getByLabel("Back Squat set 1 completed", { exact: true }),
@@ -138,6 +140,14 @@ test("narrow Home and completed workout cards keep the set table inside the phon
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  for (let set = 1; set <= 4; set++) {
+    await page
+      .getByLabel(`Back Squat set ${set} weight`, { exact: true })
+      .fill("135");
+    await page
+      .getByLabel(`Back Squat set ${set} reps`, { exact: true })
+      .fill("5");
+  }
   await page
     .getByRole("button", { name: "Mark as complete", exact: true })
     .click();

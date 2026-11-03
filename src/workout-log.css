@@ -538,3 +538,29 @@
 .exercise-countdown.timer-finished {
   border-color: var(--purple, #795bd3);
 }
+
+.inline-workout-log .exercise-accordion > summary h3 {
+  grid-row: 1;
+  grid-column: 1;
+}
+.inline-workout-log .exercise-accordion > summary .swap-exercise {
+  grid-row: 1;
+  grid-column: 2 / 4;
+}
+.inline-workout-log .exercise-accordion > summary .exercise-plan-target {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: inherit;
+  opacity: 0.8;
+}
+.inline-workout-log .exercise-accordion > summary .exercise-expand-label {
+  grid-row: 3;
+  grid-column: 1 / 3;
+}
+.inline-workout-log .exercise-accordion > summary::after {
+  grid-row: 3;
+  grid-column: 3;
+}

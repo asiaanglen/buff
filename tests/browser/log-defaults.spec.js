@@ -1,7 +1,7 @@
 import { openExercise } from "./exercise-navigation.js";
 import { test, expect } from "./auth-fixture.js";
 import { initialState } from "../../src/model.js";
-test("target defaults can be accepted without editing and do not complete sets on open", async ({
+test("actual fields start blank, targets are under the name, and completing a set requires entered results", async ({
   page,
 }) => {
   const state = initialState();
@@ -13,25 +13,39 @@ test("target defaults can be accepted without editing and do not complete sets o
   await page.getByRole("button", { name: "Start workout" }).click();
   await expect(
     page.getByLabel("Barbell bench press set 1 weight", { exact: true }),
-  ).toHaveValue("40");
+  ).toHaveValue("");
   await expect(
     page.getByLabel("Barbell bench press set 1 reps", { exact: true }),
-  ).toHaveValue("8");
+  ).toHaveValue("");
   await expect(
     page.getByLabel("Plank set 1 weight", { exact: true }),
-  ).toHaveValue("0");
+  ).toHaveValue("");
   await expect(
     page.getByLabel("Plank set 1 seconds", { exact: true }),
-  ).toHaveValue("45");
+  ).toHaveValue("");
   expect(
     await page.evaluate(
       () => window.readTestJournal().workouts[0].exercises[0].logs[0],
     ),
   ).toEqual({ weight: "", actual: "", done: false });
+  await expect(
+    page
+      .locator(".exercise-accordion")
+      .first()
+      .locator(".exercise-plan-target"),
+  ).toHaveText("Target: 4 sets × 8 reps · 40 lbs");
+  await page
+    .getByLabel("Barbell bench press set 1 weight", { exact: true })
+    .fill("40");
+  await page
+    .getByLabel("Barbell bench press set 1 reps", { exact: true })
+    .fill("8");
   await page
     .getByLabel("Barbell bench press set 1 completed", { exact: true })
     .check();
   await openExercise(page, "Plank");
+  await page.getByLabel("Plank set 1 weight", { exact: true }).fill("0");
+  await page.getByLabel("Plank set 1 seconds", { exact: true }).fill("45");
   await page.getByLabel("Plank set 1 completed", { exact: true }).check();
   await page.getByRole("button", { name: "Collapse workout" }).click();
   await expect(page.locator(".workout-card")).toContainText("2 sets completed");

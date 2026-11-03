@@ -70,7 +70,7 @@ test("timed exercises count down from targets, pause, reset, survive redraws, an
   await expect(output).toHaveText("1:00");
   await expect(
     page.getByLabel("Plank set 1 seconds", { exact: true }),
-  ).toHaveValue("45");
+  ).toHaveValue("");
   await expect(
     page.getByLabel("Plank set 1 completed", { exact: true }),
   ).not.toBeChecked();

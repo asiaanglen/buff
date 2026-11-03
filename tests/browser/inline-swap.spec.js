@@ -107,6 +107,9 @@ test("exercise dropdown logs in place and opens the library only for swapping, r
     .getByLabel("Incline Dumbbell Bench Press set 1 weight", { exact: true })
     .fill("35");
   await page
+    .getByLabel("Incline Dumbbell Bench Press set 1 reps", { exact: true })
+    .fill("8");
+  await page
     .getByLabel("Incline Dumbbell Bench Press set 1 completed", { exact: true })
     .check();
   // Touch users can open the library even with completed sets; history is retained.

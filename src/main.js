@@ -581,16 +581,16 @@ function exerciseLog(w, e, index) {
       : "";
   return `${groupHeading}<details class="log-exercise exercise-accordion" name="workout-${esc(w.id)}" data-exercise-id="${esc(e.id)}" ${(openExerciseIds.get(w.id) || new Set()).has(e.id) ? "open" : ""}>
     <summary>
-      <span class="exercise-target-display">${e.target} <span>${e.mode === "time" ? "sec" : "reps"}</span></span>
       <h3>${esc(e.name)} ${e.group ? `<span class="superset-chip">Superset ${esc(e.group)}</span>` : ""}</h3>
       ${swapButton(w, e)}
+      <span class="exercise-plan-target">Target: ${e.sets} sets × ${e.target} ${e.mode === "time" ? "sec" : "reps"} · ${e.weight} ${state.unit}${e.weighted === false ? " (bodyweight)" : ""}</span>
       <span class="exercise-expand-label"><span class="exercise-set-progress">${e.logs.filter((log) => log.done).length}/${e.sets} sets logged</span></span>
     </summary>
     <div class="exercise-log-body">
       ${exerciseTimers.markup(w, e, esc)}
       ${steps.length ? `<ul class="exercise-inline-instructions" aria-label="${esc(e.name)} instructions">${steps.map((step) => `<li>${esc(step)}</li>`).join("")}</ul>` : ""}
       <div class="exercise-guide-link"><button type="button" class="text-button" data-action="edit-exercise" data-id="${w.id}" data-eid="${e.id}" aria-label="Edit ${esc(e.name)}">Edit exercise</button></div>
-      <p class="log-target-description">Target: ${e.sets} × ${e.target} ${e.mode === "time" ? "sec" : "reps"}${e.weight ? ` at ${e.weight} ${state.unit}` : ""}</p>
+
       <label class="exercise-notes"><span class="visually-hidden">Notes for ${esc(e.name)}</span><textarea aria-label="Notes for ${esc(e.name)}" data-exercise-note="${esc(e.id)}" maxlength="1000" rows="1" placeholder="Add note…">${esc(e.note || "")}</textarea></label>
       ${previousPerformanceHeader(w, e)}
       <div class="log-head"><span>Set</span><span>Previous</span><span>Lbs</span><span>${e.mode === "time" ? "Sec" : "Reps"}</span><span class="log-done-heading">Done</span></div>
@@ -599,8 +599,8 @@ function exerciseLog(w, e, index) {
           (l, i) => `<div class="log-row ${l.done ? "set-done" : ""}">
         <strong class="log-set-number">${i + 1}</strong>
         ${previousSetCell(e, i, history)}
-        <div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} weight" type="number" inputmode="decimal" min="0" max="5000" step="0.01" placeholder="${e.weight}" ${e.weighted === false ? 'readonly title="Bodyweight exercise"' : ""} value="${esc(l.weight === "" ? e.weight : l.weight)}" data-eid="${e.id}" data-set="${i}" data-field="weight"></div>
-        <div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" type="number" inputmode="numeric" min="0" max="10000" step="1" placeholder="${e.target}" value="${esc(l.actual === "" ? e.target : l.actual)}" data-eid="${e.id}" data-set="${i}" data-field="actual"></div>
+        <div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} weight" type="number" inputmode="decimal" min="0" max="5000" step="0.01" placeholder="—" value="${esc(l.weight)}" data-eid="${e.id}" data-set="${i}" data-field="weight"></div>
+        <div class="log-input-cell"><input aria-label="${esc(e.name)} set ${i + 1} ${e.mode === "time" ? "seconds" : "reps"}" type="number" inputmode="numeric" min="0" max="10000" step="1" placeholder="—" value="${esc(l.actual)}" data-eid="${e.id}" data-set="${i}" data-field="actual"></div>
         <input aria-label="${esc(e.name)} set ${i + 1} completed" type="checkbox" ${l.done ? "checked" : ""} data-eid="${e.id}" data-set="${i}" data-field="done">
       </div>`,
         )
@@ -611,7 +611,7 @@ function exerciseLog(w, e, index) {
   </details>`;
 }
 function logForm(w) {
-  return `<section class="inline-workout-log" data-workout-id="${esc(w.id)}">${workoutHistory(w)}<p class="log-intro" role="status">Adjust your results, then check each completed set. Mark as complete accepts all displayed results.</p><form class="log-form">${w.exercises.map((e, index) => exerciseLog(w, e, index)).join("") || "<p>Add an exercise to your plan to start logging.</p>"}<div class="modal-footer"><span class="autosave">Changes save automatically</span>${w.exercises.length && !isWorkoutComplete(w) ? `<button type="button" class="button primary" data-action="complete-workout" data-id="${w.id}">Mark as complete</button>` : ""}</div></form></section>`;
+  return `<section class="inline-workout-log" data-workout-id="${esc(w.id)}">${workoutHistory(w)}<p class="log-intro" role="status">Enter your actual weight (0 for bodyweight) and reps or seconds, then check each completed set. Mark as complete requires results for every set.</p><form class="log-form">${w.exercises.map((e, index) => exerciseLog(w, e, index)).join("") || "<p>Add an exercise to your plan to start logging.</p>"}<div class="modal-footer"><span class="autosave">Changes save automatically</span>${w.exercises.length && !isWorkoutComplete(w) ? `<button type="button" class="button primary" data-action="complete-workout" data-id="${w.id}">Mark as complete</button>` : ""}</div></form></section>`;
 }
 // Read and validate every affected input before changing any saved set.
 function logRoot() {

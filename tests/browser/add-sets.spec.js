@@ -15,6 +15,9 @@ test("inline exercises have only set checkboxes and additional sets preserve res
     .getByLabel("Barbell bench press set 1 weight", { exact: true })
     .fill("95");
   await page
+    .getByLabel("Barbell bench press set 1 reps", { exact: true })
+    .fill("8");
+  await page
     .getByLabel("Barbell bench press set 1 completed", { exact: true })
     .check();
   await page
@@ -28,10 +31,10 @@ test("inline exercises have only set checkboxes and additional sets preserve res
     .click();
   await expect(
     page.getByLabel("Barbell bench press set 5 weight", { exact: true }),
-  ).toHaveValue("40");
+  ).toHaveValue("");
   await expect(
     page.getByLabel("Barbell bench press set 5 reps", { exact: true }),
-  ).toHaveValue("8");
+  ).toHaveValue("");
   await expect(
     page.getByLabel("Barbell bench press set 5 completed", { exact: true }),
   ).not.toBeChecked();
@@ -44,6 +47,9 @@ test("inline exercises have only set checkboxes and additional sets preserve res
   await expect(
     page.getByLabel("Notes for Barbell bench press", { exact: true }),
   ).toHaveValue("Add a back-off set.");
+  await page
+    .getByLabel("Barbell bench press set 5 weight", { exact: true })
+    .fill("40");
   await page
     .getByLabel("Barbell bench press set 5 reps", { exact: true })
     .fill("6");
@@ -95,6 +101,8 @@ test("completing one expanded workout never completes another expanded workout",
   await first.getByRole("button", { name: "Start workout" }).click();
   await second.getByRole("button", { name: "Start workout" }).click();
   await page.getByLabel("Row set 1 weight", { exact: true }).fill("40");
+  await page.getByLabel("Squat set 1 weight", { exact: true }).fill("95");
+  await page.getByLabel("Squat set 1 reps", { exact: true }).fill("8");
   await first
     .getByRole("button", { name: "Mark as complete", exact: true })
     .click();
