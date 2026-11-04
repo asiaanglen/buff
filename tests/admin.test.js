@@ -105,6 +105,15 @@ test("admin timestamps preserve unknown legacy dates, new signups are recorded, 
   assert.equal(summary.totals.coaches, 1);
   assert.equal(summary.totals.completedWorkouts, 1);
   assert.equal(summary.totals.active24h, 1);
+  db.raw
+    .prepare(
+      "UPDATE journals SET data=json_set(data,'$.workouts[0].completed',json('true'),'$.workouts[0].exercises[0].logs[0].done',json('false')) WHERE user_id=?",
+    )
+    .run(id);
+  assert.equal(
+    (await adminSummary(db, { now: now + 360001 })).totals.completedWorkouts,
+    1,
+  );
   assert.ok(!JSON.stringify(summary).includes("PRIVATE_"));
   assert.ok(!JSON.stringify(summary).includes("PASSWORD_SHOULD_NOT_LEAK"));
   assert.ok(!JSON.stringify(summary).includes("1990-01-01"));

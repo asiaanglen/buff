@@ -2,7 +2,7 @@ import { openExercise } from "./exercise-navigation.js";
 import { navigateTo } from "./navigation.js";
 import { test, expect } from "./auth-fixture.js";
 import { exercise } from "../../src/model.js";
-test("set checkoff and bulk completion preserve actual results, exclude partial workouts and advance the active program", async ({
+test("set checkoff and partial completion preserve actual results, exclude unfinished sessions, and advance the active program", async ({
   page,
   baseURL,
 }) => {
@@ -45,6 +45,8 @@ test("set checkoff and bulk completion preserve actual results, exclude partial 
   await page.getByLabel("Squat set 1 weight", { exact: true }).fill("0");
   await page.getByLabel("Squat set 1 reps", { exact: true }).fill("6");
   await page.getByLabel("Squat set 1 completed", { exact: true }).check();
+  await page.getByLabel("Squat set 2 weight", { exact: true }).fill("95");
+  await page.getByLabel("Squat set 2 reps", { exact: true }).fill("8");
   await page.getByLabel("Squat set 2 completed", { exact: true }).check();
   await expect(
     page.getByLabel("Squat set 1 completed", { exact: true }),
@@ -62,15 +64,9 @@ test("set checkoff and bulk completion preserve actual results, exclude partial 
   await page
     .getByRole("button", { name: "Mark as complete", exact: true })
     .click();
-  await expect(page.locator(".inline-workout-log")).toBeVisible();
-  expect(
-    (await page.evaluate(() => window.readTestJournal())).workouts[0]
-      .exercises[1].logs[0].done,
-  ).toBe(false);
-  await page.getByLabel("Plank set 1 seconds", { exact: true }).fill("40");
-  await page
-    .getByRole("button", { name: "Mark as complete", exact: true })
-    .click();
+  await expect(page.locator(".workout-completion-message")).toHaveText(
+    "Congrats! You completed 2 out of 3 sets.",
+  );
   await expect(
     next.getByRole("heading", { name: "Session two" }),
   ).toBeVisible();
@@ -90,9 +86,9 @@ test("set checkoff and bulk completion preserve actual results, exclude partial 
     done: true,
   });
   expect(saved.state.workouts[0].exercises[1].logs[0]).toEqual({
-    weight: "0",
-    actual: "40",
-    done: true,
+    weight: "",
+    actual: "",
+    done: false,
   });
   await navigateTo(page, "history");
   await expect(
@@ -144,6 +140,10 @@ test("completed program workouts collapse, stay grey after reload, and retain ed
     .locator(".workout-card")
     .filter({ hasText: "Checkoff session" });
   await first.getByRole("button", { name: "Start workout" }).click();
+  await first
+    .getByLabel("Back Squat set 1 weight", { exact: true })
+    .fill("135");
+  await first.getByLabel("Back Squat set 1 reps", { exact: true }).fill("5");
   await first.getByLabel("Back Squat set 1 completed", { exact: true }).click();
   await expect(first).toHaveClass(/workout-minimized/);
   await expect(

@@ -379,14 +379,14 @@ test("coach log validation cannot mutate plans or unrelated exercises; a pending
         id: e.id,
         name: "INJECTED",
         logs: [
-          { weight: "", actual: "", done: true },
+          { weight: "", actual: "8", done: true },
           { weight: "", actual: "", done: false },
         ],
         note: "Coached",
       },
     ],
   });
-  assert.equal(updated.workouts[0].exercises[0].logs[0].weight, 95);
+  assert.equal(updated.workouts[0].exercises[0].logs[0].weight, "");
   assert.equal(updated.workouts[0].exercises[0].name, "Back Squat");
   assert.deepEqual(plan, source);
   assert.throws(() =>
@@ -533,4 +533,33 @@ test("coaches can edit only their assigned client's plan with revisions, library
     ).status,
     404,
   );
+});
+
+test("coach progress counts workouts explicitly finished with incomplete sets", async () => {
+  const { call, invite, db, users } = await setup();
+  const link = await invite();
+  const joined = await call(
+    "client",
+    "/invites/" + link.token + "/accept",
+    "POST",
+    { startDate: "2026-11-02", allowCoachLogging: true },
+  );
+  const row = db.raw
+    .prepare("SELECT data FROM journals WHERE user_id=?")
+    .get(users.client.id);
+  const state = JSON.parse(row.data);
+  state.workouts.find((w) => w.programId === joined.body.programId).completed =
+    true;
+  db.raw
+    .prepare("UPDATE journals SET data=?,revision=revision+1 WHERE user_id=?")
+    .run(JSON.stringify(state), users.client.id);
+  const detail = await call(
+    "coach",
+    "/assignments/" + joined.body.assignmentId,
+  );
+  assert.equal(detail.body.progress.completed, 1);
+  assert.equal(detail.body.progress.setsDone, 0);
+  const dashboard = await call("coach", "");
+  assert.equal(dashboard.body.assignments[0].completed, 1);
+  assert.equal(dashboard.body.assignments[0].sets_done, 0);
 });

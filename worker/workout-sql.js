@@ -1,0 +1,1 @@
+export const completedWorkoutSql = `(json_extract(w.value,'$.completed')=1 OR (EXISTS(SELECT 1 FROM json_each(w.value,'$.exercises') e,json_each(e.value,'$.logs') l) AND NOT EXISTS(SELECT 1 FROM json_each(w.value,'$.exercises') e,json_each(e.value,'$.logs') l WHERE json_extract(l.value,'$.done') IS NOT 1)))`;

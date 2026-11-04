@@ -1,8 +1,6 @@
 import { progress, programWeek } from "./model.js";
-export function isWorkoutComplete(workout) {
-  const { total, done } = progress(workout);
-  return total > 0 && total === done;
-}
+import { isWorkoutComplete } from "../shared/completion.js";
+export { isWorkoutComplete };
 export function homeView({
   state,
   workoutCard,

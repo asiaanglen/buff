@@ -1,3 +1,4 @@
+import { completedWorkoutSql } from "./workout-sql.js";
 import { exerciseCatalog } from "../shared/exercises.js";
 import { identify } from "./session.js";
 import { digest, randomHex } from "./crypto.js";
@@ -325,7 +326,7 @@ export async function coachingApi(request, env) {
         `SELECT a.id,a.program_id,a.program_name,a.client_name,a.client_email,a.created,a.updated,a.revoked,
    EXISTS(SELECT 1 FROM json_each(j.data,'$.programs') p WHERE json_extract(p.value,'$.id')=a.program_id) AS program_exists,
    (SELECT count(*) FROM json_each(j.data,'$.workouts') w WHERE json_extract(w.value,'$.programId')=a.program_id) AS workouts,
-   (SELECT count(*) FROM json_each(j.data,'$.workouts') w WHERE json_extract(w.value,'$.programId')=a.program_id AND EXISTS(SELECT 1 FROM json_each(w.value,'$.exercises') e,json_each(e.value,'$.logs') l) AND NOT EXISTS(SELECT 1 FROM json_each(w.value,'$.exercises') e,json_each(e.value,'$.logs') l WHERE json_extract(l.value,'$.done') IS NOT 1)) AS completed,
+   (SELECT count(*) FROM json_each(j.data,'$.workouts') w WHERE json_extract(w.value,'$.programId')=a.program_id AND ${completedWorkoutSql}) AS completed,
    (SELECT count(*) FROM json_each(j.data,'$.workouts') w,json_each(w.value,'$.exercises') e,json_each(e.value,'$.logs') l WHERE json_extract(w.value,'$.programId')=a.program_id) AS sets,
    (SELECT count(*) FROM json_each(j.data,'$.workouts') w,json_each(w.value,'$.exercises') e,json_each(e.value,'$.logs') l WHERE json_extract(w.value,'$.programId')=a.program_id AND json_extract(l.value,'$.done')=1) AS sets_done
    FROM coaching_assignments a LEFT JOIN journals j ON j.user_id=a.client_id AND a.revoked IS NULL WHERE a.coach_id=? ORDER BY a.created DESC LIMIT 200`,

@@ -1,3 +1,4 @@
+import { isWorkoutComplete } from "./completion.js";
 import { exerciseByName } from "./exercises.js";
 
 const identity = (e) =>
@@ -14,6 +15,7 @@ export function futureSwapTargets(state, current, original, today) {
   return state.workouts
     .filter(
       (w) =>
+        !isWorkoutComplete(w) &&
         w.id !== current.id &&
         w.programId === current.programId &&
         w.date > current.date &&

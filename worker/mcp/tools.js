@@ -1,3 +1,4 @@
+import { isWorkoutComplete } from "../../shared/completion.js";
 import {
   personalExercise,
   applyDefinition,
@@ -110,6 +111,7 @@ const summary = (w) => ({
   date: w.date,
   programId: w.programId || null,
   exerciseCount: w.exercises.length,
+  completed: isWorkoutComplete(w),
   completedSets: w.exercises.reduce(
     (n, e) => n + e.logs.filter((l) => l.done).length,
     0,
@@ -379,6 +381,7 @@ export async function mcpHandler(request, env, ctx) {
             (!a.end_date || w.date <= a.end_date) &&
             (!a.program_id || w.programId === a.program_id) &&
             (!a.completed_only ||
+              w.completed === true ||
               w.exercises.some((e) => e.logs.some((l) => l.done))),
         )
         .sort((a, b) => a.date.localeCompare(b.date));

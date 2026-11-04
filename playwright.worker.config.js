@@ -20,6 +20,7 @@ export default defineConfig({
     "pwa.spec.js",
     "active-program.spec.js",
     "completion.spec.js",
+    "partial-completion.spec.js",
     "exercise-library.spec.js",
     "guides-notes.spec.js",
     "supersets.spec.js",

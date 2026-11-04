@@ -1,3 +1,4 @@
+import { exercisePerformanceHistory } from "../src/model.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { weekStart, addDays, exercise, progress } from "../src/model.js";
@@ -490,4 +491,59 @@ test("future swaps embed custom definitions and adjust timed targets without lea
   assert.equal(future.libraryId, undefined);
   assert.equal(future.customExerciseId, "personal");
   assert.equal(future.instructions, replacement.instructions);
+});
+
+import { finishWorkout, isWorkoutComplete } from "../shared/completion.js";
+test("finishing a partial workout preserves set results and counts only completed sets; copied weeks start unfinished", () => {
+  const state = initialState(),
+    w = state.workouts[0];
+  const total = w.exercises.reduce((sum, e) => sum + e.sets, 0);
+  const original = structuredClone(w.exercises);
+  w.exercises[0].logs[0] = { weight: 0, actual: 6, done: true };
+  assert.equal(isWorkoutComplete(w), false);
+  assert.deepEqual(finishWorkout(w), { done: 1, total });
+  assert.equal(isWorkoutComplete(w), true);
+  assert.deepEqual(w.exercises.slice(1), original.slice(1));
+  assert.equal(validState(state), true);
+  w.completed = "yes";
+  assert.equal(validState(state), false);
+  w.completed = true;
+  state.programs = [
+    { id: "p", name: "Plan", weeks: 2, startDate: w.date, note: "" },
+  ];
+  w.programId = "p";
+  const copied = copyProgramWeek(state, "p", 1, 2);
+  assert.equal(copied.length, 1);
+  assert.equal(isWorkoutComplete(copied[0]), false);
+  const empty = structuredClone(w);
+  empty.exercises.forEach((e) =>
+    e.logs.forEach((l) => {
+      l.done = false;
+      l.weight = "";
+      l.actual = "";
+    }),
+  );
+  delete empty.completed;
+  assert.deepEqual(finishWorkout(empty), { done: 0, total });
+  assert.equal(isWorkoutComplete(empty), true);
+});
+
+test("completed sets can omit weight and still appear in exercise history without inventing a zero weight", () => {
+  const state = initialState();
+  const w = state.workouts[0];
+  const e = w.exercises[0];
+  e.logs[0] = { weight: "", actual: 8, done: true };
+  assert.equal(validState(state), true);
+  const current = {
+    ...structuredClone(w),
+    id: "next-no-weight",
+    date: addDays(w.date, 1),
+  };
+  const history = exercisePerformanceHistory(
+    state,
+    current,
+    current.exercises[0],
+  );
+  assert.equal(history[0].sets[0].weight, "");
+  assert.equal(history[0].sets[0].actual, 8);
 });

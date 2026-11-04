@@ -1,3 +1,5 @@
+import { finishWorkout } from "./completion.js";
+import { isWorkoutComplete } from "./completion.js";
 import { validState } from "./journal.js";
 export const personName = (user, fallback = "Your coach") =>
   [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
@@ -10,7 +12,7 @@ export function programProgress(workouts) {
     const logs = w.exercises.flatMap((e) => e.logs);
     sets += logs.length;
     done += logs.filter((l) => l.done).length;
-    if (logs.length && logs.every((l) => l.done)) completed++;
+    if (isWorkoutComplete(w)) completed++;
   }
   return { workouts: workouts.length, completed, sets, setsDone: done };
 }
@@ -43,19 +45,17 @@ export function applyCoachLog(current, programId, workoutId, input) {
       throw Error("Results must match the assigned exercises and sets.");
     seen.add(change.id);
     e.logs = change.logs.map((l) => ({
-      weight: l?.done && l.weight === "" ? e.weight : l?.weight,
-      actual: l?.done && l.actual === "" ? e.target : l?.actual,
+      weight: l?.weight,
+      actual: l?.actual,
       done: l?.done,
     }));
     if (change.note !== undefined) e.note = change.note;
   }
-  if (input.complete)
+  if (input.complete) {
     for (const e of workout.exercises)
-      for (const l of e.logs) {
-        if (l.weight === "") l.weight = e.weight;
-        if (l.actual === "") l.actual = e.target;
-        l.done = true;
-      }
+      for (const l of e.logs) if (l.actual !== "") l.done = true;
+    finishWorkout(workout);
+  }
   if (
     !validState(state) ||
     new TextEncoder().encode(JSON.stringify(state)).length > 1024 * 1024

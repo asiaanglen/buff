@@ -102,5 +102,7 @@ test("existing results and zero values are preserved; clearing a default prevent
   await expect(
     page.getByLabel("Barbell bench press set 3 completed", { exact: true }),
   ).not.toBeChecked();
-  await expect(page.locator(".log-intro")).toContainText("Enter both weight");
+  await expect(page.locator(".log-intro")).toContainText(
+    "Enter reps or seconds",
+  );
 });

@@ -1,3 +1,4 @@
+import { isWorkoutComplete } from "../shared/completion.js";
 import { trackAccountActivity } from "./admin-activity.js";
 import { identify } from "./session.js";
 const actors = new Map();
@@ -66,14 +67,7 @@ async function privateHash(key, value) {
 function completions(state) {
   return new Set(
     (state?.workouts || [])
-      .filter(
-        (workout) =>
-          workout.exercises.length &&
-          workout.exercises.every(
-            (exercise) =>
-              exercise.logs.length && exercise.logs.every((log) => log.done),
-          ),
-      )
+      .filter(isWorkoutComplete)
       .map((workout) => workout.id),
   );
 }

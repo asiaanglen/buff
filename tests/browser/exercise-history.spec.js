@@ -1,6 +1,6 @@
 import { test, expect } from "./auth-fixture.js";
 import { exercise, initialState, addDays, key } from "../../src/model.js";
-test("logger shows previous actual weights and reps per set without marking prefilled targets completed", async ({
+test("logger shows previous actual weights and reps per set while leaving actual-entry fields blank", async ({
   page,
 }) => {
   const state = initialState(),
@@ -32,7 +32,7 @@ test("logger shows previous actual weights and reps per set without marking pref
   await expect(bench.locator(".log-row").first()).toContainText("× 9");
   await expect(
     page.getByLabel("Barbell bench press set 1 weight", { exact: true }),
-  ).toHaveValue("40");
+  ).toHaveValue("");
   const plank = page
     .locator(".log-exercise")
     .filter({ has: page.getByRole("heading", { name: "Plank", exact: true }) });

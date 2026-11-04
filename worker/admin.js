@@ -1,3 +1,4 @@
+import { completedWorkoutSql } from "./workout-sql.js";
 import { identify } from "./session.js";
 import { usageOwner, usageSummary } from "./usage.js";
 import { page, signIn, escape as esc } from "./pages.js";
@@ -34,14 +35,14 @@ export async function adminSummary(
       )
       .bind(now - 86400000, now - days * 86400000),
     db.prepare(
-      "SELECT coalesce(sum(json_array_length(data,'$.programs')),0) AS programs,(SELECT count(*) FROM journals j,json_each(j.data,'$.workouts') w WHERE EXISTS(SELECT 1 FROM json_each(w.value,'$.exercises') e,json_each(e.value,'$.logs') l) AND NOT EXISTS(SELECT 1 FROM json_each(w.value,'$.exercises') e,json_each(e.value,'$.logs') l WHERE json_extract(l.value,'$.done') IS NOT 1)) AS completedWorkouts FROM journals",
+      `SELECT coalesce(sum(json_array_length(data,'$.programs')),0) AS programs,(SELECT count(*) FROM journals j,json_each(j.data,'$.workouts') w WHERE ${completedWorkoutSql}) AS completedWorkouts FROM journals`,
     ),
     db
       .prepare(`SELECT count(*) AS total FROM users u WHERE ${where}`)
       .bind(query, query),
     db
       .prepare(
-        `SELECT u.id,u.email,u.first_name,u.last_name,a.registered_at,a.last_active_at,EXISTS(SELECT 1 FROM coach_profiles c WHERE c.user_id=u.id) AS isCoach,(SELECT count(*) FROM coaching_assignments c WHERE c.client_id=u.id AND c.revoked IS NULL) AS coachingPrograms,coalesce(json_array_length(j.data,'$.programs'),0) AS programs,(SELECT count(*) FROM json_each(j.data,'$.workouts') w WHERE EXISTS(SELECT 1 FROM json_each(w.value,'$.exercises') e,json_each(e.value,'$.logs') l) AND NOT EXISTS(SELECT 1 FROM json_each(w.value,'$.exercises') e,json_each(e.value,'$.logs') l WHERE json_extract(l.value,'$.done') IS NOT 1)) AS completedWorkouts FROM users u LEFT JOIN admin_account_activity a ON a.user_id=u.id LEFT JOIN journals j ON j.user_id=u.id WHERE ${where} ORDER BY a.registered_at DESC,u.id LIMIT 50 OFFSET ?`,
+        `SELECT u.id,u.email,u.first_name,u.last_name,a.registered_at,a.last_active_at,EXISTS(SELECT 1 FROM coach_profiles c WHERE c.user_id=u.id) AS isCoach,(SELECT count(*) FROM coaching_assignments c WHERE c.client_id=u.id AND c.revoked IS NULL) AS coachingPrograms,coalesce(json_array_length(j.data,'$.programs'),0) AS programs,(SELECT count(*) FROM json_each(j.data,'$.workouts') w WHERE ${completedWorkoutSql}) AS completedWorkouts FROM users u LEFT JOIN admin_account_activity a ON a.user_id=u.id LEFT JOIN journals j ON j.user_id=u.id WHERE ${where} ORDER BY a.registered_at DESC,u.id LIMIT 50 OFFSET ?`,
       )
       .bind(query, query, (pageNumber - 1) * 50),
     db.prepare(

@@ -1,3 +1,4 @@
+import { finishWorkout } from "../shared/completion.js";
 import { avatarUrl } from "./profile-picture.js";
 import { brandLogo } from "./brand.js";
 import { createExerciseTimers } from "./exercise-timer.js";
@@ -116,6 +117,7 @@ let inviteInfo = null;
 let inviteError = "";
 let inviteBusy = false;
 let inviteSuccess = "";
+let completionMessage = "";
 let inviteImport = null;
 function renderInvitation() {
   return invitationBanner({
@@ -344,10 +346,7 @@ function render() {
   const weekly = state.workouts.filter(
     (w) => onPlanner(state, w) && w.date >= week && w.date <= addDays(week, 6),
   );
-  const completed = weekly.filter((w) => {
-    let p = progress(w);
-    return p.total && p.total === p.done;
-  }).length;
+  const completed = weekly.filter(isWorkoutComplete).length;
   const total = weekly.reduce((n, w) => n + progress(w).total, 0);
   const done = weekly.reduce((n, w) => n + progress(w).done, 0);
   app.innerHTML = `<aside class="sidebar"><a class="brand" href="/" aria-label="Buff home">${brandLogo()}</a><div class="workspace-label">YOUR WORKSPACE</div><nav><button data-tab="home" class="nav-item ${tab === "home" ? "active" : ""}"><span>⌂</span> Home</button><button data-tab="programs" class="nav-item ${tab === "programs" ? "active" : ""}"><span>▤</span> Programs</button><button data-tab="planner" class="nav-item ${tab === "planner" ? "active" : ""}"><span>▦</span> Weekly planner</button><button data-tab="history" class="nav-item ${tab === "history" ? "active" : ""}"><span>◷</span> Completed workouts</button></nav><div class="sidebar-bottom"><div class="mini-mark">${upArrow}</div><strong>A little stronger, every week.</strong><p>Show up. Put in the work.<br>Make it yours.</p></div><div class="profile"><span class="avatar">${sidebarIdentity().picture ? `<img src="${sidebarIdentity().picture}" alt="${esc(sidebarIdentity().name)} profile picture">` : esc(sidebarIdentity().initial)}</span><div><strong title="${esc(sidebarIdentity().name)}">${esc(sidebarIdentity().name)}</strong><small>Personal training journal</small></div></div></aside>
@@ -365,6 +364,7 @@ function render() {
       "",
     )}</select></div><div class="desktop-breadcrumb"><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "home" ? "Home" : tab === "programs" ? "Programs" : tab === "planner" ? "Weekly planner" : "Completed workouts"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content">${new URL(location.href).searchParams.has("coach") ? `<div class="coach-builder-banner"><a href="/coach">← Coach dashboard</a><span>Your program templates. Client progress stays in the coach dashboard.</span></div>` : ""}<div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div><div class="heading-actions">${tab === "programs" ? '<button class="button subtle" data-action="import-program">↑ Import program</button>' : ""}<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button></div></div>
 ${tab === "programs" ? '<a class="ai-program-callout" href="/connections#ai-program-guide"><span class="ai-callout-icon" aria-hidden="true">✧</span><span><strong>Learn how to create programs with AI here</strong><small>Connect ChatGPT or Claude and turn your goals into a program.</small></span><span aria-hidden="true">↗</span></a>' : ""}
+${completionMessage ? `<div class="notice workout-completion-message" role="status">${esc(completionMessage)}</div>` : ""}
 ${inviteToken ? renderInvitation() : ""}${inviteSuccess ? `<div class="notice invitation-success" role="status">${esc(inviteSuccess)}</div>` : ""}
 ${cloud.journalUsage().warning ? '<div class="notice journal-storage-warning" role="status">Your workout history is approaching the 1 MB sync limit. Download a backup from Account before removing older workouts to make room.</div>' : ""}
 ${storageError ? '<div class="notice">Device storage is unavailable or was reset. Your changes may not persist after closing this page.</div>' : ""}
@@ -505,7 +505,7 @@ function workoutCard(w) {
     return `<article class="workout-card workout-complete workout-minimized"><div class="workout-heading"><div class="workout-title"><div class="tag">COMPLETED</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises · ${p.done} sets completed</p></div><div class="workout-actions">${moveWorkoutButton(w)}<button class="button subtle" data-action="log" data-id="${w.id}">View log</button></div></div></article>`;
   }
   let lastGroup = null;
-  return `<article class="workout-card ${isWorkoutComplete(w) ? "workout-complete" : ""}"><div class="workout-heading"><div class="workout-symbol">${upArrow}</div><div class="workout-title"><div class="tag">${p.total && p.done === p.total ? "COMPLETED" : programSummary(w) ? esc(programSummary(w)) : "STRENGTH & CONDITIONING"}</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises <span>·</span> ${p.total} sets <span>·</span> ${p.done} sets completed</p></div><div class="workout-actions">${moveWorkoutButton(w)}<button class="button subtle" data-action="edit-workout" data-id="${w.id}">Edit plan</button><button class="button primary" data-action="log" data-id="${w.id}">${logging ? "Collapse workout" : p.done ? "Resume workout" : "Start workout"} <span>→</span></button></div></div>${w.note ? `<p class="workout-note">${esc(w.note)}</p>` : ""}${
+  return `<article class="workout-card ${isWorkoutComplete(w) ? "workout-complete" : ""}"><div class="workout-heading"><div class="workout-symbol">${upArrow}</div><div class="workout-title"><div class="tag">${isWorkoutComplete(w) ? "COMPLETED" : programSummary(w) ? esc(programSummary(w)) : "STRENGTH & CONDITIONING"}</div><h2>${esc(w.name)}</h2><p>${w.exercises.length} exercises <span>·</span> ${p.total} sets <span>·</span> ${p.done} sets completed</p></div><div class="workout-actions">${moveWorkoutButton(w)}<button class="button subtle" data-action="edit-workout" data-id="${w.id}">Edit plan</button><button class="button primary" data-action="log" data-id="${w.id}">${logging ? "Collapse workout" : p.done ? "Resume workout" : "Start workout"} <span>→</span></button></div></div>${w.note ? `<p class="workout-note">${esc(w.note)}</p>` : ""}${
     logging
       ? logForm(w)
       : `<div class="exercise-table exercise-preview"><div class="exercise-table-head"><span>EXERCISE</span><span>SETS</span><span>TARGET</span><span>WEIGHT</span></div>${w.exercises
@@ -550,19 +550,22 @@ function previousPerformanceHeader(w, e) {
   const history = previousExercisePerformance(state, w, e);
   if (!history)
     return '<p class="previous-performance empty-history">No completed history for this exercise yet.</p>';
-  return `<div class="previous-performance"><span>LAST TIME · ${esc(fmt(history.date, { month: "short", day: "numeric", year: "numeric" }))}</span><strong>${history.latest.weight} ${state.unit} × ${history.latest.actual} ${e.mode === "time" ? "sec" : "reps"}</strong><small>Last completed set (set ${history.latest.setNumber}) · ${esc(history.workoutName)}</small></div>`;
+  return `<div class="previous-performance"><span>LAST TIME · ${esc(fmt(history.date, { month: "short", day: "numeric", year: "numeric" }))}</span><strong>${history.latest.weight === "" ? "" : `${history.latest.weight} ${state.unit} × `}${history.latest.actual} ${e.mode === "time" ? "sec" : "reps"}</strong><small>Last completed set (set ${history.latest.setNumber}) · ${esc(history.workoutName)}</small></div>`;
 }
 function workoutHistory(w) {
   return `<details class="workout-history"><summary>Workout history</summary><p>Previous completed sets for these exercises, across your programs. Weight is in lbs.</p>${w.exercises
     .map((e) => {
       const sessions = exercisePerformanceHistory(state, w, e).slice(0, 30);
-      return `<section class="exercise-history"><h3>${esc(e.name)}</h3>${sessions.map((session) => `<article><strong>${esc(session.workoutName)} · ${dateLabel(session.date)} ${esc(fmt(session.date, { year: "numeric" }))}</strong><ul>${session.sets.map((set) => `<li>Set ${set.setNumber}: ${set.weight} lbs × ${set.actual} ${e.mode === "time" ? "sec" : "reps"}</li>`).join("")}</ul>${session.note ? `<p class="exercise-history-note"><strong>Notes:</strong> ${esc(session.note)}</p>` : ""}</article>`).join("") || "<p>No previous completed sets yet.</p>"}</section>`;
+      return `<section class="exercise-history"><h3>${esc(e.name)}</h3>${sessions.map((session) => `<article><strong>${esc(session.workoutName)} · ${dateLabel(session.date)} ${esc(fmt(session.date, { year: "numeric" }))}</strong><ul>${session.sets.map((set) => `<li>Set ${set.setNumber}: ${set.weight === "" ? "" : `${set.weight} lbs × `}${set.actual} ${e.mode === "time" ? "sec" : "reps"}</li>`).join("")}</ul>${session.note ? `<p class="exercise-history-note"><strong>Notes:</strong> ${esc(session.note)}</p>` : ""}</article>`).join("") || "<p>No previous completed sets yet.</p>"}</section>`;
     })
     .join("")}</details>`;
 }
 function previousSetCell(e, index, history) {
   const set = history?.sets.find((set) => set.setNumber === index + 1);
-  return `<span class="log-previous" ${set ? `aria-label="Previous set ${index + 1}: ${set.weight} lbs × ${set.actual} ${e.mode === "time" ? "sec" : "reps"}"` : 'aria-label="No previous completed set"'}>${set ? `${set.weight} lbs <span>× ${set.actual}${e.mode === "time" ? " sec" : ""}</span>` : "—"}</span>`;
+  const value = set
+    ? `${set.weight === "" ? "" : set.weight + " lbs × "}${set.actual}${e.mode === "time" ? " sec" : " reps"}`
+    : "—";
+  return `<span class="log-previous" aria-label="${set ? `Previous set ${index + 1}: ${esc(value)}` : "No previous completed set"}">${set && set.weight !== "" ? `${set.weight} lbs <span>× ${set.actual}${e.mode === "time" ? " sec" : ""}</span>` : esc(value)}</span>`;
 }
 function exerciseLog(w, e, index) {
   const history = previousExercisePerformance(state, w, e);
@@ -611,7 +614,7 @@ function exerciseLog(w, e, index) {
   </details>`;
 }
 function logForm(w) {
-  return `<section class="inline-workout-log" data-workout-id="${esc(w.id)}">${workoutHistory(w)}<p class="log-intro" role="status">Enter your actual weight (0 for bodyweight) and reps or seconds, then check each completed set. Mark as complete requires results for every set.</p><form class="log-form">${w.exercises.map((e, index) => exerciseLog(w, e, index)).join("") || "<p>Add an exercise to your plan to start logging.</p>"}<div class="modal-footer"><span class="autosave">Changes save automatically</span>${w.exercises.length && !isWorkoutComplete(w) ? `<button type="button" class="button primary" data-action="complete-workout" data-id="${w.id}">Mark as complete</button>` : ""}</div></form></section>`;
+  return `<section class="inline-workout-log" data-workout-id="${esc(w.id)}">${workoutHistory(w)}<p class="log-intro" role="status">Enter your actual reps or seconds, then check each completed set. Weight is optional. You can mark the workout complete at any time; unfinished sets stay unlogged.</p><form class="log-form">${w.exercises.map((e, index) => exerciseLog(w, e, index)).join("") || "<p>Add an exercise to your plan to start logging.</p>"}<div class="modal-footer"><span class="autosave">Changes save automatically</span>${w.exercises.length && !isWorkoutComplete(w) ? `<button type="button" class="button primary" data-action="complete-workout" data-id="${w.id}">Mark as complete</button>` : ""}</div></form></section>`;
 }
 // Read and validate every affected input before changing any saved set.
 function logRoot() {
@@ -621,45 +624,39 @@ function logRoot() {
     ) || app
   );
 }
-function completeExercises(exercises, done = true) {
-  const updates = [];
-  for (const e of exercises) {
+function finishCurrentWorkout() {
+  const w = workout();
+  const fields = [...logRoot().querySelectorAll("[data-field]")];
+  for (const e of w.exercises) {
     for (let i = 0; i < e.logs.length; i++) {
-      const row = [...logRoot().querySelectorAll(".log-row")].find((row) => {
-        const field = row.querySelector('[data-field="weight"]');
-        return field.dataset.eid === e.id && Number(field.dataset.set) === i;
-      });
-      const weight = row.querySelector('[data-field="weight"]');
-      const actual = row.querySelector('[data-field="actual"]');
-      if (done) {
-        for (const field of [weight, actual]) {
-          if (!field.checkValidity() || field.value === "") {
-            logRoot().querySelector(".log-intro").textContent =
-              "Enter both weight (0 for bodyweight) and reps or seconds for every set before completing.";
-            const accordion = field.closest(".exercise-accordion");
-            if (accordion) accordion.open = true;
-            field.reportValidity();
-            field.focus();
-            return false;
-          }
-        }
+      const rowFields = fields.filter(
+        (input) =>
+          input.dataset.eid === e.id && Number(input.dataset.set) === i,
+      );
+      const weight = rowFields.find(
+        (input) => input.dataset.field === "weight",
+      );
+      const actual = rowFields.find(
+        (input) => input.dataset.field === "actual",
+      );
+      if (
+        weight &&
+        actual &&
+        actual.value !== "" &&
+        weight.checkValidity() &&
+        actual.checkValidity()
+      ) {
+        Object.assign(e.logs[i], {
+          weight: weight.value,
+          actual: actual.value,
+          done: true,
+        });
       }
-      updates.push({
-        log: e.logs[i],
-        weight: weight.value,
-        actual: actual.value,
-      });
     }
   }
-  for (const update of updates) {
-    if (done) {
-      update.log.weight = update.weight;
-      update.log.actual = update.actual;
-    }
-    update.log.done = done;
-  }
+  const count = finishWorkout(w);
+  completionMessage = `Congrats! You completed ${count.done} out of ${count.total} sets.`;
   save();
-  return true;
 }
 app.addEventListener("click", (event) => {
   const trash = event.target.closest('[data-action="calendar-delete-workout"]');
@@ -888,6 +885,7 @@ app.addEventListener("click", (event) => {
   if (a === "add-set") {
     const e = workout().exercises.find((e) => e.id === b.dataset.eid);
     if (e.sets < 30) {
+      delete workout().completed;
       e.sets += 1;
       e.logs.push({ weight: "", actual: "", done: false });
       openExerciseIds.get(active)?.add(e.id);
@@ -895,7 +893,7 @@ app.addEventListener("click", (event) => {
     }
   }
   if (a === "complete-workout") {
-    if (!completeExercises(workout().exercises)) return;
+    finishCurrentWorkout();
     modal = null;
     loggingWorkouts.clear();
     if (tab !== "home" && tab !== "programs") tab = "history";
@@ -1108,6 +1106,7 @@ app.addEventListener("submit", (event) => {
       if (old.customExerciseId) e.customExerciseId = old.customExerciseId;
     }
     if (keepHistory) {
+      delete w.completed;
       w.exercises.splice(w.exercises.indexOf(old) + 1, 0, e);
       openExerciseIds.set(w.id, new Set([e.id]));
     } else if (old) {
@@ -1260,6 +1259,7 @@ app.addEventListener("change", (event) => {
     input.reportValidity();
     return;
   }
+  const wasComplete = isWorkoutComplete(workout());
   const e = workout().exercises.find((e) => e.id === input.dataset.eid),
     log = e.logs[Number(input.dataset.set)];
   if (input.dataset.field === "done") {
@@ -1272,22 +1272,24 @@ app.addEventListener("change", (event) => {
         (!weight.checkValidity() ? weight : actual).reportValidity();
         return;
       }
-      if (weight.value === "" || actual.value === "") {
+      if (actual.value === "") {
         input.checked = false;
         logRoot().querySelector(".log-intro").textContent =
-          "Enter both weight (0 for bodyweight) and reps or seconds before completing a set.";
-        (weight.value === "" ? weight : actual).focus();
+          "Enter reps or seconds before completing a set. Weight is optional.";
+        actual.focus();
         return;
       }
       log.weight = weight.value;
       log.actual = actual.value;
     }
     log.done = input.checked;
+    if (!input.checked) delete workout().completed;
     input.closest(".log-row").classList.toggle("set-done", input.checked);
   } else {
     log[input.dataset.field] = input.value;
-    if (input.value === "") {
+    if (input.value === "" && input.dataset.field === "actual") {
       log.done = false;
+      delete workout().completed;
       input.closest(".log-row").classList.remove("set-done");
       input.closest(".log-row").querySelector('[type="checkbox"]').checked =
         false;
@@ -1300,12 +1302,19 @@ app.addEventListener("change", (event) => {
     progressLabel.textContent = `${e.logs.filter((log) => log.done).length}/${e.sets} sets logged`;
 
   save();
+  if (wasComplete && !isWorkoutComplete(workout())) {
+    completionMessage = "";
+    render();
+    return;
+  }
   if (
     input.dataset.field === "done" &&
     input.checked &&
     workout().programId &&
     isWorkoutComplete(workout())
   ) {
+    const count = progress(workout());
+    completionMessage = `Congrats! You completed ${count.done} out of ${count.total} sets.`;
     loggingWorkouts.delete(active);
     openExerciseIds.delete(active);
     render();
@@ -1347,6 +1356,7 @@ const cloud = createCloud({
   },
   getState: () => state,
   setState: (next) => {
+    completionMessage = "";
     exerciseTimers.clear();
     state = inPounds(next);
     calendarMessage = "";

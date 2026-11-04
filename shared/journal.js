@@ -85,6 +85,7 @@ export function validState(s) {
       !text(w.name, 100) ||
       !w.name.trim() ||
       !text(w.note, 500) ||
+      (w.completed !== undefined && typeof w.completed !== "boolean") ||
       !validDate(w.date) ||
       !Array.isArray(w.exercises) ||
       w.exercises.length > 200
@@ -133,7 +134,7 @@ export function validState(s) {
           typeof l.done === "boolean" &&
           logNum(l.weight, s.unit === "lbs" ? 5000 : 2000) &&
           logNum(l.actual, 10000) &&
-          (!l.done || (l.weight !== "" && l.actual !== "")),
+          (!l.done || l.actual !== ""),
       );
     });
   });

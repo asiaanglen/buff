@@ -96,6 +96,7 @@ export function copyProgramWeek(state, programId, from, to) {
     throw Error("This copy would exceed the journal’s 5,000-workout limit.");
   const copies = originals.map((w) => ({
     ...structuredClone(w),
+    completed: false,
     id: uid(),
     date: shiftDate(w.date, (to - from) * 7),
     exercises: w.exercises.map((e) => ({
@@ -161,14 +162,13 @@ export function exercisePerformanceHistory(
         continue;
       const sets = e.logs.flatMap((l, index) =>
         l.done &&
-        l.weight !== "" &&
         l.actual !== "" &&
         Number.isFinite(Number(l.weight)) &&
         Number.isFinite(Number(l.actual))
           ? [
               {
                 setNumber: index + 1,
-                weight: Number(l.weight),
+                weight: l.weight === "" ? "" : Number(l.weight),
                 actual: Number(l.actual),
               },
             ]
