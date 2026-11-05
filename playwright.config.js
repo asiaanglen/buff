@@ -9,6 +9,7 @@ export default defineConfig({
     "feedback.spec.js",
     "admin.spec.js",
     "avatar.spec.js",
+    "ai-programs.spec.js",
   ],
   use: {
     baseURL: "http://127.0.0.1:5173",

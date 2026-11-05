@@ -1,3 +1,4 @@
+import { aiProgramsApi } from "./ai-programs.js";
 import { avatarApi, withAvatar } from "./avatar.js";
 import { adminPage } from "./admin.js";
 import { feedbackPage } from "./feedback.js";
@@ -108,6 +109,7 @@ async function api(request, env) {
     return usagePage(request, env, true);
   if (path === "/api/usage/events" && method === "POST")
     return reportSyncFailure(request, env);
+  if (path.startsWith("/api/ai-programs")) return aiProgramsApi(request, env);
   if (path.startsWith("/api/coaching")) return coachingApi(request, env);
   if (path.startsWith("/api/program-shares")) return sharingApi(request, env);
   if (path === "/api/auth/providers" && method === "GET") {

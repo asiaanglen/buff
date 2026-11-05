@@ -61,7 +61,10 @@ let state = { version: 1, unit: "lbs", programs: [], workouts: [] },
   loading = true,
   error = "",
   notice = "",
-  page = "clients",
+  page =
+    new URL(location.href).searchParams.get("tab") === "programs"
+      ? "programs"
+      : "clients",
   dirty = false,
   openWorkout = null;
 async function api(path = "", options = {}) {
@@ -219,7 +222,7 @@ function clientCards() {
   );
 }
 function programs() {
-  return `<a class="ai-program-callout" href="/connections#ai-program-guide"><span class="ai-callout-icon" aria-hidden="true">✧</span><span><strong>Learn how to create programs with AI here</strong><small>Connect ChatGPT or Claude to create your program templates.</small></span><span aria-hidden="true">↗</span></a><p class="coach-help">Build programs using Buff’s exercise library, weeks, sets, targets, and supersets. Clients get their own copy. Changes to your template do not overwrite a client’s existing plan or results.</p><a class="button primary" href="/?coach=1">Build or edit programs →</a><div class="coach-grid">${(state.programs || []).map((p) => `<article class="coach-panel"><span class="tag">${p.weeks} WEEKS</span><h2>${esc(p.name)}</h2><p>${state.workouts.filter((w) => w.programId === p.id).length} workouts</p><button class="button subtle" data-cmd="invite" data-id="${esc(p.id)}">Invite a client →</button></article>`).join("") || empty("Create your first program.", "Your programs are saved to your own account.", '<a class="button subtle" href="/?coach=1">Open program builder</a>')}</div>`;
+  return `<a class="ai-program-callout" href="/connections#ai-program-guide"><span class="ai-callout-icon" aria-hidden="true">✧</span><span><strong>Learn how to create programs with AI here</strong><small>Connect ChatGPT or Claude to create your program templates.</small></span><span aria-hidden="true">↗</span></a><p class="coach-help">Build programs using Buff’s exercise library, weeks, sets, targets, and supersets. Clients get their own copy. Changes to your template do not overwrite a client’s existing plan or results.</p><div class="coach-actions"><a class="button primary" href="/create-with-ai?coach=1">✧ Create with AI</a><a class="button subtle" href="/?coach=1">Build or edit programs →</a></div><div class="coach-grid">${(state.programs || []).map((p) => `<article class="coach-panel"><span class="tag">${p.weeks} WEEKS</span><h2>${esc(p.name)}</h2><p>${state.workouts.filter((w) => w.programId === p.id).length} workouts</p><button class="button subtle" data-cmd="invite" data-id="${esc(p.id)}">Invite a client →</button></article>`).join("") || empty("Create your first program.", "Your programs are saved to your own account.", '<a class="button subtle" href="/?coach=1">Open program builder</a>')}</div>`;
 }
 function pending() {
   return `<section class="coach-pending"><h2>Pending invitations</h2><p>Links expire after 30 days and can be accepted by one client. Create a new invitation for each client.</p>${data.invitations.map((i) => `<article class="coach-panel"><div><strong>${esc(i.programName)}</strong><p>${esc(i.client_email || "Text invitation · any recipient with the link")} · Expires ${dateTime(i.expires)}</p></div><button class="button subtle" data-cmd="revoke-invite" data-id="${i.id}">Disable invitation</button></article>`).join("") || "<p>No pending invitations.</p>"}</section>`;

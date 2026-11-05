@@ -6,6 +6,11 @@ const coachRedirect = (server) => {
     if (["/coach", "/coach/"].includes(url.pathname)) {
       response.writeHead(302, { Location: "/coach.html" + url.search });
       response.end();
+    } else if (["/create-with-ai", "/create-with-ai/"].includes(url.pathname)) {
+      response.writeHead(302, {
+        Location: "/create-with-ai.html" + url.search,
+      });
+      response.end();
     } else next();
   });
 };
@@ -18,7 +23,13 @@ export default defineConfig({
     },
   ],
   build: {
-    rollupOptions: { input: { app: "index.html", coach: "coach.html" } },
+    rollupOptions: {
+      input: {
+        app: "index.html",
+        coach: "coach.html",
+        aiProgram: "create-with-ai.html",
+      },
+    },
   },
   server: {
     proxy: Object.fromEntries(

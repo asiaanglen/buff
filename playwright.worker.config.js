@@ -7,6 +7,7 @@ export default defineConfig({
     "feedback.spec.js",
     "admin.spec.js",
     "avatar.spec.js",
+    "ai-programs.spec.js",
     "sync.spec.js",
     "worker-api.spec.js",
     "signup-profile.spec.js",

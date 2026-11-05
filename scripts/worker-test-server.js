@@ -1,3 +1,4 @@
+import { aiBrief, aiPlan } from "../tests/fixtures/ai-program.js";
 import { passwordProof } from "../src/credentials.js";
 import { makeVerifier, randomHex } from "../worker/crypto.js";
 import { spawn } from "node:child_process";
@@ -49,9 +50,10 @@ try {
     salt,
   );
   const seed = join(storage, "usage-owner.sql");
+  const sqlText = (value) => JSON.stringify(value).replaceAll("'", "''");
   writeFileSync(
     seed,
-    `INSERT INTO users(id,email,password,salt,first_name,last_name,date_of_birth) VALUES('usage-owner-fixture','usage-owner@example.test','${verifier}','${salt}','Usage','Owner','1990-01-15'); INSERT INTO usage_owners(user_id) VALUES('usage-owner-fixture');`,
+    `INSERT INTO users(id,email,password,salt,first_name,last_name,date_of_birth) VALUES('usage-owner-fixture','usage-owner@example.test','${verifier}','${salt}','Usage','Owner','1990-01-15'); INSERT INTO usage_owners(user_id) VALUES('usage-owner-fixture'); INSERT INTO ai_program_drafts(id,user_id,preferences,content,version,created,updated,expires) VALUES('${"a".repeat(32)}','usage-owner-fixture','${sqlText(aiBrief)}','${sqlText(aiPlan("Seeded AI program"))}',1,${Date.now()},${Date.now()},${Date.now() + 86400000});`,
   );
   await run("node_modules/wrangler/bin/wrangler.js", [
     "d1",

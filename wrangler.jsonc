@@ -24,6 +24,8 @@
       "/feedback",
       "/feedback/*",
       "/coach",
+      "/create-with-ai",
+      "/create-with-ai/*",
       "/coach/*",
       "/usage",
       "/usage/*",
