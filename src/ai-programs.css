@@ -85,8 +85,7 @@
   height: 20px;
   flex-shrink: 0;
 }
-.ai-data-note,
-.ai-allowance {
+.ai-data-note {
   font-size: 13px;
   color: #74677e;
 }

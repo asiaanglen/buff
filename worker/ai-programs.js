@@ -11,7 +11,6 @@ import {
 import { copySharedProgram } from "../shared/program-sharing.js";
 import { inPounds } from "../shared/weights.js";
 const DAY = 86400000,
-  RESERVE = 500000,
   MAX_INPUT_BYTES = 90000;
 const prices = {
   "claude-sonnet-4-6": [3, 15],
@@ -28,20 +27,8 @@ const json = (value, status = 200) =>
   });
 function config(env) {
   const model = env.AI_PROGRAM_MODEL || "claude-sonnet-4-6";
-  const limit = Math.max(
-    1,
-    Math.min(20, Math.trunc(Number(env.AI_PROGRAM_USER_DAILY_LIMIT) || 5)),
-  );
-  const dollars =
-    env.AI_PROGRAM_DAILY_BUDGET_USD === undefined
-      ? 5
-      : Number(env.AI_PROGRAM_DAILY_BUDGET_USD);
   return {
     model,
-    limit,
-    budget: Number.isFinite(dollars)
-      ? Math.max(0, Math.min(100, dollars)) * 1000000
-      : 0,
     enabled: Boolean(env.ANTHROPIC_API_KEY && prices[model]),
   };
 }
@@ -117,55 +104,24 @@ function preview(row, state) {
     updated: row.updated,
   };
 }
-async function reserve(db, userId, draftId, cfg, now, lease) {
-  const day = new Date(now).toISOString().slice(0, 10),
-    id = randomHex(16);
-  await db.batch([
-    db
-      .prepare("INSERT OR IGNORE INTO ai_program_budgets(day) VALUES(?)")
-      .bind(day),
-    db
-      .prepare(
-        "INSERT OR IGNORE INTO ai_program_usage(user_id,day) VALUES(?,?)",
-      )
-      .bind(userId, day),
-    db
-      .prepare(
-        "INSERT INTO ai_program_requests(id,user_id,draft_id,day,created) SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM ai_program_usage WHERE user_id=? AND day=? AND requests<?) AND EXISTS(SELECT 1 FROM ai_program_budgets WHERE day=? AND reserved_micros+?<=?) AND EXISTS(SELECT 1 FROM ai_program_drafts WHERE id=? AND user_id=? AND lease=?)",
-      )
-      .bind(
-        id,
-        userId,
-        draftId,
-        day,
-        now,
-        userId,
-        day,
-        cfg.limit,
-        day,
-        RESERVE,
-        cfg.budget,
-        draftId,
-        userId,
-        lease,
-      ),
-    db
-      .prepare(
-        "UPDATE ai_program_budgets SET reserved_micros=reserved_micros+?,requests=requests+1 WHERE day=? AND EXISTS(SELECT 1 FROM ai_program_requests WHERE id=?)",
-      )
-      .bind(RESERVE, day, id),
-    db
-      .prepare(
-        "UPDATE ai_program_usage SET requests=requests+1 WHERE user_id=? AND day=? AND EXISTS(SELECT 1 FROM ai_program_requests WHERE id=?)",
-      )
-      .bind(userId, day, id),
-  ]);
-  return (await db
-    .prepare("SELECT id FROM ai_program_requests WHERE id=?")
-    .bind(id)
-    .first())
-    ? id
-    : null;
+async function recordRequest(db, userId, draftId, now, lease) {
+  const id = randomHex(16);
+  const result = await db
+    .prepare(
+      "INSERT INTO ai_program_requests(id,user_id,draft_id,day,created) SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM ai_program_drafts WHERE id=? AND user_id=? AND lease=?)",
+    )
+    .bind(
+      id,
+      userId,
+      draftId,
+      new Date(now).toISOString().slice(0, 10),
+      now,
+      draftId,
+      userId,
+      lease,
+    )
+    .run();
+  return result.meta.changes ? id : null;
 }
 async function saveDraft(db, userId, row, input) {
   if (row.saved_program_id) {
@@ -279,38 +235,21 @@ export async function aiProgramsApi(
     path = url.pathname,
     db = env.DB,
     cfg = config(env),
-    now = Date.now(),
-    day = new Date(now).toISOString().slice(0, 10);
+    now = Date.now();
   if (
     !["GET", "HEAD"].includes(request.method) &&
     request.headers.get("Origin") !== (env.PUBLIC_ORIGIN || url.origin)
   )
     return json({ error: "Request origin is not allowed." }, 403);
   if (path === "/api/ai-programs" && request.method === "GET") {
-    const [usage, budget, drafts] = await Promise.all([
-      db
-        .prepare(
-          "SELECT requests FROM ai_program_usage WHERE user_id=? AND day=?",
-        )
-        .bind(user.id, day)
-        .first(),
-      db
-        .prepare("SELECT reserved_micros FROM ai_program_budgets WHERE day=?")
-        .bind(day)
-        .first(),
-      db
-        .prepare(
-          "SELECT id,version,updated,saved_program_id,json_extract(content,'$.name') AS name FROM ai_program_drafts WHERE user_id=? AND expires>? AND content IS NOT NULL ORDER BY updated DESC LIMIT 10",
-        )
-        .bind(user.id, now)
-        .all(),
-    ]);
+    const drafts = await db
+      .prepare(
+        "SELECT id,version,updated,saved_program_id,json_extract(content,'$.name') AS name FROM ai_program_drafts WHERE user_id=? AND expires>? AND content IS NOT NULL ORDER BY updated DESC LIMIT 10",
+      )
+      .bind(user.id, now)
+      .all();
     return json({
       enabled: cfg.enabled,
-      limit: cfg.limit,
-      remaining: Math.max(0, cfg.limit - (usage?.requests || 0)),
-      capacityAvailable: (budget?.reserved_micros || 0) + RESERVE <= cfg.budget,
-      resetAt: new Date(Date.parse(day + "T00:00:00Z") + DAY).toISOString(),
       drafts: drafts.results,
     });
   }
@@ -468,14 +407,13 @@ export async function aiProgramsApi(
         },
         400,
       );
-    requestId = await reserve(db, user.id, row.id, cfg, now, lease);
+    requestId = await recordRequest(db, user.id, row.id, now, lease);
     if (!requestId)
       return json(
         {
-          error:
-            "Today’s AI allowance or shared capacity has been reached. Try again after the daily reset, or build manually.",
+          error: "This draft changed. Reload it before trying again.",
         },
-        429,
+        409,
       );
     const client = createClient({
       apiKey: env.ANTHROPIC_API_KEY,

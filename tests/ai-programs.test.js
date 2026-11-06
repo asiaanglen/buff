@@ -278,7 +278,7 @@ test("AI drafts use the official client's tool flow, stay private, revise withou
     409,
   );
 });
-test("invalid output or provider failure preserves previous drafts; daily user and shared cost reservations cannot be bypassed", async () => {
+test("invalid output or provider failure preserves previous drafts without daily usage limits", async () => {
   const { db, call, calls, setPlan, setFailure } = await setup({
     budget: "1",
     limit: "5",
@@ -295,26 +295,40 @@ test("invalid output or provider failure preserves previous drafts; daily user a
   });
   assert.equal(failed.status, 422);
   assert.equal((await call("user", "/" + first.body.id)).body.version, 1);
+  setPlan(aiPlan());
   assert.equal(
     (await call("other", "/generate", "POST", { brief: aiBrief })).status,
-    429,
-  );
-  assert.equal(calls.length, 2);
-  assert.equal(
-    db.raw.prepare("SELECT reserved_micros FROM ai_program_budgets").get()
-      .reserved_micros,
-    1000000,
-  );
-  const second = await setup({ limit: "1" });
-  assert.equal(
-    (await second.call("user", "/generate", "POST", { brief: aiBrief })).status,
     201,
   );
+  // Legacy environment limits and already-exhausted quota rows cannot block requests.
+  const second = await setup({ limit: "1", budget: "0" });
+  const day = new Date().toISOString().slice(0, 10);
+  second.db.raw
+    .prepare(
+      "INSERT INTO ai_program_usage(user_id,day,requests) VALUES(?,?,999)",
+    )
+    .run(second.actors.user.id, day);
+  second.db.raw
+    .prepare(
+      "INSERT INTO ai_program_budgets(day,reserved_micros,requests) VALUES(?,999999999,999)",
+    )
+    .run(day);
+  for (let i = 0; i < 12; i++) {
+    assert.equal(
+      (await second.call("user", "/generate", "POST", { brief: aiBrief }))
+        .status,
+      201,
+    );
+  }
+  assert.equal(second.calls.length, 12);
+  const status = (await second.call("user")).body;
+  assert.equal(status.enabled, true);
+  assert.equal("remaining" in status, false);
   assert.equal(
-    (await second.call("user", "/generate", "POST", { brief: aiBrief })).status,
-    429,
+    second.db.raw.prepare("SELECT count(*) AS n FROM ai_program_requests").get()
+      .n,
+    12,
   );
-  assert.equal(second.calls.length, 1);
   const offline = await setup();
   offline.env.ANTHROPIC_API_KEY = "";
   assert.equal((await offline.call("user")).body.enabled, false);

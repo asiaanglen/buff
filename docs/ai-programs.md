@@ -8,17 +8,11 @@ The backend uses the official `@anthropic-ai/sdk` Messages API with a forced `su
 
 Apply D1 migrations (`npm run db:migrate:remote`) and deploy (`npm run deploy`). Set the **buff** Worker secret `ANTHROPIC_API_KEY` in Cloudflare’s dashboard or using `node scripts/wrangler.js secret put ANTHROPIC_API_KEY`. Never commit the key or put it in a Vite/client variable. Local Worker development can use an untracked `.dev.vars` file. The Node/Express development server does not provide these Worker-only API routes.
 
-Optional Worker variables:
+The optional Worker variable `AI_PROGRAM_MODEL` defaults to `claude-sonnet-4-6`. Supported alternatives are `claude-sonnet-4-5-20250929` and `claude-haiku-4-5-20251001`; other values disable generation.
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `AI_PROGRAM_MODEL` | `claude-sonnet-4-6` | Supported models: this model, `claude-sonnet-4-5-20250929`, or `claude-haiku-4-5-20251001`. Other values disable generation. |
-| `AI_PROGRAM_USER_DAILY_LIMIT` | `5` | Generation/revision attempts per user per UTC day; clamped to 1–20. |
-| `AI_PROGRAM_DAILY_BUDGET_USD` | `5` | Shared daily reservation budget; 0 disables new attempts, maximum 100. |
+There are **no app-enforced daily generation/revision limits or shared spending caps**. The former `AI_PROGRAM_USER_DAILY_LIMIT` and `AI_PROGRAM_DAILY_BUDGET_USD` variables are ignored, including if still configured on the Worker. Existing quota rows do not block requests. Provider token counts and estimated actual cost continue to be recorded in `ai_program_requests`; historical reservation tables remain for compatibility but new requests do not reserve funds. Actual charges are billed to the configured Anthropic API account. Anthropic account limits, credits, and provider rate limits still apply.
 
-Every provider attempt reserves **$0.50**, including failed attempts. Reservations are not refunded based on actual usage. Thus the default shared budget allows at most **10 attempts per day across the app**, with at most five per user. This conservative reservation is intentionally larger than the maximum estimated per-request cost at the supported models’ configured prices. It is not a credit balance or an Anthropic invoice forecast. Provider token counts and estimated actual cost are recorded separately in `ai_program_requests`. Review model pricing before updating the supported model list. Set Anthropic account spending limits as an additional safeguard.
-
-Each attempt makes one provider request, with retries disabled, a 75-second timeout, at most 8,192 output tokens, and a 90 KB serialized input bound. Form submissions are limited to 16 KB. Atomic D1 reservations enforce user and shared budgets across concurrent requests. Saving/resuming drafts makes no Claude call and uses no allowance. Limits reset at midnight UTC; the UI shows the reset in the device’s local time. Missing secrets or unavailable capacity leave manual program creation available.
+Each attempt makes one provider request, with retries disabled, a 75-second timeout, at most 8,192 output tokens, and a 90 KB serialized input bound. Form submissions are limited to 16 KB. Saving/resuming drafts makes no Claude call. Missing secrets leave manual program creation available.
 
 ## Data and limits
 
@@ -30,4 +24,4 @@ Saving uses journal revision checks, preserves existing plans/history/enrollment
 
 ## Verification
 
-`npm test` covers authentication, private draft access, output validation, concurrency, budgets, opt-in history, official SDK request serialization, journal conflicts, and idempotent saving. `npm run test:worker -- ai-programs.spec.js` covers the mobile form/preview/revision/save flow with mocked provider results and the actual Worker/D1 save path. These tests do not spend Anthropic credits or create production accounts.
+`npm test` covers authentication, private draft access, output validation, concurrency, generation beyond former daily caps, opt-in history, official SDK request serialization, journal conflicts, and idempotent saving. `npm run test:worker -- ai-programs.spec.js` covers the mobile form/preview/revision/save flow with mocked provider results and the actual Worker/D1 save path. These tests do not spend Anthropic credits or create production accounts.

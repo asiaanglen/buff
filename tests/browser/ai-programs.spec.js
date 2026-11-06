@@ -28,10 +28,6 @@ function draftData(version = 1, name = "AI strength block") {
 }
 const available = {
   enabled: true,
-  limit: 5,
-  remaining: 5,
-  capacityAvailable: true,
-  resetAt: "2026-11-10T00:00:00Z",
   drafts: [],
 };
 test("short form, validated preview, chat revisions, failure recovery and explicit save work on mobile", async ({
