@@ -43,7 +43,7 @@ test("short form, validated preview, chat revisions, failure recovery and explic
       const input = request.postDataJSON();
       generations++;
       if (generations === 1) {
-        expect(input.brief.goal).toBe("Build strength");
+        expect(input.brief.goal).toBe("Lose weight");
         expect(input.brief.weeks).toBe(2);
         expect(input.brief.useHistory).toBe(false);
         return route.fulfill({ status: 201, json: draftData() });
@@ -76,6 +76,9 @@ test("short form, validated preview, chat revisions, failure recovery and explic
   await expect(
     page.getByRole("heading", { name: "Create with AI", exact: true }),
   ).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Your goal", exact: true })
+    .selectOption("Lose weight");
   await page.getByLabel("Program length (weeks)", { exact: true }).fill("2");
   await page
     .getByLabel("Week 1 start date", { exact: true })

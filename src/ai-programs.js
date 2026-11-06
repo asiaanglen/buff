@@ -40,6 +40,15 @@ let state = { version: 1, unit: "lbs", programs: [], workouts: [] },
   error = "",
   requestError = false;
 let draftOwner = null;
+const trainingGoals = [
+  "Build strength",
+  "Build muscle",
+  "Lose weight",
+  "Improve endurance",
+  "Improve overall fitness",
+  "Improve mobility and flexibility",
+  "Improve athletic performance",
+];
 let formDraft = {
   goal: "Build strength",
   experience: "beginner",
@@ -131,7 +140,7 @@ function captureForm() {
   };
 }
 function briefForm() {
-  return `<form id="ai-brief" class="ai-panel"><h2>Tell your coach what you need</h2><p>One short form, then chat to refine your program.</p><div class="form-grid"><label>Your goal<input name="goal" required maxlength="300" value="${esc(formDraft.goal)}" placeholder="e.g. Build strength and muscle"></label><label>Training experience<select name="experience">${["beginner", "intermediate", "advanced"].map((v) => `<option value="${v}" ${formDraft.experience === v ? "selected" : ""}>${v[0].toUpperCase() + v.slice(1)}</option>`).join("")}</select></label><label>Available equipment<input name="equipment" required maxlength="400" value="${esc(formDraft.equipment)}" placeholder="e.g. Dumbbells, bench, bands"></label><label>Training days per week<select name="daysPerWeek">${Array.from({ length: 7 }, (_, i) => `<option value="${i + 1}" ${formDraft.daysPerWeek === i + 1 ? "selected" : ""}>${i + 1}</option>`).join("")}</select></label><label>Minutes per workout<input name="minutes" type="number" required min="10" max="180" value="${formDraft.minutes}"></label><label>Program length (weeks)<input name="weeks" type="number" required min="1" max="52" value="${formDraft.weeks}"></label><label>Week 1 start date<input name="startDate" type="date" required value="${esc(formDraft.startDate)}"></label></div><label>Preferences or movements to avoid <span class="optional">optional</span><textarea name="preferences" rows="3" maxlength="1000" placeholder="Exercises you like, movements to avoid, preferred training days…">${esc(formDraft.preferences)}</textarea></label><label class="ai-history-choice"><input name="useHistory" type="checkbox" ${formDraft.useHistory ? "checked" : ""}><span>Use my recent completed weights to suggest starting loads</span></label><p class="ai-data-note">Your form, library exercise names, and revision messages are sent to Claude. Recent set history is shared only if you select the option above. Otherwise, starting weights are left unassigned. Review the draft before saving.</p><button class="button primary" type="submit" ${!status?.enabled || busy ? "disabled" : ""}>${busy ? "Building your program…" : "Build my program"}</button></form>`;
+  return `<form id="ai-brief" class="ai-panel"><h2>Tell your coach what you need</h2><p>One short form, then chat to refine your program.</p><div class="form-grid"><label>Your goal<select name="goal" required>${trainingGoals.map((goal) => `<option value="${esc(goal)}" ${formDraft.goal === goal ? "selected" : ""}>${esc(goal)}</option>`).join("")}</select></label><label>Training experience<select name="experience">${["beginner", "intermediate", "advanced"].map((v) => `<option value="${v}" ${formDraft.experience === v ? "selected" : ""}>${v[0].toUpperCase() + v.slice(1)}</option>`).join("")}</select></label><label>Available equipment<input name="equipment" required maxlength="400" value="${esc(formDraft.equipment)}" placeholder="e.g. Dumbbells, bench, bands"></label><label>Training days per week<select name="daysPerWeek">${Array.from({ length: 7 }, (_, i) => `<option value="${i + 1}" ${formDraft.daysPerWeek === i + 1 ? "selected" : ""}>${i + 1}</option>`).join("")}</select></label><label>Minutes per workout<input name="minutes" type="number" required min="10" max="180" value="${formDraft.minutes}"></label><label>Program length (weeks)<input name="weeks" type="number" required min="1" max="52" value="${formDraft.weeks}"></label><label>Week 1 start date<input name="startDate" type="date" required value="${esc(formDraft.startDate)}"></label></div><label>Preferences or movements to avoid <span class="optional">optional</span><textarea name="preferences" rows="3" maxlength="1000" placeholder="Exercises you like, movements to avoid, preferred training days…">${esc(formDraft.preferences)}</textarea></label><label class="ai-history-choice"><input name="useHistory" type="checkbox" ${formDraft.useHistory ? "checked" : ""}><span>Use my recent completed weights to suggest starting loads</span></label><p class="ai-data-note">Your form, library exercise names, and revision messages are sent to Claude. Recent set history is shared only if you select the option above. Otherwise, starting weights are left unassigned. Review the draft before saving.</p><button class="button primary" type="submit" ${!status?.enabled || busy ? "disabled" : ""}>${busy ? "Building your program…" : "Build my program"}</button></form>`;
 }
 function preview() {
   const plan = draft.plan;
