@@ -89,7 +89,7 @@ Files are parsed locally in your browser. Only the resulting program and workout
 
 The authenticated MCP endpoint is **https://buff.asiaanglen.workers.dev/mcp**. It supports reading programs/history, planning workouts, editing targets and logging sets. Write tools produce an exact preview with a link for your approval in Buff; they cannot directly apply changes. Read-only access is also available.
 
-Both regular and coach **Programs** screens show **Learn how to create programs with AI here**, linking to **Connected apps**. That page includes current ChatGPT and Claude setup steps, a selectable MCP URL, required permissions, approval instructions, troubleshooting, and copyable prompts for personal programs, coach templates, exercise edits, and progression.
+Both regular and coach **Programs** screens link to the embedded **Create with AI** experience. **Account → Manage connected AI apps** opens **Connected apps**, which includes current ChatGPT and Claude setup steps, a selectable MCP URL, required permissions, approval instructions, troubleshooting, and copyable prompts for personal programs, coach templates, exercise edits, and progression.
 
 See [MCP setup and tool reference](docs/mcp.md) to connect a custom app in ChatGPT using OAuth. Your personal ChatGPT app connection still requires you to add and authorize it. Disconnect clients under **Account → Manage connected AI apps**.
 

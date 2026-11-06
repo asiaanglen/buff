@@ -61,10 +61,10 @@ test("coach builds a program, invites by email/text, client joins, coach logs re
     await coach.getByRole("button", { name: "Programs", exact: true }).click();
     await expect(
       coach.getByRole("link", {
-        name: "Learn how to create programs with AI here",
+        name: "Create with AI",
         exact: false,
       }),
-    ).toHaveAttribute("href", "/connections#ai-program-guide");
+    ).toHaveAttribute("href", "/create-with-ai?coach=1");
     await coach
       .getByRole("link", { name: "Build or edit programs", exact: false })
       .click();

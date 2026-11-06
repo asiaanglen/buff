@@ -54,12 +54,9 @@ test("navigation omits Connect to AI while account still opens connected app man
       ),
     ).toBe(true);
     await page.goto("/?tab=programs");
-    const aiGuide = page.getByRole("link", {
-      name: "Learn how to create programs with AI here",
-      exact: false,
-    });
-    await expect(aiGuide).toBeVisible();
-    await aiGuide.click();
-    await expect(page).toHaveURL(/\/connections#ai-program-guide$/);
+    await expect(page.locator(".ai-program-callout")).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Create with AI", exact: false }),
+    ).toHaveAttribute("href", "/create-with-ai");
   }
 });
