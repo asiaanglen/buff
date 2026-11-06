@@ -1,8 +1,10 @@
 # In-app AI program creator
 
-Signed-in users and coaches can choose **Programs → Create with AI** or visit `/create-with-ai`. Describe your goals in chat. Claude asks concise follow-up questions about missing training needs, then builds a draft. Review every numbered week and request changes in the same conversation. **Save program** creates a new, unenrolled program in that account’s library. Generation and revisions never change the journal or enroll the user. Coaches can subsequently share their saved template using the existing invitation workflow.
+Signed-in users and coaches can choose **Programs → Create with AI** to open the chat popup without leaving their workspace. The Home banner opens the same popup. The direct `/create-with-ai` URL also works. Describe your goals in chat. Claude asks concise follow-up questions about missing training needs, then builds a draft. Review every numbered week and request changes in the same conversation. **Save program** creates a new, unenrolled program in that account’s library. Generation and revisions never change the journal or enroll the user. Coaches can subsequently share their saved template using the existing invitation workflow.
 
 The backend uses the official `@anthropic-ai/sdk` Messages API with a choice of two tools: `ask_program_questions` for conversational replies and `submit_program_draft` for validated program previews. This is not the Agent SDK. The draft tool returns a compact schedule, inferred training preferences, and reusable templates; Buff validates them against the current user’s exercise catalog before displaying or saving. No browser API key or Claude subscription is needed.
+
+The popup uses the same authenticated chat page in a same-origin frame. Save/busy/close messages are accepted only from that frame and origin for the opening account. Parent edits must sync before opening; saving reloads the journal and preserves enrollment. The × button and Escape close the popup, with confirmation while generating. Mobile uses the full viewport. Closing retains successful conversations in Recent drafts.
 
 ## Worker configuration
 

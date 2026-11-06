@@ -1,3 +1,4 @@
+import { setupAiProgramPopup } from "./ai-program-popup.js";
 import { finishWorkout } from "../shared/completion.js";
 import { avatarUrl } from "./profile-picture.js";
 import { brandLogo } from "./brand.js";
@@ -1377,6 +1378,17 @@ const cloud = createCloud({
     updateSidebarIdentity();
     const el = document.querySelector("#sync-label");
     if (el) el.textContent = label;
+  },
+});
+setupAiProgramPopup({
+  getOwner: () => cloud.account()?.id,
+  beforeOpen: () => cloud.flush(),
+  onSaved: async (programId) => {
+    await cloud.refresh();
+    selectedProgramId = programId;
+    selectedProgramWeek = 1;
+    tab = "programs";
+    render();
   },
 });
 const sharing = createSharing({

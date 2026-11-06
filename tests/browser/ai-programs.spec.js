@@ -93,33 +93,46 @@ test("natural conversation, follow-ups, validated preview, chat revisions, failu
   await page
     .getByRole("link", { name: "Create a program with AI", exact: false })
     .click();
+  const ui = page.frameLocator('iframe[title="AI program coach"]');
   await expect(
-    page.getByRole("heading", { name: "Create with AI", exact: true }),
+    page.getByRole("dialog", { name: "Create a program with AI" }),
   ).toBeVisible();
-  await expect(page.locator("#ai-brief")).toHaveCount(0);
+  await expect(
+    ui.getByRole("heading", { name: "Let’s build your program", exact: true }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+  await page.getByRole("button", { name: "Close AI chat" }).click();
+  await expect(page.locator("dialog.ai-program-popup")).toHaveCount(0);
   await page
+    .getByRole("link", { name: "Create a program with AI", exact: false })
+    .click();
+  await expect(
+    ui.getByLabel("Message your coach", { exact: true }),
+  ).toBeVisible();
+  await expect(ui.locator("#ai-brief")).toHaveCount(0);
+  await ui
     .getByLabel("Message your coach", { exact: true })
     .fill("I want to build strength");
-  await page.getByRole("button", { name: "Send message", exact: true }).click();
-  await expect(page.locator(".ai-message-content ol li")).toHaveCount(2);
-  await expect(page.locator(".ai-message-content li strong")).toHaveText([
+  await ui.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(ui.locator(".ai-message-content ol li")).toHaveCount(2);
+  await expect(ui.locator(".ai-message-content li strong")).toHaveText([
     "Equipment",
     "Schedule",
   ]);
-  await expect(page.locator(".ai-message-content")).not.toContainText("**");
+  await expect(ui.locator(".ai-message-content")).not.toContainText("**");
   await expect(
-    page.getByRole("button", { name: "Save program", exact: true }),
+    ui.getByRole("button", { name: "Save program", exact: true }),
   ).toHaveCount(0);
-  await page
+  await ui
     .getByLabel("Message your coach", { exact: true })
     .fill("Full gym, beginner, 3 days per week, 45 minutes, for 2 weeks.");
-  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await ui.getByRole("button", { name: "Send message", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "AI strength block", exact: true }),
+    ui.getByRole("heading", { name: "AI strength block", exact: true }),
   ).toBeVisible();
-  await expect(page.locator(".ai-week")).toHaveCount(2);
-  await expect(page.locator(".ai-preview")).toContainText("Back Squat");
-  await expect(page.locator(".ai-preview")).toContainText(
+  await expect(ui.locator(".ai-week")).toHaveCount(2);
+  await expect(ui.locator(".ai-preview")).toContainText("Back Squat");
+  await expect(ui.locator(".ai-preview")).toContainText(
     "Starting weight unassigned",
   );
   expect(savedVersion).toBeNull();
@@ -128,29 +141,31 @@ test("natural conversation, follow-ups, validated preview, chat revisions, failu
       () => document.documentElement.scrollWidth <= innerWidth + 1,
     ),
   ).toBe(true);
-  await page
+  await ui
     .getByLabel("What would you like to change?", { exact: true })
     .fill("Make the sessions shorter.");
-  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await ui.getByRole("button", { name: "Send message", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Shorter AI block", exact: true }),
+    ui.getByRole("heading", { name: "Shorter AI block", exact: true }),
   ).toBeVisible();
-  await page
+  await ui
     .getByLabel("What would you like to change?", { exact: true })
     .fill("One more revision");
-  await page.getByRole("button", { name: "Send message", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText(
+  await ui.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(ui.getByRole("alert")).toContainText(
     "previous draft is unchanged",
   );
   await expect(
-    page.getByRole("heading", { name: "Shorter AI block", exact: true }),
+    ui.getByRole("heading", { name: "Shorter AI block", exact: true }),
   ).toBeVisible();
   await page.screenshot({
     path: "/tmp/buff-ai-program-mobile.png",
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Save program", exact: true }).click();
-  await expect(page).toHaveURL(/tab=programs/);
+  await ui.getByRole("button", { name: "Save program", exact: true }).click();
+  await expect(page.locator("dialog.ai-program-popup")).toHaveCount(0);
+  await expect(page.locator("#mobile-page-select")).toHaveValue("programs");
+  await expect(page).toHaveURL(/\/$/);
   expect(savedVersion).toBe(3);
 });
 test("actual Worker enforces authentication and configuration and saves an owned draft exactly once", async ({
@@ -199,12 +214,33 @@ test("actual Worker enforces authentication and configuration and saves an owned
       ).ok(),
     ).toBeTruthy();
     const before = await (await owner.request.get("/api/state")).json();
-    const saved = await owner.request.post(
-      "/api/ai-programs/" + "a".repeat(32) + "/save",
-      { headers: { Origin: baseURL }, data: { version: 1 } },
-    );
-    expect(saved.status()).toBe(201);
-    const programId = (await saved.json()).programId;
+    const screen = await owner.newPage();
+    await screen.goto("/coach?tab=programs");
+    await screen
+      .getByRole("button", { name: "Create coach profile", exact: false })
+      .click();
+    await screen.getByRole("button", { name: "Programs", exact: true }).click();
+    await screen
+      .getByRole("link", { name: "Create with AI", exact: false })
+      .click();
+    const coachChat = screen.frameLocator('iframe[title="AI program coach"]');
+    await coachChat
+      .getByRole("button", {
+        name: "Seeded AI program · Resume draft",
+        exact: true,
+      })
+      .click();
+    await coachChat
+      .getByRole("button", { name: "Save program", exact: true })
+      .click();
+    await expect(screen.locator("dialog.ai-program-popup")).toHaveCount(0);
+    await expect(
+      screen.getByRole("heading", { name: "Seeded AI program", exact: true }),
+    ).toBeVisible();
+    const persisted = await (await owner.request.get("/api/state")).json();
+    const programId = persisted.state.programs.find(
+      (p) => p.name === "Seeded AI program",
+    ).id;
     const second = await owner.request.post(
       "/api/ai-programs/" + "a".repeat(32) + "/save",
       { headers: { Origin: baseURL }, data: { version: 1 } },
@@ -218,18 +254,33 @@ test("actual Worker enforces authentication and configuration and saves an owned
     expect(
       after.state.workouts.filter((w) => w.programId === programId),
     ).toHaveLength(6);
-    const screen = await owner.newPage();
-    await screen.goto("/coach?tab=programs");
-    await screen
-      .getByRole("button", { name: "Create coach profile", exact: false })
-      .click();
-    await screen.getByRole("button", { name: "Programs", exact: true }).click();
     await expect(
       screen.getByRole("link", { name: "Create with AI", exact: false }),
     ).toHaveAttribute("href", "/create-with-ai?coach=1");
     await expect(
       screen.getByRole("heading", { name: "Seeded AI program", exact: true }),
     ).toBeVisible();
+    await screen
+      .getByRole("link", { name: "Create with AI", exact: false })
+      .click();
+    await expect(screen).toHaveURL(/\/coach\?tab=programs$/);
+
+    await expect(
+      coachChat.getByLabel("Message your coach", { exact: true }),
+    ).toBeVisible();
+    await screen.getByRole("button", { name: "Close AI chat" }).click();
+    await expect(screen.locator("dialog.ai-program-popup")).toHaveCount(0);
+    await expect(
+      screen.getByRole("link", { name: "Create with AI", exact: false }),
+    ).toBeFocused();
+    await screen
+      .getByRole("link", { name: "Create with AI", exact: false })
+      .click();
+    await coachChat.getByLabel("Message your coach", { exact: true }).focus();
+    await coachChat
+      .getByLabel("Message your coach", { exact: true })
+      .press("Escape");
+    await expect(screen.locator("dialog.ai-program-popup")).toHaveCount(0);
   } finally {
     await owner.close();
   }

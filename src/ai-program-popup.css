@@ -1,0 +1,84 @@
+body.ai-popup-open {
+  overflow: hidden;
+}
+dialog.ai-program-popup {
+  width: min(1100px, calc(100vw - 48px));
+  height: min(850px, calc(100dvh - 48px));
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: white;
+  color: var(--ink, #252331);
+  box-shadow: 0 24px 90px #21142b40;
+  overflow: hidden;
+}
+dialog.ai-program-popup[open] {
+  display: flex;
+  flex-direction: column;
+}
+.ai-program-popup::backdrop {
+  background: #25172b80;
+  backdrop-filter: blur(4px);
+}
+.ai-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.ai-popup-header strong {
+  font-size: 19px;
+}
+.ai-popup-header small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+.ai-popup-close {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  color: var(--purple);
+  font-size: 28px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.ai-program-popup iframe {
+  border: 0;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+.ai-popup-loading {
+  padding: 20px;
+}
+.ai-popup-error {
+  padding: 12px 22px;
+  background: #fff0f3;
+  color: #92344a;
+}
+.ai-popup-error[hidden] {
+  display: none;
+}
+@media (max-width: 600px) {
+  dialog.ai-program-popup {
+    width: 100vw;
+    height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  .ai-popup-header {
+    padding: max(12px, env(safe-area-inset-top)) 16px 12px;
+  }
+  .ai-popup-header strong {
+    font-size: 17px;
+  }
+}

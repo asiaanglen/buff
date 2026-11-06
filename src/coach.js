@@ -1,3 +1,4 @@
+import { setupAiProgramPopup } from "./ai-program-popup.js";
 import { brandLogo } from "./brand.js";
 import { editClientWorkout } from "./coach-editor.js";
 import { createCloud } from "./cloud.js";
@@ -539,6 +540,15 @@ app.addEventListener("submit", async (event) => {
     form.querySelector(".form-error").textContent = e.message;
     buttons.forEach((b) => (b.disabled = false));
   }
+});
+setupAiProgramPopup({
+  getOwner: () => cloud.account()?.id,
+  beforeOpen: () => cloud.flush(),
+  onSaved: async () => {
+    await cloud.refresh();
+    page = "programs";
+    render();
+  },
 });
 render();
 const started = await cloud.start();

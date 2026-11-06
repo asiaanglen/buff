@@ -31,6 +31,24 @@ const fmt = (value) =>
     day: "numeric",
   });
 const coachMode = new URL(location.href).searchParams.get("coach") === "1";
+const embedded =
+  window.parent !== window &&
+  new URL(location.href).searchParams.get("embedded") === "1";
+if (embedded) document.body.classList.add("ai-program-embedded");
+const notifyParent = (type, data = {}) => {
+  if (embedded)
+    window.parent.postMessage(
+      { type: "buff-ai:" + type, ...data },
+      location.origin,
+    );
+};
+function returnToPrograms(programId) {
+  if (embedded) {
+    notifyParent("saved", { programId });
+    app.innerHTML =
+      '<p class="ai-saved-notice" role="status">Program saved. Updating your library…</p>';
+  } else location.assign(back);
+}
 const back = coachMode ? "/coach?tab=programs" : "/?tab=programs";
 let state = { version: 1, unit: "lbs", programs: [], workouts: [] },
   loading = true,
@@ -143,7 +161,8 @@ function render() {
       '<section class="ai-panel"><h1>Create your next program</h1><p>Sign in to build a program with Claude, refine it, and save it to your Buff account.</p><div class="coach-actions"><button class="button primary" data-action="signup">Create account</button><button class="button subtle" data-action="signin">Sign in</button></div></section>';
   else
     content = `<div class="ai-heading"><span class="eyebrow">YOUR PROGRAM, BUILT WITH YOU</span><h1>Create with AI</h1><p>${coachMode ? "Create a program template, refine it with your AI coach, then share it with clients." : "Chat about your goals. Build a program together. Make it yours."}</p></div>${error ? `<p class="ai-error" role="alert">${esc(error)}${requestError ? ' <button class="text-button" data-action="reload">Try again</button>' : ""}</p>` : ""}${status && !status.enabled ? '<p class="ai-capacity" role="status">AI program creation is not enabled yet. You can still create programs manually. Your account does not need a Claude subscription.</p>' : ""}${busy ? '<p class="ai-working" role="status"><span class="boot-spinner" aria-hidden="true"></span>Your coach is thinking. Building a full program can take a minute; keep this page open.</p>' : ""}${draft?.plan ? `<div class="ai-draft-layout">${preview()}${chat()}</div>` : chat()}${!draft && status?.drafts?.length ? `<section class="ai-panel"><h2>Recent drafts</h2><p>Drafts are private and available for 30 days.</p>${status.drafts.map((d) => `<button class="button subtle ai-resume" data-action="resume" data-id="${d.id}">${esc(d.name)}${d.saved_program_id ? " · Saved" : " · Resume draft"}</button>`).join("")}</section>` : ""}`;
-  app.innerHTML = `<div class="ai-shell">${top}<main class="ai-main">${content}</main></div>`;
+  notifyParent("busy", { busy: busy || saving });
+  app.innerHTML = `<div class="ai-shell">${embedded ? "" : top}<main class="ai-main">${content}</main></div>`;
 }
 app.addEventListener("input", (event) => {
   if (event.target.id === "ai-revision-text") revisionText = event.target.value;
@@ -228,7 +247,7 @@ app.addEventListener("click", async (event) => {
       draft = result;
       draftOwner = owner;
       if (draft.savedProgramId) {
-        location.assign(back);
+        returnToPrograms(draft.savedProgramId);
         return;
       }
       error = "";
@@ -247,13 +266,14 @@ app.addEventListener("click", async (event) => {
       if (draftOwner !== cloud.account()?.id)
         throw Error("Sign in again before saving.");
       await cloud.flush();
-      await api("/" + draft.id + "/save", {
+      const result = await api("/" + draft.id + "/save", {
         method: "POST",
         body: JSON.stringify({ version: draft.version }),
       });
       await cloud.refresh();
       saving = false;
-      location.assign(back);
+      notifyParent("busy", { busy: false });
+      returnToPrograms(result.programId);
     } catch (e) {
       error = e.message;
       saving = false;
@@ -278,3 +298,10 @@ else {
   error = "Could not connect to Buff. Reload to try again.";
   render();
 }
+
+window.addEventListener("keydown", (event) => {
+  if (embedded && event.key === "Escape") {
+    event.preventDefault();
+    notifyParent("close");
+  }
+});

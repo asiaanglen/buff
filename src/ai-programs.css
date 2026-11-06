@@ -274,3 +274,34 @@
   color: var(--ink, inherit);
   font-weight: 700;
 }
+
+.ai-program-embedded .ai-shell {
+  padding: 0 20px 20px;
+}
+.ai-program-embedded .ai-main {
+  padding: 20px 0 0;
+}
+.ai-program-embedded .ai-heading {
+  display: none;
+}
+.ai-program-embedded .ai-chat {
+  max-width: none;
+}
+.ai-program-embedded .ai-panel {
+  border-radius: 16px;
+  padding: 20px;
+}
+.ai-program-embedded .ai-saved-notice {
+  padding: 24px;
+}
+@media (max-width: 600px) {
+  .ai-program-embedded .ai-shell {
+    padding: 0 12px 12px;
+  }
+  .ai-program-embedded .ai-main {
+    padding-top: 12px;
+  }
+  .ai-program-embedded .ai-panel {
+    padding: 16px;
+  }
+}
