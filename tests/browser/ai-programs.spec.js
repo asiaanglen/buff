@@ -55,7 +55,7 @@ test("natural conversation, follow-ups, validated preview, chat revisions, failu
               { role: "user", text: input.message },
               {
                 role: "assistant",
-                text: "What equipment do you have, and how often can you train?",
+                text: "Let’s get started!\n\n1. **Equipment** — What equipment do you have?\n2. **Schedule** — How often can you train?",
               },
             ],
           },
@@ -101,9 +101,12 @@ test("natural conversation, follow-ups, validated preview, chat revisions, failu
     .getByLabel("Message your coach", { exact: true })
     .fill("I want to build strength");
   await page.getByRole("button", { name: "Send message", exact: true }).click();
-  await expect(page.locator(".ai-messages")).toContainText(
-    "What equipment do you have",
-  );
+  await expect(page.locator(".ai-message-content ol li")).toHaveCount(2);
+  await expect(page.locator(".ai-message-content li strong")).toHaveText([
+    "Equipment",
+    "Schedule",
+  ]);
+  await expect(page.locator(".ai-message-content")).not.toContainText("**");
   await expect(
     page.getByRole("button", { name: "Save program", exact: true }),
   ).toHaveCount(0);

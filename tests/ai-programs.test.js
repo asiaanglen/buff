@@ -548,3 +548,25 @@ test("natural language intake asks follow-ups, resumes privately, generates and 
     201,
   );
 });
+
+test("assistant messages format paragraphs, bold and lists while escaping untrusted HTML", async () => {
+  const { formatAiMessage } = await import("../src/ai-message-format.js");
+  assert.equal(
+    formatAiMessage(
+      "Hi!\n\n1. **Equipment** — Where do you train?\n2. **Days** — How often?",
+    ),
+    "<p>Hi!</p><ol><li><strong>Equipment</strong> — Where do you train?</li><li><strong>Days</strong> — How often?</li></ol>",
+  );
+  assert.equal(
+    formatAiMessage("- First\n- Second\n\nA paragraph\nwith a break."),
+    "<ul><li>First</li><li>Second</li></ul><p>A paragraph<br>with a break.</p>",
+  );
+  const unsafe = formatAiMessage(
+    "**<img src=x onerror=alert(1)>**\n<script>alert(1)</script>\n[Click](javascript:alert(1))",
+  );
+  assert.ok(!unsafe.includes("<img"));
+  assert.ok(!unsafe.includes("<script"));
+  assert.ok(!unsafe.includes("<a"));
+  assert.ok(unsafe.includes("&lt;img"));
+  assert.ok(unsafe.includes("<strong>"));
+});
