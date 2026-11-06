@@ -69,9 +69,10 @@ test("short form, validated preview, chat revisions, failure recovery and explic
     return route.fulfill({ json: draftData(2, "Shorter AI block") });
   });
   await page.setViewportSize({ width: 320, height: 844 });
-  await page.goto("/?tab=programs");
+  await page.goto("/");
+  await page.locator("#mobile-page-select").selectOption("home");
   await page
-    .getByRole("link", { name: "Create with AI", exact: false })
+    .getByRole("link", { name: "Create a program with AI", exact: false })
     .click();
   await expect(
     page.getByRole("heading", { name: "Create with AI", exact: true }),
