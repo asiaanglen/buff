@@ -74,6 +74,7 @@ async function setup({ budget = "5", limit = "5", providerFetch } = {}) {
     .prepare("INSERT INTO journals(user_id,revision,data) VALUES(?,1,?)")
     .run(actors.user.id, JSON.stringify(state));
   let next = aiPlan(),
+    question = null,
     failure = null,
     hold = null,
     calls = [];
@@ -88,9 +89,9 @@ async function setup({ budget = "5", limit = "5", providerFetch } = {}) {
           content: [
             {
               type: "tool_use",
-              name: "submit_program_draft",
+              name: question ? "ask_program_questions" : "submit_program_draft",
               id: "call-1",
-              input: structuredClone(next),
+              input: question ? { message: question } : structuredClone(next),
             },
           ],
           usage: { input_tokens: 2500, output_tokens: 1200 },
@@ -135,6 +136,9 @@ async function setup({ budget = "5", limit = "5", providerFetch } = {}) {
     env,
     call,
     calls,
+    setQuestion: (message) => {
+      question = message;
+    },
     setPlan: (p) => {
       next = p;
     },
@@ -451,4 +455,96 @@ test("the real Anthropic SDK serializes a forced tool request and decodes its dr
   } finally {
     db.raw.close();
   }
+});
+
+test("natural language intake asks follow-ups, resumes privately, generates and revises a validated program without a form", async () => {
+  const { call, calls, setQuestion, setPlan, setFailure, db, actors } =
+    await setup();
+  const before = db.raw
+    .prepare("SELECT data FROM journals WHERE user_id=?")
+    .get(actors.user.id).data;
+  setQuestion("How many days can you train, and what equipment do you have?");
+  const initial = await call("user", "/generate", "POST", {
+    message: "I want to get stronger",
+    today: aiBrief.startDate,
+    useHistory: false,
+  });
+  assert.equal(initial.status, 201);
+  assert.equal(initial.body.plan, null);
+  assert.equal(initial.body.version, 1);
+  assert.equal(calls[0].tool_choice.type, "any");
+  assert.deepEqual(
+    calls[0].tools.map((t) => t.name),
+    ["ask_program_questions", "submit_program_draft"],
+  );
+  const id = initial.body.id;
+  assert.equal((await call("user")).body.drafts[0].id, id);
+  assert.equal(
+    (await call("user", "/" + id)).body.conversation[1].text,
+    "How many days can you train, and what equipment do you have?",
+  );
+  assert.equal((await call("other", "/" + id)).status, 404);
+  assert.equal(
+    (await call("user", "/" + id + "/save", "POST", { version: 1 })).status,
+    409,
+  );
+  assert.equal(
+    (
+      await call("user", "/generate", "POST", {
+        id,
+        version: 0,
+        message: "Three days",
+      })
+    ).status,
+    409,
+  );
+  setFailure(Error("provider unavailable"));
+  assert.equal(
+    (
+      await call("user", "/generate", "POST", {
+        id,
+        version: 1,
+        message: "Full gym",
+      })
+    ).status,
+    422,
+  );
+  assert.equal((await call("user", "/" + id)).body.version, 1);
+  setFailure(null);
+  setQuestion(null);
+  setPlan({ ...aiPlan(), brief: { ...aiBrief, useHistory: true } });
+  const ready = await call("user", "/generate", "POST", {
+    id,
+    version: 1,
+    message:
+      "3 days, full gym, beginner, 45 minutes, 2 weeks starting November 9.",
+  });
+  assert.equal(ready.status, 200);
+  assert.equal(ready.body.plan.workouts.length, 6);
+  assert.equal(ready.body.plan.workouts[0].exercises[0].weight, 0);
+  assert.equal(ready.body.brief.useHistory, false);
+  assert.equal(
+    JSON.parse(calls.at(-1).messages[0].content).recent_discussion[0].text,
+    "I want to get stronger",
+  );
+  setQuestion(
+    "Yes, we can keep those sessions balanced. Want to change an exercise?",
+  );
+  const answered = await call("user", "/generate", "POST", {
+    id,
+    version: 2,
+    message: "Is the program balanced?",
+  });
+  assert.equal(answered.status, 200);
+  assert.deepEqual(answered.body.plan, ready.body.plan);
+  assert.equal(
+    db.raw
+      .prepare("SELECT data FROM journals WHERE user_id=?")
+      .get(actors.user.id).data,
+    before,
+  );
+  assert.equal(
+    (await call("user", "/" + id + "/save", "POST", { version: 3 })).status,
+    201,
+  );
 });

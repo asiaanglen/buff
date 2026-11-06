@@ -30,7 +30,7 @@ const available = {
   enabled: true,
   drafts: [],
 };
-test("short form, validated preview, chat revisions, failure recovery and explicit save work on mobile", async ({
+test("natural conversation, follow-ups, validated preview, chat revisions, failure recovery and explicit save work on mobile", async ({
   page,
 }) => {
   let generations = 0,
@@ -43,16 +43,35 @@ test("short form, validated preview, chat revisions, failure recovery and explic
       const input = request.postDataJSON();
       generations++;
       if (generations === 1) {
-        expect(input.brief.goal).toBe("Lose weight");
-        expect(input.brief.weeks).toBe(2);
-        expect(input.brief.useHistory).toBe(false);
-        return route.fulfill({ status: 201, json: draftData() });
+        expect(input.message).toBe("I want to build strength");
+        expect(input.brief).toBeUndefined();
+        expect(input.useHistory).toBe(false);
+        return route.fulfill({
+          status: 201,
+          json: {
+            ...draftData(),
+            plan: null,
+            conversation: [
+              { role: "user", text: input.message },
+              {
+                role: "assistant",
+                text: "What equipment do you have, and how often can you train?",
+              },
+            ],
+          },
+        });
       }
       if (generations === 2) {
         expect(input.id).toBe(id);
         expect(input.version).toBe(1);
+        expect(input.message).toContain("Full gym");
+        return route.fulfill({ json: draftData(2) });
+      }
+      if (generations === 3) {
+        expect(input.id).toBe(id);
+        expect(input.version).toBe(2);
         expect(input.message).toBe("Make the sessions shorter.");
-        return route.fulfill({ json: draftData(2, "Shorter AI block") });
+        return route.fulfill({ json: draftData(3, "Shorter AI block") });
       }
       return route.fulfill({
         status: 422,
@@ -77,16 +96,21 @@ test("short form, validated preview, chat revisions, failure recovery and explic
   await expect(
     page.getByRole("heading", { name: "Create with AI", exact: true }),
   ).toBeVisible();
+  await expect(page.locator("#ai-brief")).toHaveCount(0);
   await page
-    .getByRole("combobox", { name: "Your goal", exact: true })
-    .selectOption("Lose weight");
-  await page.getByLabel("Program length (weeks)", { exact: true }).fill("2");
+    .getByLabel("Message your coach", { exact: true })
+    .fill("I want to build strength");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(page.locator(".ai-messages")).toContainText(
+    "What equipment do you have",
+  );
+  await expect(
+    page.getByRole("button", { name: "Save program", exact: true }),
+  ).toHaveCount(0);
   await page
-    .getByLabel("Week 1 start date", { exact: true })
-    .fill(aiBrief.startDate);
-  await page
-    .getByRole("button", { name: "Build my program", exact: true })
-    .click();
+    .getByLabel("Message your coach", { exact: true })
+    .fill("Full gym, beginner, 3 days per week, 45 minutes, for 2 weeks.");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "AI strength block", exact: true }),
   ).toBeVisible();
@@ -104,18 +128,14 @@ test("short form, validated preview, chat revisions, failure recovery and explic
   await page
     .getByLabel("What would you like to change?", { exact: true })
     .fill("Make the sessions shorter.");
-  await page
-    .getByRole("button", { name: "Revise program", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Shorter AI block", exact: true }),
   ).toBeVisible();
   await page
     .getByLabel("What would you like to change?", { exact: true })
     .fill("One more revision");
-  await page
-    .getByRole("button", { name: "Revise program", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText(
     "previous draft is unchanged",
   );
@@ -128,7 +148,7 @@ test("short form, validated preview, chat revisions, failure recovery and explic
   });
   await page.getByRole("button", { name: "Save program", exact: true }).click();
   await expect(page).toHaveURL(/tab=programs/);
-  expect(savedVersion).toBe(2);
+  expect(savedVersion).toBe(3);
 });
 test("actual Worker enforces authentication and configuration and saves an owned draft exactly once", async ({
   page,
@@ -151,7 +171,7 @@ test("actual Worker enforces authentication and configuration and saves an owned
     page.getByRole("heading", { name: "Create with AI", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Build my program", exact: true }),
+    page.getByRole("button", { name: "Send message", exact: true }),
   ).toBeDisabled();
   await expect(page.getByRole("status")).toContainText("not enabled yet");
   const owner = await browser.newContext({

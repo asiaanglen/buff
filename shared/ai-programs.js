@@ -322,3 +322,52 @@ export function normalizeAiDraft(
     explanation: plan.explanation,
   };
 }
+
+export const questionsTool = {
+  name: "ask_program_questions",
+  description:
+    "Reply conversationally to clarify the user's training needs before drafting, or answer a program question. Ask only for missing essentials; do not save anything.",
+  input_schema: {
+    type: "object",
+    additionalProperties: false,
+    required: ["message"],
+    properties: { message: { type: "string", minLength: 1, maxLength: 2000 } },
+  },
+};
+export const conversationalDraftTool = {
+  ...draftTool,
+  input_schema: {
+    ...draftTool.input_schema,
+    required: [...draftTool.input_schema.required, "brief"],
+    properties: {
+      ...draftTool.input_schema.properties,
+      brief: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "goal",
+          "experience",
+          "equipment",
+          "daysPerWeek",
+          "minutes",
+          "weeks",
+          "startDate",
+          "preferences",
+        ],
+        properties: {
+          goal: { type: "string", maxLength: 300 },
+          experience: {
+            type: "string",
+            enum: ["beginner", "intermediate", "advanced"],
+          },
+          equipment: { type: "string", maxLength: 400 },
+          daysPerWeek: { type: "integer", minimum: 1, maximum: 7 },
+          minutes: { type: "integer", minimum: 10, maximum: 180 },
+          weeks: { type: "integer", minimum: 1, maximum: 52 },
+          startDate: { type: "string", description: "YYYY-MM-DD" },
+          preferences: { type: "string", maxLength: 1000 },
+        },
+      },
+    },
+  },
+};
