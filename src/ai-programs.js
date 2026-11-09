@@ -34,6 +34,7 @@ export function mountAiCoach({
   let draftOwner = null;
   let useHistory = false;
   let revisionText = "";
+  let pendingMessage = "";
   async function api(path = "", options = {}) {
     const response = await fetch("/api/ai-programs" + path, {
       credentials: "same-origin",
@@ -87,17 +88,17 @@ export function mountAiCoach({
     const messages = draft?.conversation || [
       {
         role: "assistant",
-        text: "Hi! What would you like to work toward? Tell me about your goals and where you train. We’ll build a program together.",
+        text: "Hi! I’m Buffy, your AI workout coach. What would you like to work toward? Tell me about your goals and where you train. We’ll build a program together.",
       },
     ];
-    return `<section class="ai-chat"><h2 class="visually-hidden">Chat with your Buff coach</h2><div class="ai-messages" aria-label="Program conversation" aria-live="polite">${messages.map((m) => `<article class="ai-message ${m.role === "user" ? "ai-message-user" : ""}"><strong>${m.role === "user" ? "You" : "Buff AI coach"}</strong>${m.role === "user" ? `<p>${esc(m.text)}</p>` : `<div class="ai-message-content">${formatAiMessage(m.text)}</div>`}</article>`).join("")}${draft?.plan ? preview() : ""}${busy ? `<article class="ai-message ai-message-user"><strong>You</strong><p>${esc(revisionText)}</p></article><p class="ai-thinking" role="status">Your coach is thinking…</p>` : ""}${saved ? '<p class="ai-chat-saved" role="status">Your program is saved! You can view it in Programs or start another conversation.</p>' : ""}${!draft ? `<div class="ai-starters"><button type="button" class="button subtle" data-action="starter" data-message="I want to build strength. Can you help me get started?">Build strength</button><button type="button" class="button subtle" data-action="starter" data-message="I want to lose weight and improve my fitness. Help me build a workout program.">Lose weight</button><button type="button" class="button subtle" data-action="starter" data-message="I want to build muscle with a program that fits my schedule.">Build muscle</button></div>${status?.drafts?.length ? `<details class="ai-recent"><summary>Previous conversations</summary>${status.drafts.map((d) => `<button class="button subtle ai-resume" data-action="resume" data-id="${d.id}">${esc(d.name)} · ${d.saved_program_id ? "Saved" : "Resume draft"}</button>`).join("")}</details>` : ""}` : ""}</div>${saved ? '<div class="ai-composer"><button class="button primary" data-action="return-programs">View program</button><button class="text-button" data-action="start-over">New conversation</button></div>' : `<form id="ai-revision" class="ai-composer"><label class="visually-hidden" for="ai-revision-text">${hasPlan ? "What would you like to change?" : "Message your coach"}</label><textarea id="ai-revision-text" name="message" maxlength="2000" rows="2" required placeholder="Message your coach…" ${busy || saving ? "disabled" : ""}>${esc(revisionText)}</textarea><div class="ai-composer-tools"><details class="ai-chat-options"><summary>Privacy${!draft ? " & starting weights" : ""}</summary>${!draft ? `<label class="ai-history-choice"><input name="useHistory" type="checkbox" ${useHistory ? "checked" : ""} ${busy ? "disabled" : ""}><span>Use my recent completed weights</span></label>` : ""}<p class="ai-data-note">Your messages and library exercise names are sent to Claude. Recent set history is shared only if you opt in when starting the conversation. Review your program before saving.</p></details><button class="button primary" type="submit" ${busy || saving || !status?.enabled ? "disabled" : ""}>${busy ? "Thinking…" : "Send message"}</button></div></form>`}</section>`;
+    return `<section class="ai-chat"><h2 class="visually-hidden">Chat with Buffy</h2><div class="ai-messages" aria-label="Program conversation" aria-live="polite">${messages.map((m) => `<article class="ai-message ${m.role === "user" ? "ai-message-user" : ""}"><strong>${m.role === "user" ? "You" : "Buffy"}</strong>${m.role === "user" ? `<p>${esc(m.text)}</p>` : `<div class="ai-message-content">${formatAiMessage(m.text)}</div>`}</article>`).join("")}${draft?.plan ? preview() : ""}${busy ? `<article class="ai-message ai-message-user"><strong>You</strong><p>${esc(pendingMessage)}</p></article><p class="ai-thinking" role="status">Buffy is thinking…</p>` : ""}${saved ? '<p class="ai-chat-saved" role="status">Your program is saved! You can view it in Programs or start another conversation.</p>' : ""}${!draft ? `<div class="ai-starters"><button type="button" class="button subtle" data-action="starter" data-message="I want to build strength. Can you help me get started?">Build strength</button><button type="button" class="button subtle" data-action="starter" data-message="I want to lose weight and improve my fitness. Help me build a workout program.">Lose weight</button><button type="button" class="button subtle" data-action="starter" data-message="I want to build muscle with a program that fits my schedule.">Build muscle</button></div>${status?.drafts?.length ? `<details class="ai-recent"><summary>Previous conversations</summary>${status.drafts.map((d) => `<button class="button subtle ai-resume" data-action="resume" data-id="${d.id}">${esc(d.name)} · ${d.saved_program_id ? "Saved" : "Resume draft"}</button>`).join("")}</details>` : ""}` : ""}</div>${saved ? '<div class="ai-composer"><button class="button primary" data-action="return-programs">View program</button><button class="text-button" data-action="start-over">New conversation</button></div>' : `<form id="ai-revision" class="ai-composer"><label class="visually-hidden" for="ai-revision-text">${hasPlan ? "What would you like to change?" : "Message Buffy"}</label><textarea id="ai-revision-text" name="message" maxlength="2000" rows="2" required placeholder="Message Buffy…" ${busy || saving ? "disabled" : ""}>${esc(revisionText)}</textarea><div class="ai-composer-tools"><details class="ai-chat-options"><summary>Privacy${!draft ? " & starting weights" : ""}</summary>${!draft ? `<label class="ai-history-choice"><input name="useHistory" type="checkbox" ${useHistory ? "checked" : ""} ${busy ? "disabled" : ""}><span>Use my recent completed weights</span></label>` : ""}<p class="ai-data-note">Your messages and library exercise names are sent to Claude. Recent set history is shared only if you opt in when starting the conversation. Review your program before saving.</p></details><button class="button primary" type="submit" ${busy || saving || !status?.enabled ? "disabled" : ""}>${busy ? "Thinking…" : "Send message"}</button></div></form>`}</section>`;
   }
   function render() {
     if (destroyed) return;
     let content;
     if (loading)
       content =
-        '<p class="ai-popup-loading" role="status">Connecting to your coach…</p>';
+        '<p class="ai-popup-loading" role="status">Connecting to Buffy…</p>';
     else
       content = `${error ? `<p class="ai-error" role="alert">${esc(error)}${requestError ? ' <button class="text-button" data-action="reload">Try again</button>' : ""}</p>` : ""}${status && !status.enabled ? '<p class="ai-capacity" role="status">AI program creation is not enabled yet. You can still build programs manually.</p>' : ""}${chat()}`;
     app.innerHTML = `<div class="ai-main">${content}</div>`;
@@ -127,7 +128,9 @@ export function mountAiCoach({
   app.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (busy || saving || destroyed || !event.target.reportValidity()) return;
-    revisionText = event.target.elements.message.value;
+    const message = event.target.elements.message.value;
+    pendingMessage = message;
+    revisionText = "";
     const owner = cloud.account()?.id;
     busy = true;
     error = "";
@@ -138,8 +141,8 @@ export function mountAiCoach({
         method: "POST",
         body: JSON.stringify(
           draft
-            ? { id: draft.id, version: draft.version, message: revisionText }
-            : { message: revisionText, today: today(), useHistory },
+            ? { id: draft.id, version: draft.version, message }
+            : { message, today: today(), useHistory },
         ),
       });
       if (destroyed || cloud.account()?.id !== owner) return;
@@ -151,6 +154,7 @@ export function mountAiCoach({
       } catch {}
     } catch (e) {
       if (!destroyed && cloud.account()?.id === owner) {
+        revisionText = message;
         error = e.message;
         if (e.status === 409) requestError = true;
         try {
@@ -158,6 +162,7 @@ export function mountAiCoach({
         } catch {}
       }
     } finally {
+      pendingMessage = "";
       busy = false;
       render();
     }

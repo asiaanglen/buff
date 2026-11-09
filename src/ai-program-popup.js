@@ -10,8 +10,8 @@ export function setupAiProgramPopup({ cloud, getOwner, beforeOpen, onSaved }) {
   const launcher = document.createElement("button");
   launcher.type = "button";
   launcher.className = "ai-chat-launcher";
-  launcher.textContent = "✧ AI coach";
-  launcher.setAttribute("aria-label", "Chat with Buff AI");
+  launcher.textContent = "✧ Buffy";
+  launcher.setAttribute("aria-label", "Chat with Buffy");
   launcher.setAttribute("aria-controls", "buff-ai-chat-panel");
   launcher.setAttribute("aria-expanded", "false");
   document.body.append(launcher);
@@ -47,7 +47,7 @@ export function setupAiProgramPopup({ cloud, getOwner, beforeOpen, onSaved }) {
     panel.id = "buff-ai-chat-panel";
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-labelledby", "ai-popup-title");
-    panel.innerHTML = `<header class="ai-popup-header"><div><strong id="ai-popup-title">Buff AI coach</strong><small>Let’s build your next program.</small></div><button class="ai-popup-close" type="button" aria-label="Close AI chat">×</button></header><div class="ai-coach-host"><p role="status">Connecting to your coach…</p></div>`;
+    panel.innerHTML = `<header class="ai-popup-header"><div><strong id="ai-popup-title">Buffy</strong><small>Let’s build your next program.</small></div><button class="ai-popup-close" type="button" aria-label="Close Buffy chat">×</button></header><div class="ai-coach-host"><p role="status">Connecting to Buffy…</p></div>`;
     panel.querySelector(".ai-popup-close").onclick = hide;
     panel.addEventListener("keydown", (event) => {
       if (
