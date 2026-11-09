@@ -76,6 +76,9 @@ test("started programs persist and advance after completed sets, including undo 
     .locator(".home-workout")
     .filter({ hasText: "First session" });
   await expect(first).toHaveClass(/workout-complete/);
+  await expect(page.locator(".workout-celebration")).toContainText(
+    "Nice work!",
+  );
   await first.getByRole("button", { name: "View log" }).click();
   await page.getByLabel("Squat set 1 completed").uncheck();
   await page.getByRole("button", { name: "Collapse workout" }).click();

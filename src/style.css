@@ -4107,3 +4107,69 @@ body:has(#program-share-dialog[open]) .pwa-help {
     display: none;
   }
 }
+
+/* A visible, nonblocking celebration even when the workout log was scrolled down. */
+.workout-celebration {
+  position: fixed;
+  z-index: 1200;
+  top: max(18px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: min(460px, calc(100vw - 24px));
+  padding: 20px;
+  border: 1px solid var(--purple);
+  border-radius: 20px;
+  background: white;
+  color: #30243c;
+  box-shadow: 0 14px 50px #25172b35;
+  pointer-events: none;
+}
+.celebration-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--purple) 15%, white);
+  color: var(--purple);
+  font-size: 26px;
+  font-weight: 700;
+}
+.celebration-title {
+  display: block;
+  font-size: 21px;
+  color: var(--purple);
+  margin-bottom: 6px;
+}
+.workout-celebration p {
+  margin: 5px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #51425f;
+}
+.celebration-close {
+  pointer-events: auto;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--purple);
+  font-size: 25px;
+  min-width: 32px;
+  min-height: 32px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+@media (max-width: 480px) {
+  .workout-celebration {
+    padding: 16px;
+    gap: 10px;
+  }
+  .celebration-title {
+    font-size: 19px;
+  }
+}

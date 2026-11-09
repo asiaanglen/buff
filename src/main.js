@@ -100,6 +100,19 @@ let inviteError = "";
 let inviteBusy = false;
 let inviteSuccess = "";
 let completionMessage = "";
+let completionCelebration = null;
+let celebrationTimer;
+function dismissCelebration() {
+  clearTimeout(celebrationTimer);
+  completionCelebration = null;
+  app.querySelector(".workout-celebration")?.remove();
+}
+function celebrateWorkout(w, count) {
+  dismissCelebration();
+  completionMessage = `Congrats! You completed ${count.done} out of ${count.total} sets.`;
+  completionCelebration = { name: w.name, ...count };
+  celebrationTimer = setTimeout(dismissCelebration, 10000);
+}
 let inviteImport = null;
 function renderInvitation() {
   return invitationBanner({
@@ -343,7 +356,8 @@ function render() {
       "",
     )}</select></div><div class="desktop-breadcrumb"><span class="breadcrumb">Workspace</span><span class="slash">/</span> ${tab === "home" ? "Home" : tab === "programs" ? "Programs" : "Completed workouts"}</div><button class="local-badge" data-action="account" aria-label="Account and cross-device sync"><i></i><span id="sync-label">${esc(cloud.label())}</span> <span class="sync-link">Account</span></button></header><div class="content">${new URL(location.href).searchParams.has("coach") ? `<div class="coach-builder-banner"><a href="/coach">← Coach dashboard</a><span>Your program templates. Client progress stays in the coach dashboard.</span></div>` : ""}<div class="page-heading"><div><div class="eyebrow">MAKE ROOM FOR PROGRESS</div><h1>${esc(pageTitle)}</h1><p>${esc(pageDescription)}</p></div><div class="heading-actions">${tab === "programs" ? `<a class="button subtle" href="/create-with-ai${new URL(location.href).searchParams.has("coach") ? "?coach=1" : ""}">✧ Create with AI</a><button class="button subtle" data-action="import-program">↑ Import program</button>` : ""}${tab === "programs" ? `<button class="button primary" data-action="${tab === "programs" && !program() ? "new-program" : "new-workout"}">+ <span>${tab === "programs" && !program() ? "Create program" : "Plan a workout"}</span></button>` : ""}</div></div>
 ${tab === "home" ? '<a class="ai-program-callout" href="/create-with-ai"><span class="ai-callout-icon" aria-hidden="true">✧</span><span><strong>Create a program with AI</strong><small>Tell Buffy your goals, build a personalized plan, and chat to make it yours.</small></span><span aria-hidden="true">→</span></a>' : ""}
-${completionMessage ? `<div class="notice workout-completion-message" role="status">${esc(completionMessage)}</div>` : ""}
+${completionMessage ? `<div class="notice workout-completion-message" ${completionCelebration ? "" : 'role="status"'}>${esc(completionMessage)}</div>` : ""}
+${completionCelebration ? `<section class="workout-celebration" role="status" aria-live="polite" aria-atomic="true"><span class="celebration-icon" aria-hidden="true">✓</span><div><strong class="celebration-title">Nice work! 🎉</strong><p><strong>${esc(completionCelebration.name)}</strong> is complete.</p><p>You completed ${completionCelebration.done} out of ${completionCelebration.total} sets.</p></div><button type="button" class="celebration-close" data-action="dismiss-celebration" aria-label="Dismiss congratulations">×</button></section>` : ""}
 ${inviteToken ? renderInvitation() : ""}${inviteSuccess ? `<div class="notice invitation-success" role="status">${esc(inviteSuccess)}</div>` : ""}
 ${cloud.journalUsage().warning ? '<div class="notice journal-storage-warning" role="status">Your workout history is approaching the 1 MB sync limit. Download a backup from Account before removing older workouts to make room.</div>' : ""}
 ${storageError ? '<div class="notice">Device storage is unavailable or was reset. Your changes may not persist after closing this page.</div>' : ""}
@@ -575,7 +589,7 @@ function finishCurrentWorkout() {
   }
   w.performedDate ||= key(new Date());
   const count = finishWorkout(w);
-  completionMessage = `Congrats! You completed ${count.done} out of ${count.total} sets.`;
+  celebrateWorkout(w, count);
   save();
 }
 app.addEventListener("click", (event) => {
@@ -589,6 +603,10 @@ app.addEventListener("click", (event) => {
   }
   const a = b.dataset.action;
   if (!a) return;
+  if (a === "dismiss-celebration") {
+    dismissCelebration();
+    return;
+  }
   if (a === "landing-signin" || a === "landing-signup") {
     cloud.open(a === "landing-signup" ? "signup" : "signin");
     return;
@@ -742,6 +760,7 @@ app.addEventListener("click", (event) => {
   }
   if (a === "edit-workout") modal = { type: "edit" };
   if (a === "log") {
+    dismissCelebration();
     if (loggingWorkouts.has(active)) loggingWorkouts.delete(active);
     else {
       if (!isWorkoutComplete(workout()))
@@ -1135,6 +1154,7 @@ app.addEventListener("change", (event) => {
 
   save();
   if (wasComplete && !isWorkoutComplete(workout())) {
+    dismissCelebration();
     completionMessage = "";
     render();
     return;
@@ -1142,11 +1162,11 @@ app.addEventListener("change", (event) => {
   if (
     input.dataset.field === "done" &&
     input.checked &&
-    workout().programId &&
+    !wasComplete &&
     isWorkoutComplete(workout())
   ) {
     const count = progress(workout());
-    completionMessage = `Congrats! You completed ${count.done} out of ${count.total} sets.`;
+    celebrateWorkout(workout(), count);
     loggingWorkouts.delete(active);
     openExerciseIds.delete(active);
     render();
@@ -1188,6 +1208,7 @@ const cloud = createCloud({
   },
   getState: () => state,
   setState: (next) => {
+    dismissCelebration();
     completionMessage = "";
     exerciseTimers.clear();
     state = inPounds(next);
@@ -1203,6 +1224,7 @@ const cloud = createCloud({
     !document.querySelector("#program-share-dialog[open]"),
   onAuthenticated: processInvitation,
   onStatus: (label) => {
+    if (!cloud.isSignedIn()) dismissCelebration();
     aiCoach?.checkAccount(label.startsWith("Synced"));
     updateSidebarIdentity();
     const el = document.querySelector("#sync-label");

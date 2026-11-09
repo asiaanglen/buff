@@ -60,6 +60,21 @@ test("finishing a partial workout shows set counts, advances the program, keeps 
   await expect(page.locator(".workout-completion-message")).toHaveText(
     "Congrats! You completed 1 out of 3 sets.",
   );
+  await expect(page.locator(".workout-celebration")).toBeVisible();
+  await expect(page.locator(".workout-celebration")).toContainText(
+    "Nice work!",
+  );
+  await expect(page.locator(".workout-celebration")).toContainText(
+    "Current session",
+  );
+  await expect(page.locator(".workout-celebration")).toContainText(
+    "1 out of 3 sets",
+  );
+  await page
+    .getByRole("button", { name: "Dismiss congratulations", exact: true })
+    .click();
+  await expect(page.locator(".workout-celebration")).toHaveCount(0);
+
   await expect(
     page.getByRole("region", { name: "Next workout", exact: true }),
   ).toContainText("Next session");
@@ -113,6 +128,9 @@ test("finishing a partial workout shows set counts, advances the program, keeps 
     .click();
   await expect(page.locator(".workout-completion-message")).toHaveText(
     "Congrats! You completed 0 out of 3 sets.",
+  );
+  await expect(page.locator(".workout-celebration")).toContainText(
+    "0 out of 3 sets",
   );
   await expect(
     page.getByRole("region", { name: "Next workout", exact: true }),
