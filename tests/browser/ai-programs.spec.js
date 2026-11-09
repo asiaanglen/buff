@@ -51,7 +51,9 @@ test("natural conversation, follow-ups, validated preview, chat revisions, failu
       const input = request.postDataJSON();
       generations++;
       if (generations === 1) {
-        expect(input.message).toBe("I want to build strength");
+        expect(input.message).toBe(
+          "I want to build strength. Can you help me get started?",
+        );
         expect(input.brief).toBeUndefined();
         expect(input.useHistory).toBe(false);
         await firstResponse;
@@ -138,20 +140,12 @@ test("natural conversation, follow-ups, validated preview, chat revisions, failu
     "Keep this unsent question",
   );
   await ui.getByRole("button", { name: "Build strength", exact: true }).click();
-  await expect(ui.getByLabel("Message Buffy", { exact: true })).toHaveValue(
-    "I want to build strength. Can you help me get started?",
-  );
-
-  await ui
-    .getByLabel("Message Buffy", { exact: true })
-    .fill("I want to build strength");
-  await ui.getByRole("button", { name: "Send message", exact: true }).click();
   try {
     await expect(ui.getByLabel("Message Buffy", { exact: true })).toHaveValue(
       "",
     );
     await expect(ui.locator(".ai-message-user").last()).toHaveText(
-      "YouI want to build strength",
+      "YouI want to build strength. Can you help me get started?",
     );
     await expect(
       ui.getByRole("button", { name: "Thinking…", exact: true }),
@@ -501,4 +495,45 @@ test("header New chat resets intake and permissions, confirms unsent/in-flight w
   await expect(input).toHaveValue("");
   await expect(host.locator(".ai-message")).toHaveCount(1);
   expect(generations).toBe(2);
+});
+
+test("goal suggestions send once immediately without pressing Send", async ({
+  page,
+}) => {
+  const sent = [];
+  await page.route("**/api/ai-programs**", async (route) => {
+    if (route.request().method() === "GET")
+      return route.fulfill({ json: available });
+    const input = route.request().postDataJSON();
+    sent.push(input);
+    return route.fulfill({
+      json: {
+        ...draftData(),
+        plan: null,
+        conversation: [
+          { role: "user", text: input.message },
+          { role: "assistant", text: "Tell me about your equipment." },
+        ],
+      },
+    });
+  });
+  await page.goto("/?tab=programs");
+  await page
+    .getByRole("link", { name: "Create with AI", exact: false })
+    .click();
+  const host = page.locator(".ai-coach-host");
+  for (const [index, goal] of ["Lose weight", "Build muscle"].entries()) {
+    if (index)
+      await page.getByRole("button", { name: "New chat", exact: true }).click();
+    await host.getByRole("button", { name: goal, exact: true }).click();
+    await expect(host.locator(".ai-messages")).toContainText(
+      "Tell me about your equipment.",
+    );
+    await expect(host.getByLabel("Message Buffy", { exact: true })).toHaveValue(
+      "",
+    );
+    expect(sent).toHaveLength(index + 1);
+    expect(sent[index].message.toLowerCase()).toContain(goal.toLowerCase());
+    expect(sent[index].id).toBeUndefined();
+  }
 });

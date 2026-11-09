@@ -95,7 +95,7 @@ export function mountAiCoach({
   }
   function starters() {
     return !draft
-      ? `<div class="ai-starters"><button type="button" class="button subtle" data-action="starter" data-message="I want to build strength. Can you help me get started?">Build strength</button><button type="button" class="button subtle" data-action="starter" data-message="I want to lose weight and improve my fitness. Help me build a workout program.">Lose weight</button><button type="button" class="button subtle" data-action="starter" data-message="I want to build muscle with a program that fits my schedule.">Build muscle</button></div>`
+      ? `<div class="ai-starters"><button type="button" class="button subtle" ${busy || saving || !status?.enabled ? "disabled" : ""} data-action="starter" data-message="I want to build strength. Can you help me get started?">Build strength</button><button type="button" class="button subtle" ${busy || saving || !status?.enabled ? "disabled" : ""} data-action="starter" data-message="I want to lose weight and improve my fitness. Help me build a workout program.">Lose weight</button><button type="button" class="button subtle" ${busy || saving || !status?.enabled ? "disabled" : ""} data-action="starter" data-message="I want to build muscle with a program that fits my schedule.">Build muscle</button></div>`
       : "";
   }
   function chat() {
@@ -288,10 +288,11 @@ export function mountAiCoach({
       return load();
     }
     if (action === "starter") {
+      if (!status?.enabled) return;
       historyOpen = false;
       revisionText = button.dataset.message;
       render();
-      app.querySelector("#ai-revision-text")?.focus();
+      app.querySelector("#ai-revision")?.requestSubmit();
       return;
     }
     if (action === "start-over") {
