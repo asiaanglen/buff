@@ -21,8 +21,10 @@ export function mountAiCoach({
   beforeSave,
   onSaved,
   onClose,
+  onStateChange = () => {},
 }) {
   let destroyed = false;
+  let conversationEpoch = 0;
   const requests = new AbortController();
   let loading = true,
     busy = false,
@@ -109,6 +111,7 @@ export function mountAiCoach({
   }
   function render() {
     if (destroyed) return;
+    onStateChange({ loading, saving });
     let content;
     if (loading)
       content =
@@ -118,6 +121,32 @@ export function mountAiCoach({
     app.innerHTML = `<div class="ai-main">${content}</div>`;
     const transcript = app.querySelector(".ai-messages");
     if (transcript) transcript.scrollTop = transcript.scrollHeight;
+  }
+  function newChat() {
+    if (destroyed || loading || saving) return false;
+    if (
+      (busy || revisionText.trim()) &&
+      !confirm(
+        busy
+          ? "Buffy is still responding. Start a new chat? The response can finish in the previous conversation, and saved history will be kept."
+          : "Start a new chat and clear your unsent message? Previous conversations and saved programs will be kept.",
+      )
+    )
+      return false;
+    conversationEpoch++;
+    draft = null;
+    draftOwner = null;
+    revisionText = "";
+    pendingMessage = "";
+    useHistory = false;
+    historyOpen = false;
+    historyLoading = false;
+    error = "";
+    requestError = false;
+    busy = false;
+    render();
+    app.querySelector("#ai-revision-text")?.focus();
+    return true;
   }
   app.addEventListener("input", (event) => {
     if (event.target.id === "ai-revision-text")
@@ -151,6 +180,7 @@ export function mountAiCoach({
   app.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (busy || saving || destroyed || !event.target.reportValidity()) return;
+    const epoch = conversationEpoch;
     const message = event.target.elements.message.value;
     historyOpen = false;
     pendingMessage = message;
@@ -169,7 +199,12 @@ export function mountAiCoach({
             : { message, today: today(), useHistory },
         ),
       });
-      if (destroyed || cloud.account()?.id !== owner) return;
+      if (
+        destroyed ||
+        cloud.account()?.id !== owner ||
+        epoch !== conversationEpoch
+      )
+        return;
       draft = result;
       draftOwner = owner;
       revisionText = "";
@@ -177,7 +212,11 @@ export function mountAiCoach({
         status = await api();
       } catch {}
     } catch (e) {
-      if (!destroyed && cloud.account()?.id === owner) {
+      if (
+        !destroyed &&
+        cloud.account()?.id === owner &&
+        epoch === conversationEpoch
+      ) {
         revisionText = message;
         error = e.message;
         if (e.status === 409) requestError = true;
@@ -186,9 +225,20 @@ export function mountAiCoach({
         } catch {}
       }
     } finally {
-      pendingMessage = "";
-      busy = false;
-      render();
+      if (epoch === conversationEpoch) {
+        pendingMessage = "";
+        busy = false;
+        render();
+      } else if (!destroyed && cloud.account()?.id === owner) {
+        // A reset must not let a late response replace the new conversation.
+        try {
+          const refreshed = await api();
+          if (!destroyed && cloud.account()?.id === owner) {
+            status = refreshed;
+            render();
+          }
+        } catch {}
+      }
     }
   });
   app.addEventListener("click", async (event) => {
@@ -245,18 +295,8 @@ export function mountAiCoach({
       return;
     }
     if (action === "start-over") {
-      if (
-        !confirm(
-          "Start a new program? Your current draft remains in Recent drafts.",
-        )
-      )
-        return;
-      draft = null;
-      historyOpen = false;
-      revisionText = "";
-      useHistory = false;
-      error = "";
-      return render();
+      newChat();
+      return;
     }
     if (action === "resume") {
       if (
@@ -266,8 +306,14 @@ export function mountAiCoach({
         return;
       try {
         const owner = cloud.account()?.id;
+        const epoch = conversationEpoch;
         const result = await api("/" + button.dataset.id);
-        if (destroyed || cloud.account()?.id !== owner) return;
+        if (
+          destroyed ||
+          cloud.account()?.id !== owner ||
+          epoch !== conversationEpoch
+        )
+          return;
         draft = result;
         draftOwner = owner;
         revisionText = "";
@@ -316,6 +362,7 @@ export function mountAiCoach({
   window.addEventListener("beforeunload", beforeUnload);
   void load();
   return {
+    newChat,
     focus: () => {
       const transcript = app.querySelector(".ai-messages");
       if (transcript) transcript.scrollTop = transcript.scrollHeight;

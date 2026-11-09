@@ -47,8 +47,10 @@ export function setupAiProgramPopup({ cloud, getOwner, beforeOpen, onSaved }) {
     panel.id = "buff-ai-chat-panel";
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-labelledby", "ai-popup-title");
-    panel.innerHTML = `<header class="ai-popup-header"><div><strong id="ai-popup-title">Buffy</strong><small>Let’s build your next program.</small></div><button class="ai-popup-close" type="button" aria-label="Close Buffy chat">×</button></header><div class="ai-coach-host"><p role="status">Connecting to Buffy…</p></div>`;
+    panel.innerHTML = `<header class="ai-popup-header"><div><strong id="ai-popup-title">Buffy</strong><small>Let’s build your next program.</small></div><div class="ai-popup-header-actions"><button class="ai-popup-new" type="button" aria-label="New chat" title="New chat" disabled>+</button><button class="ai-popup-close" type="button" aria-label="Close Buffy chat">×</button></div></header><div class="ai-coach-host"><p role="status">Connecting to Buffy…</p></div>`;
     panel.querySelector(".ai-popup-close").onclick = hide;
+    const newChatButton = panel.querySelector(".ai-popup-new");
+    newChatButton.onclick = () => chat?.newChat();
     panel.addEventListener("keydown", (event) => {
       if (
         event.key === "Escape" &&
@@ -69,6 +71,9 @@ export function setupAiProgramPopup({ cloud, getOwner, beforeOpen, onSaved }) {
         cloud,
         onClose: hide,
         onSaved,
+        onStateChange: ({ loading, saving }) => {
+          newChatButton.disabled = loading || saving;
+        },
         beforeSave: async () => {
           if (document.querySelector(".modal-backdrop, dialog[open]"))
             throw Error(

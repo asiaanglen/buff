@@ -339,7 +339,6 @@ test("actual Worker enforces authentication and configuration and saves an owned
     await expect(screen).toHaveURL(/\/coach\?tab=programs$/);
 
     await expect(coachChat.locator(".ai-chat-saved")).toBeVisible();
-    screen.once("dialog", (d) => d.accept());
     await coachChat
       .getByRole("button", { name: "New conversation", exact: true })
       .click();
@@ -395,4 +394,111 @@ test("minimized chatbot keeps unsent messages and clears private state on signou
   await expect(page.locator("body")).not.toContainText(
     "My private unsent training question",
   );
+});
+
+test("header New chat resets intake and permissions, confirms unsent/in-flight work, and ignores late replies", async ({
+  page,
+}) => {
+  let releaseOld;
+  const oldResponse = new Promise((resolve) => {
+    releaseOld = resolve;
+  });
+  let reads = 0,
+    generations = 0,
+    drafts = [];
+  await page.route("**/api/ai-programs**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/ai-programs") {
+      reads++;
+      return route.fulfill({ json: { enabled: true, drafts } });
+    }
+    const input = route.request().postDataJSON();
+    generations++;
+    expect(input.id).toBeUndefined();
+    if (generations === 1) {
+      expect(input.useHistory).toBe(true);
+      await oldResponse;
+      drafts = [{ id, name: "Previous conversation" }];
+      return route.fulfill({
+        json: {
+          ...draftData(),
+          plan: null,
+          conversation: [
+            { role: "user", text: input.message },
+            { role: "assistant", text: "Late reply from previous chat" },
+          ],
+        },
+      });
+    }
+    expect(input.useHistory).toBe(false);
+    return route.fulfill({
+      json: {
+        ...draftData(),
+        id: "c".repeat(32),
+        plan: null,
+        conversation: [
+          { role: "user", text: input.message },
+          { role: "assistant", text: "Fresh conversation response" },
+        ],
+      },
+    });
+  });
+  await page.goto("/?tab=programs");
+  await page
+    .getByRole("link", { name: "Create with AI", exact: false })
+    .click();
+  const host = page.locator(".ai-coach-host");
+  const reset = page.getByRole("button", { name: "New chat", exact: true });
+  const input = host.getByLabel("Message Buffy", { exact: true });
+  await host.locator(".ai-chat-options summary").click();
+  await host
+    .getByLabel("Use my recent completed weights", { exact: true })
+    .check();
+  await input.fill("Old conversation");
+  await host.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(
+    host.getByRole("button", { name: "Thinking…", exact: true }),
+  ).toBeVisible();
+  page.once("dialog", (d) => d.dismiss());
+  await reset.click();
+  await expect(host.locator(".ai-messages")).toContainText("Old conversation");
+  page.once("dialog", (d) => d.accept());
+  await reset.click();
+  await expect(input).toHaveValue("");
+  await expect(host.locator(".ai-message")).toHaveCount(1);
+  await expect(host.locator(".ai-messages")).toContainText("Hi! I’m Buffy");
+  await expect(
+    host.getByLabel("Use my recent completed weights", { exact: true }),
+  ).not.toBeChecked();
+  await input.fill("My next message");
+  releaseOld();
+  await expect.poll(() => reads).toBeGreaterThan(1);
+  await expect(input).toHaveValue("My next message");
+  await expect(host.locator(".ai-messages")).not.toContainText(
+    "Late reply from previous chat",
+  );
+  await host
+    .getByRole("button", { name: "Conversation history", exact: true })
+    .click();
+  await expect(
+    host.getByRole("region", { name: "Conversation history" }),
+  ).toContainText("Previous conversation");
+  await host
+    .getByRole("button", { name: "Close conversation history", exact: true })
+    .click();
+  page.once("dialog", (d) => d.dismiss());
+  await reset.click();
+  await expect(input).toHaveValue("My next message");
+  page.once("dialog", (d) => d.accept());
+  await reset.click();
+  await expect(input).toHaveValue("");
+  await input.fill("Start fresh");
+  await host.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(host.locator(".ai-messages")).toContainText(
+    "Fresh conversation response",
+  );
+  await reset.click();
+  await expect(input).toHaveValue("");
+  await expect(host.locator(".ai-message")).toHaveCount(1);
+  expect(generations).toBe(2);
 });
