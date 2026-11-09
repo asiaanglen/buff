@@ -121,6 +121,27 @@ test("natural conversation, follow-ups, validated preview, chat revisions, failu
     "Keep this unsent question",
   );
   await expect(ui.locator("#ai-brief")).toHaveCount(0);
+  await expect(ui.locator(".ai-composer .ai-starters")).toBeVisible();
+  await expect(ui.locator(".ai-messages .ai-starters, .ai-recent")).toHaveCount(
+    0,
+  );
+  await ui
+    .getByRole("button", { name: "Conversation history", exact: true })
+    .click();
+  await expect(
+    ui.getByRole("region", { name: "Conversation history", exact: true }),
+  ).toContainText("No previous conversations yet");
+  await ui
+    .getByRole("button", { name: "Close conversation history", exact: true })
+    .click();
+  await expect(ui.getByLabel("Message Buffy", { exact: true })).toHaveValue(
+    "Keep this unsent question",
+  );
+  await ui.getByRole("button", { name: "Build strength", exact: true }).click();
+  await expect(ui.getByLabel("Message Buffy", { exact: true })).toHaveValue(
+    "I want to build strength. Can you help me get started?",
+  );
+
   await ui
     .getByLabel("Message Buffy", { exact: true })
     .fill("I want to build strength");
@@ -269,7 +290,7 @@ test("actual Worker enforces authentication and configuration and saves an owned
       .click();
     const coachChat = screen.locator(".ai-coach-host");
     await coachChat
-      .getByText("Previous conversations", { exact: true })
+      .getByRole("button", { name: "Conversation history", exact: true })
       .click();
     await coachChat
       .getByRole("button", {
