@@ -93,22 +93,29 @@ test("natural conversation, follow-ups, validated preview, chat revisions, failu
   await page
     .getByRole("link", { name: "Create a program with AI", exact: false })
     .click();
-  const ui = page.frameLocator('iframe[title="AI program coach"]');
+  const ui = page.locator(".ai-coach-host");
   await expect(
-    page.getByRole("dialog", { name: "Create a program with AI" }),
+    page.getByRole("dialog", { name: "Buff AI coach" }),
   ).toBeVisible();
   await expect(
-    ui.getByRole("heading", { name: "Let’s build your program", exact: true }),
+    ui.getByLabel("Message your coach", { exact: true }),
   ).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator(".ai-program-popup iframe")).toHaveCount(0);
+  await ui
+    .getByLabel("Message your coach", { exact: true })
+    .fill("Keep this unsent question");
   await page.getByRole("button", { name: "Close AI chat" }).click();
-  await expect(page.locator("dialog.ai-program-popup")).toHaveCount(0);
+  await expect(page.locator(".ai-program-popup")).toBeHidden();
   await page
     .getByRole("link", { name: "Create a program with AI", exact: false })
     .click();
   await expect(
     ui.getByLabel("Message your coach", { exact: true }),
   ).toBeVisible();
+  await expect(
+    ui.getByLabel("Message your coach", { exact: true }),
+  ).toHaveValue("Keep this unsent question");
   await expect(ui.locator("#ai-brief")).toHaveCount(0);
   await ui
     .getByLabel("Message your coach", { exact: true })
@@ -127,6 +134,7 @@ test("natural conversation, follow-ups, validated preview, chat revisions, failu
     .getByLabel("Message your coach", { exact: true })
     .fill("Full gym, beginner, 3 days per week, 45 minutes, for 2 weeks.");
   await ui.getByRole("button", { name: "Send message", exact: true }).click();
+  await ui.locator(".ai-plan-attachment > summary").click();
   await expect(
     ui.getByRole("heading", { name: "AI strength block", exact: true }),
   ).toBeVisible();
@@ -145,6 +153,7 @@ test("natural conversation, follow-ups, validated preview, chat revisions, failu
     .getByLabel("What would you like to change?", { exact: true })
     .fill("Make the sessions shorter.");
   await ui.getByRole("button", { name: "Send message", exact: true }).click();
+  await ui.locator(".ai-plan-attachment > summary").click();
   await expect(
     ui.getByRole("heading", { name: "Shorter AI block", exact: true }),
   ).toBeVisible();
@@ -155,6 +164,7 @@ test("natural conversation, follow-ups, validated preview, chat revisions, failu
   await expect(ui.getByRole("alert")).toContainText(
     "previous draft is unchanged",
   );
+  await ui.locator(".ai-plan-attachment > summary").click();
   await expect(
     ui.getByRole("heading", { name: "Shorter AI block", exact: true }),
   ).toBeVisible();
@@ -163,7 +173,9 @@ test("natural conversation, follow-ups, validated preview, chat revisions, failu
     fullPage: true,
   });
   await ui.getByRole("button", { name: "Save program", exact: true }).click();
-  await expect(page.locator("dialog.ai-program-popup")).toHaveCount(0);
+  await expect(ui.locator(".ai-chat-saved")).toBeVisible();
+  await ui.getByRole("button", { name: "View program", exact: true }).click();
+  await expect(page.locator(".ai-program-popup")).toBeHidden();
   await expect(page.locator("#mobile-page-select")).toHaveValue("programs");
   await expect(page).toHaveURL(/\/$/);
   expect(savedVersion).toBe(3);
@@ -186,7 +198,7 @@ test("actual Worker enforces authentication and configuration and saves an owned
   expect(generated.status()).toBe(503);
   await page.goto("/create-with-ai");
   await expect(
-    page.getByRole("heading", { name: "Create with AI", exact: true }),
+    page.getByRole("dialog", { name: "Buff AI coach", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Send message", exact: true }),
@@ -223,17 +235,25 @@ test("actual Worker enforces authentication and configuration and saves an owned
     await screen
       .getByRole("link", { name: "Create with AI", exact: false })
       .click();
-    const coachChat = screen.frameLocator('iframe[title="AI program coach"]');
+    const coachChat = screen.locator(".ai-coach-host");
+    await coachChat
+      .getByText("Previous conversations", { exact: true })
+      .click();
     await coachChat
       .getByRole("button", {
         name: "Seeded AI program · Resume draft",
         exact: true,
       })
       .click();
+    await coachChat.locator(".ai-plan-attachment > summary").click();
     await coachChat
       .getByRole("button", { name: "Save program", exact: true })
       .click();
-    await expect(screen.locator("dialog.ai-program-popup")).toHaveCount(0);
+    await expect(coachChat.locator(".ai-chat-saved")).toBeVisible();
+    await coachChat
+      .getByRole("button", { name: "View program", exact: true })
+      .click();
+    await expect(screen.locator(".ai-program-popup")).toBeHidden();
     await expect(
       screen.getByRole("heading", { name: "Seeded AI program", exact: true }),
     ).toBeVisible();
@@ -265,11 +285,16 @@ test("actual Worker enforces authentication and configuration and saves an owned
       .click();
     await expect(screen).toHaveURL(/\/coach\?tab=programs$/);
 
+    await expect(coachChat.locator(".ai-chat-saved")).toBeVisible();
+    screen.once("dialog", (d) => d.accept());
+    await coachChat
+      .getByRole("button", { name: "New conversation", exact: true })
+      .click();
     await expect(
       coachChat.getByLabel("Message your coach", { exact: true }),
     ).toBeVisible();
     await screen.getByRole("button", { name: "Close AI chat" }).click();
-    await expect(screen.locator("dialog.ai-program-popup")).toHaveCount(0);
+    await expect(screen.locator(".ai-program-popup")).toBeHidden();
     await expect(
       screen.getByRole("link", { name: "Create with AI", exact: false }),
     ).toBeFocused();
@@ -280,8 +305,41 @@ test("actual Worker enforces authentication and configuration and saves an owned
     await coachChat
       .getByLabel("Message your coach", { exact: true })
       .press("Escape");
-    await expect(screen.locator("dialog.ai-program-popup")).toHaveCount(0);
+    await expect(screen.locator(".ai-program-popup")).toBeHidden();
   } finally {
     await owner.close();
   }
+});
+
+test("minimized chatbot keeps unsent messages and clears private state on signout", async ({
+  page,
+}) => {
+  await page.route("**/api/ai-programs", (route) =>
+    route.fulfill({ json: available }),
+  );
+  await page.goto("/?tab=programs");
+  await page
+    .getByRole("link", { name: "Create with AI", exact: false })
+    .click();
+  const input = page
+    .locator(".ai-coach-host")
+    .getByLabel("Message your coach", { exact: true });
+  await input.fill("My private unsent training question");
+  await page.getByRole("button", { name: "Close AI chat" }).click();
+  await page
+    .getByRole("button", { name: "Chat with Buff AI", exact: true })
+    .click();
+  await expect(input).toHaveValue("My private unsent training question");
+  await page.getByRole("button", { name: "Close AI chat" }).click();
+  await page
+    .getByRole("button", { name: "Account and cross-device sync", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await expect(page.locator(".ai-program-popup")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Chat with Buff AI", exact: true }),
+  ).toBeHidden();
+  await expect(page.locator("body")).not.toContainText(
+    "My private unsent training question",
+  );
 });

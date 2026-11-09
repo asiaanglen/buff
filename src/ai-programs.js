@@ -1,13 +1,5 @@
-import { createCloud } from "./cloud.js";
-import { brandLogo } from "./brand.js";
 import { formatAiMessage } from "./ai-message-format.js";
-import "@fontsource-variable/dm-sans";
-import "@fontsource-variable/manrope";
-import "./style.css";
-import "./themes.css";
-import "./coach.css";
 import "./ai-programs.css";
-const app = document.querySelector("#app");
 const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -22,278 +14,261 @@ const today = () => {
     .toISOString()
     .slice(0, 10);
 };
-const coachMode = new URL(location.href).searchParams.get("coach") === "1";
-const embedded =
-  window.parent !== window &&
-  new URL(location.href).searchParams.get("embedded") === "1";
-if (embedded) document.body.classList.add("ai-program-embedded");
-const notifyParent = (type, data = {}) => {
-  if (embedded)
-    window.parent.postMessage(
-      { type: "buff-ai:" + type, ...data },
-      location.origin,
-    );
-};
-function returnToPrograms(programId) {
-  if (embedded) {
-    notifyParent("saved", { programId });
-    app.innerHTML =
-      '<p class="ai-saved-notice" role="status">Program saved. Updating your library…</p>';
-  } else location.assign(back);
-}
-const back = coachMode ? "/coach?tab=programs" : "/?tab=programs";
-let state = { version: 1, unit: "lbs", programs: [], workouts: [] },
-  loading = true,
-  busy = false,
-  saving = false,
-  status = null,
-  draft = null,
-  error = "",
-  requestError = false;
-let draftOwner = null;
-let useHistory = false;
-let revisionText = "";
-async function api(path = "", options = {}) {
-  const response = await fetch("/api/ai-programs" + path, {
-    credentials: "same-origin",
-    cache: "no-store",
-    signal: AbortSignal.timeout(95000),
-    ...options,
-    headers: { "Content-Type": "application/json", ...options.headers },
-  });
-  const data = await response.json();
-  if (!response.ok)
-    throw Object.assign(
-      Error(data.error || "Could not complete this request."),
-      { status: response.status },
-    );
-  return data;
-}
-const cloud = createCloud({
-  getState: () => state,
-  setState: (next) => {
-    state = next;
-  },
-  canApply: () => !busy && !saving,
-  onThemeChange: (theme) => {
-    state.theme = theme;
-    cloud.save();
+
+export function mountAiCoach({
+  container: app,
+  cloud,
+  beforeSave,
+  onSaved,
+  onClose,
+}) {
+  let destroyed = false;
+  const requests = new AbortController();
+  let loading = true,
+    busy = false,
+    saving = false,
+    status = null,
+    draft = null,
+    error = "",
+    requestError = false;
+  let draftOwner = null;
+  let useHistory = false;
+  let revisionText = "";
+  async function api(path = "", options = {}) {
+    const response = await fetch("/api/ai-programs" + path, {
+      credentials: "same-origin",
+      cache: "no-store",
+      signal: AbortSignal.any([requests.signal, AbortSignal.timeout(95000)]),
+      ...options,
+      headers: { "Content-Type": "application/json", ...options.headers },
+    });
+    const data = await response.json();
+    if (!response.ok)
+      throw Object.assign(
+        Error(data.error || "Could not complete this request."),
+        { status: response.status },
+      );
+    return data;
+  }
+  async function load() {
+    loading = true;
     render();
-  },
-  preservePath: true,
-  onAuthenticated: async () => {
-    await load();
-    return true;
-  },
-  onStatus: () => {
-    if (!cloud.isSignedIn() && !loading) {
-      draft = null;
-      status = null;
-      revisionText = "";
-      error = "";
-      draftOwner = null;
-      useHistory = false;
-      render();
-    }
-  },
-});
-async function load() {
-  loading = true;
-  render();
-  try {
-    if (cloud.isSignedIn()) {
-      const owner = cloud.account()?.id;
-      const result = await api();
-      if (cloud.account()?.id === owner) {
-        status = result;
-        if (draft && draftOwner === owner) {
-          const latest = await api("/" + draft.id);
-          if (cloud.account()?.id === owner) draft = latest;
+    try {
+      if (cloud.isSignedIn()) {
+        const owner = cloud.account()?.id;
+        const result = await api();
+        if (!destroyed && cloud.account()?.id === owner) {
+          status = result;
+          if (draft && draftOwner === owner) {
+            const latest = await api("/" + draft.id);
+            if (cloud.account()?.id === owner) draft = latest;
+          }
         }
       }
-    }
-  } catch (e) {
-    error = e.message;
-    requestError = true;
-  } finally {
-    loading = false;
-    render();
-  }
-}
-function preview() {
-  const plan = draft.plan;
-  const byWeek = Array.from({ length: plan.program.weeks }, (_, i) => ({
-    number: i + 1,
-    workouts: plan.workouts.filter((w) => Math.floor(w.offset / 7) === i),
-  }));
-  return `<section class="ai-panel ai-preview"><span class="tag">DRAFT · NOT SAVED</span><h2>${esc(plan.program.name)}</h2><a class="text-button" href="#ai-revision-text">Ask for changes ↓</a><p>${esc(plan.program.note)}</p><p><strong>${plan.program.weeks} weeks · ${plan.workouts.length} workouts</strong> · Train at your own pace</p>${byWeek.map((week) => `<details class="ai-week" ${week.number === 1 ? "open" : ""}><summary>Week ${week.number}<span>${week.workouts.length} workouts</span></summary>${week.workouts.map((w) => `<article class="ai-workout"><div><h3>${esc(w.name)}</h3><span>Week ${week.number} · Workout ${week.workouts.indexOf(w) + 1}</span></div>${w.note ? `<p class="ai-week-note">${esc(w.note)}</p>` : ""}<ol>${w.exercises.map((e) => `<li><strong>${esc(e.name)}</strong><span>${e.sets} sets × ${e.target} ${e.mode === "time" ? "sec" : "reps"} · ${e.weight ? e.weight + " lbs suggested" : e.weighted === false ? "Bodyweight" : "Starting weight unassigned"}${e.group ? " · Superset " + esc(e.group) : ""}</span></li>`).join("")}</ol></article>`).join("")}</details>`).join("")}<div class="ai-save"><p>Saving adds a new program to your library. Enrollment and your current program stay unchanged.</p><button type="button" class="button primary" data-action="save" ${busy || saving ? "disabled" : ""}>${saving ? "Saving…" : "Save program"}</button><button type="button" class="text-button" data-action="start-over" ${busy || saving ? "disabled" : ""}>Create a different program</button></div></section>`;
-}
-function chat() {
-  const hasPlan = Boolean(draft?.plan);
-  const messages = draft?.conversation || [
-    {
-      role: "assistant",
-      text: "Hi! What would you like to work toward? Tell me about your goals and where you train. We’ll build a program together.",
-    },
-  ];
-  return `<section class="ai-panel ai-chat"><h2>${hasPlan ? "Refine your program" : "Let’s build your program"}</h2><p>${hasPlan ? "Ask for changes or questions about your draft before saving." : "Talk to your Buff coach naturally. Share what you know; I’ll help with the rest."}</p><div class="ai-messages" aria-label="Program conversation" aria-live="polite">${messages.map((m) => `<article class="ai-message ${m.role === "user" ? "ai-message-user" : ""}"><strong>${m.role === "user" ? "You" : "Your Buff coach"}</strong>${m.role === "user" ? `<p>${esc(m.text)}</p>` : `<div class="ai-message-content">${formatAiMessage(m.text)}</div>`}</article>`).join("")}${busy ? `<article class="ai-message ai-message-user"><strong>You</strong><p>${esc(revisionText)}</p></article>` : ""}</div>${!draft ? `<div class="ai-starters"><button type="button" class="button subtle" data-action="starter" data-message="I want to build strength. Can you help me get started?" ${busy ? "disabled" : ""}>Build strength</button><button type="button" class="button subtle" data-action="starter" data-message="I want to lose weight and improve my fitness. Help me build a workout program." ${busy ? "disabled" : ""}>Lose weight</button><button type="button" class="button subtle" data-action="starter" data-message="I want to build muscle with a program that fits my schedule." ${busy ? "disabled" : ""}>Build muscle</button></div>` : ""}<form id="ai-revision"><label for="ai-revision-text">${hasPlan ? "What would you like to change?" : "Message your coach"}</label><textarea id="ai-revision-text" name="message" maxlength="2000" rows="3" required placeholder="${hasPlan ? "Make the workouts shorter, swap an exercise, or ask a question…" : "I’d like to build strength, train 3 days a week, and have dumbbells at home…"}" ${busy || saving ? "disabled" : ""}>${esc(revisionText)}</textarea>${!draft ? `<label class="ai-history-choice"><input name="useHistory" type="checkbox" ${useHistory ? "checked" : ""} ${busy ? "disabled" : ""}><span>Use my recent completed weights to suggest starting loads</span></label>` : ""}<p class="ai-data-note">Your messages and library exercise names are sent to Claude. Recent set history is shared only if you opt in when starting this conversation. Review your program before saving.</p><button class="button primary" type="submit" ${busy || saving || !status?.enabled ? "disabled" : ""}>${busy ? "Thinking…" : "Send message"}</button></form>${draft && !hasPlan ? '<button type="button" class="text-button" data-action="start-over">Start a new conversation</button>' : ""}</section>`;
-}
-function render() {
-  document.documentElement.dataset.theme =
-    cloud.isSignedIn() && state.theme === "muscle-mami"
-      ? "muscle-mami"
-      : "classic";
-  const top = `<header class="ai-top"><a class="brand" href="${back}" aria-label="Buff programs">${brandLogo()}</a><div><a href="${back}">← Programs</a>${cloud.isSignedIn() ? '<button type="button" class="button subtle" data-action="account">Account</button>' : ""}</div></header>`;
-  let content;
-  if (loading)
-    content =
-      '<section class="ai-panel" role="status">Loading your program creator…</section>';
-  else if (!cloud.isSignedIn())
-    content =
-      '<section class="ai-panel"><h1>Create your next program</h1><p>Sign in to build a program with Claude, refine it, and save it to your Buff account.</p><div class="coach-actions"><button class="button primary" data-action="signup">Create account</button><button class="button subtle" data-action="signin">Sign in</button></div></section>';
-  else
-    content = `<div class="ai-heading"><span class="eyebrow">YOUR PROGRAM, BUILT WITH YOU</span><h1>Create with AI</h1><p>${coachMode ? "Create a program template, refine it with your AI coach, then share it with clients." : "Chat about your goals. Build a program together. Make it yours."}</p></div>${error ? `<p class="ai-error" role="alert">${esc(error)}${requestError ? ' <button class="text-button" data-action="reload">Try again</button>' : ""}</p>` : ""}${status && !status.enabled ? '<p class="ai-capacity" role="status">AI program creation is not enabled yet. You can still create programs manually. Your account does not need a Claude subscription.</p>' : ""}${busy ? '<p class="ai-working" role="status"><span class="boot-spinner" aria-hidden="true"></span>Your coach is thinking. Building a full program can take a minute; keep this page open.</p>' : ""}${draft?.plan ? `<div class="ai-draft-layout">${preview()}${chat()}</div>` : chat()}${!draft && status?.drafts?.length ? `<section class="ai-panel"><h2>Recent drafts</h2><p>Drafts are private and available for 30 days.</p>${status.drafts.map((d) => `<button class="button subtle ai-resume" data-action="resume" data-id="${d.id}">${esc(d.name)}${d.saved_program_id ? " · Saved" : " · Resume draft"}</button>`).join("")}</section>` : ""}`;
-  notifyParent("busy", { busy: busy || saving });
-  app.innerHTML = `<div class="ai-shell">${embedded ? "" : top}<main class="ai-main">${content}</main></div>`;
-}
-app.addEventListener("input", (event) => {
-  if (event.target.id === "ai-revision-text") revisionText = event.target.value;
-});
-app.addEventListener("change", (event) => {
-  if (event.target.name === "useHistory") useHistory = event.target.checked;
-});
-app.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (busy || saving || !event.target.reportValidity()) return;
-  revisionText = event.target.elements.message.value;
-  const owner = cloud.account()?.id;
-  busy = true;
-  error = "";
-  requestError = false;
-  render();
-  try {
-    const result = await api("/generate", {
-      method: "POST",
-      body: JSON.stringify(
-        draft
-          ? { id: draft.id, version: draft.version, message: revisionText }
-          : { message: revisionText, today: today(), useHistory },
-      ),
-    });
-    if (cloud.account()?.id !== owner) return;
-    draft = result;
-    draftOwner = owner;
-    revisionText = "";
-    try {
-      status = await api();
-    } catch {}
-  } catch (e) {
-    if (cloud.account()?.id === owner) {
+    } catch (e) {
       error = e.message;
-      if (e.status === 409) requestError = true;
+      requestError = true;
+    } finally {
+      loading = false;
+      render();
+    }
+  }
+  function preview() {
+    const plan = draft.plan;
+    const byWeek = Array.from({ length: plan.program.weeks }, (_, i) => ({
+      number: i + 1,
+      workouts: plan.workouts.filter((w) => Math.floor(w.offset / 7) === i),
+    }));
+    return `<details class="ai-plan-attachment"><summary><strong>${esc(plan.program.name)}</strong><span>Review program · ${plan.program.weeks} weeks · ${plan.workouts.length} workouts</span></summary><section class="ai-panel ai-preview"><span class="tag">${draft.savedProgramId ? "SAVED TO YOUR PROGRAMS" : "DRAFT · NOT SAVED"}</span><h2>${esc(plan.program.name)}</h2><p>${esc(plan.program.note)}</p><p><strong>${plan.program.weeks} weeks · ${plan.workouts.length} workouts</strong> · Train at your own pace</p>${byWeek.map((week) => `<details class="ai-week" ${week.number === 1 ? "open" : ""}><summary>Week ${week.number}<span>${week.workouts.length} workouts</span></summary>${week.workouts.map((w) => `<article class="ai-workout"><div><h3>${esc(w.name)}</h3><span>Week ${week.number} · Workout ${week.workouts.indexOf(w) + 1}</span></div>${w.note ? `<p class="ai-week-note">${esc(w.note)}</p>` : ""}<ol>${w.exercises.map((e) => `<li><strong>${esc(e.name)}</strong><span>${e.sets} sets × ${e.target} ${e.mode === "time" ? "sec" : "reps"} · ${e.weight ? e.weight + " lbs suggested" : e.weighted === false ? "Bodyweight" : "Starting weight unassigned"}${e.group ? " · Superset " + esc(e.group) : ""}</span></li>`).join("")}</ol></article>`).join("")}</details>`).join("")}<div class="ai-save">${draft.savedProgramId ? '<p>Your program is saved. Start it whenever you’re ready.</p><button class="button primary" type="button" data-action="return-programs">View program</button>' : `<p>Saving adds a new program to your library. Enrollment and your current program stay unchanged.</p><button type="button" class="button primary" data-action="save" ${busy || saving ? "disabled" : ""}>${saving ? "Saving…" : "Save program"}</button>`}<button type="button" class="text-button" data-action="start-over" ${busy || saving ? "disabled" : ""}>Create a different program</button></div></section></details>`;
+  }
+  function chat() {
+    const hasPlan = Boolean(draft?.plan),
+      saved = Boolean(draft?.savedProgramId);
+    const messages = draft?.conversation || [
+      {
+        role: "assistant",
+        text: "Hi! What would you like to work toward? Tell me about your goals and where you train. We’ll build a program together.",
+      },
+    ];
+    return `<section class="ai-chat"><h2 class="visually-hidden">Chat with your Buff coach</h2><div class="ai-messages" aria-label="Program conversation" aria-live="polite">${messages.map((m) => `<article class="ai-message ${m.role === "user" ? "ai-message-user" : ""}"><strong>${m.role === "user" ? "You" : "Buff AI coach"}</strong>${m.role === "user" ? `<p>${esc(m.text)}</p>` : `<div class="ai-message-content">${formatAiMessage(m.text)}</div>`}</article>`).join("")}${draft?.plan ? preview() : ""}${busy ? `<article class="ai-message ai-message-user"><strong>You</strong><p>${esc(revisionText)}</p></article><p class="ai-thinking" role="status">Your coach is thinking…</p>` : ""}${saved ? '<p class="ai-chat-saved" role="status">Your program is saved! You can view it in Programs or start another conversation.</p>' : ""}${!draft ? `<div class="ai-starters"><button type="button" class="button subtle" data-action="starter" data-message="I want to build strength. Can you help me get started?">Build strength</button><button type="button" class="button subtle" data-action="starter" data-message="I want to lose weight and improve my fitness. Help me build a workout program.">Lose weight</button><button type="button" class="button subtle" data-action="starter" data-message="I want to build muscle with a program that fits my schedule.">Build muscle</button></div>${status?.drafts?.length ? `<details class="ai-recent"><summary>Previous conversations</summary>${status.drafts.map((d) => `<button class="button subtle ai-resume" data-action="resume" data-id="${d.id}">${esc(d.name)} · ${d.saved_program_id ? "Saved" : "Resume draft"}</button>`).join("")}</details>` : ""}` : ""}</div>${saved ? '<div class="ai-composer"><button class="button primary" data-action="return-programs">View program</button><button class="text-button" data-action="start-over">New conversation</button></div>' : `<form id="ai-revision" class="ai-composer"><label class="visually-hidden" for="ai-revision-text">${hasPlan ? "What would you like to change?" : "Message your coach"}</label><textarea id="ai-revision-text" name="message" maxlength="2000" rows="2" required placeholder="Message your coach…" ${busy || saving ? "disabled" : ""}>${esc(revisionText)}</textarea><div class="ai-composer-tools"><details class="ai-chat-options"><summary>Privacy${!draft ? " & starting weights" : ""}</summary>${!draft ? `<label class="ai-history-choice"><input name="useHistory" type="checkbox" ${useHistory ? "checked" : ""} ${busy ? "disabled" : ""}><span>Use my recent completed weights</span></label>` : ""}<p class="ai-data-note">Your messages and library exercise names are sent to Claude. Recent set history is shared only if you opt in when starting the conversation. Review your program before saving.</p></details><button class="button primary" type="submit" ${busy || saving || !status?.enabled ? "disabled" : ""}>${busy ? "Thinking…" : "Send message"}</button></div></form>`}</section>`;
+  }
+  function render() {
+    if (destroyed) return;
+    let content;
+    if (loading)
+      content =
+        '<p class="ai-popup-loading" role="status">Connecting to your coach…</p>';
+    else
+      content = `${error ? `<p class="ai-error" role="alert">${esc(error)}${requestError ? ' <button class="text-button" data-action="reload">Try again</button>' : ""}</p>` : ""}${status && !status.enabled ? '<p class="ai-capacity" role="status">AI program creation is not enabled yet. You can still build programs manually.</p>' : ""}${chat()}`;
+    app.innerHTML = `<div class="ai-main">${content}</div>`;
+    const transcript = app.querySelector(".ai-messages");
+    if (transcript) transcript.scrollTop = transcript.scrollHeight;
+  }
+  app.addEventListener("input", (event) => {
+    if (event.target.id === "ai-revision-text")
+      revisionText = event.target.value;
+  });
+  app.addEventListener("change", (event) => {
+    if (event.target.name === "useHistory") useHistory = event.target.checked;
+  });
+  app.addEventListener("keydown", (event) => {
+    if (
+      event.target.id === "ai-revision-text" &&
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !event.isComposing &&
+      !busy &&
+      !saving
+    ) {
+      event.preventDefault();
+      event.target.form.requestSubmit();
+    }
+  });
+  app.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (busy || saving || destroyed || !event.target.reportValidity()) return;
+    revisionText = event.target.elements.message.value;
+    const owner = cloud.account()?.id;
+    busy = true;
+    error = "";
+    requestError = false;
+    render();
+    try {
+      const result = await api("/generate", {
+        method: "POST",
+        body: JSON.stringify(
+          draft
+            ? { id: draft.id, version: draft.version, message: revisionText }
+            : { message: revisionText, today: today(), useHistory },
+        ),
+      });
+      if (destroyed || cloud.account()?.id !== owner) return;
+      draft = result;
+      draftOwner = owner;
+      revisionText = "";
       try {
         status = await api();
       } catch {}
-    }
-  } finally {
-    busy = false;
-    render();
-  }
-});
-app.addEventListener("click", async (event) => {
-  const button = event.target.closest("[data-action]");
-  if (!button) return;
-  const action = button.dataset.action;
-  if (action === "account") return cloud.open();
-  if (action === "signin" || action === "signup") return cloud.open(action);
-  if (busy || saving) return;
-  if (action === "reload") {
-    error = "";
-    requestError = false;
-    return load();
-  }
-  if (action === "starter") {
-    revisionText = button.dataset.message;
-    render();
-    app.querySelector("#ai-revision-text")?.focus();
-    return;
-  }
-  if (action === "start-over") {
-    if (
-      !confirm(
-        "Start a new program? Your current draft remains in Recent drafts.",
-      )
-    )
-      return;
-    draft = null;
-    revisionText = "";
-    useHistory = false;
-    error = "";
-    return render();
-  }
-  if (action === "resume") {
-    try {
-      const owner = cloud.account()?.id;
-      const result = await api("/" + button.dataset.id);
-      if (cloud.account()?.id !== owner) return;
-      draft = result;
-      draftOwner = owner;
-      if (draft.savedProgramId) {
-        returnToPrograms(draft.savedProgramId);
-        return;
+    } catch (e) {
+      if (!destroyed && cloud.account()?.id === owner) {
+        error = e.message;
+        if (e.status === 409) requestError = true;
+        try {
+          status = await api();
+        } catch {}
       }
+    } finally {
+      busy = false;
+      render();
+    }
+  });
+  app.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-action]");
+    if (!button) return;
+    const action = button.dataset.action;
+    if (action === "return-programs") {
+      if (busy || saving) return;
+      try {
+        await beforeSave();
+        await cloud.flush();
+        await onSaved(draft.savedProgramId);
+        if (!destroyed) onClose();
+      } catch (e) {
+        error = e.message;
+        render();
+      }
+      return;
+    }
+    if (busy || saving || destroyed) return;
+    if (action === "reload") {
+      error = "";
+      requestError = false;
+      return load();
+    }
+    if (action === "starter") {
+      revisionText = button.dataset.message;
+      render();
+      app.querySelector("#ai-revision-text")?.focus();
+      return;
+    }
+    if (action === "start-over") {
+      if (
+        !confirm(
+          "Start a new program? Your current draft remains in Recent drafts.",
+        )
+      )
+        return;
+      draft = null;
+      revisionText = "";
+      useHistory = false;
+      error = "";
+      return render();
+    }
+    if (action === "resume") {
+      try {
+        const owner = cloud.account()?.id;
+        const result = await api("/" + button.dataset.id);
+        if (destroyed || cloud.account()?.id !== owner) return;
+        draft = result;
+        draftOwner = owner;
+        error = "";
+        render();
+      } catch (e) {
+        error = e.message;
+        render();
+      }
+      return;
+    }
+    if (action === "save" && draft?.plan) {
+      saving = true;
       error = "";
       render();
-    } catch (e) {
-      error = e.message;
-      render();
+      try {
+        if (draftOwner !== cloud.account()?.id)
+          throw Error("Sign in again before saving.");
+        await beforeSave();
+        await cloud.flush();
+        if (destroyed || draftOwner !== cloud.account()?.id) return;
+        const result = await api("/" + draft.id + "/save", {
+          method: "POST",
+          body: JSON.stringify({ version: draft.version }),
+        });
+        if (destroyed || draftOwner !== cloud.account()?.id) return;
+        await onSaved(result.programId);
+        if (destroyed) return;
+        draft.savedProgramId = result.programId;
+        saving = false;
+        render();
+      } catch (e) {
+        error = e.message;
+        saving = false;
+        render();
+      }
     }
-    return;
-  }
-  if (action === "save" && draft?.plan) {
-    saving = true;
-    error = "";
-    render();
-    try {
-      if (draftOwner !== cloud.account()?.id)
-        throw Error("Sign in again before saving.");
-      await cloud.flush();
-      const result = await api("/" + draft.id + "/save", {
-        method: "POST",
-        body: JSON.stringify({ version: draft.version }),
-      });
-      await cloud.refresh();
-      saving = false;
-      notifyParent("busy", { busy: false });
-      returnToPrograms(result.programId);
-    } catch (e) {
-      error = e.message;
-      saving = false;
-      render();
+  });
+  const beforeUnload = (event) => {
+    if (busy || saving) {
+      event.preventDefault();
+      event.returnValue = "";
     }
-  }
-});
-window.addEventListener("beforeunload", (event) => {
-  if (busy || saving) {
-    event.preventDefault();
-    event.returnValue = "";
-  }
-});
-window.addEventListener("pageshow", (event) => {
-  if (event.persisted) location.reload();
-});
-render();
-const started = await cloud.start();
-if (started.ok) await load();
-else {
-  loading = false;
-  error = "Could not connect to Buff. Reload to try again.";
-  render();
+  };
+  window.addEventListener("beforeunload", beforeUnload);
+  void load();
+  return {
+    focus: () => {
+      const transcript = app.querySelector(".ai-messages");
+      if (transcript) transcript.scrollTop = transcript.scrollHeight;
+      app
+        .querySelector(
+          "#ai-revision-text, .ai-composer [data-action=return-programs]",
+        )
+        ?.focus({ preventScroll: true });
+    },
+    destroy: () => {
+      destroyed = true;
+      requests.abort();
+      window.removeEventListener("beforeunload", beforeUnload);
+      app.replaceChildren();
+    },
+  };
 }
-
-window.addEventListener("keydown", (event) => {
-  if (embedded && event.key === "Escape") {
-    event.preventDefault();
-    notifyParent("close");
-  }
-});

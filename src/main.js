@@ -81,6 +81,7 @@ let selected = key(new Date()),
   active = null,
   selectedProgramId = null,
   selectedProgramWeek = 1;
+let aiCoach;
 const app = document.querySelector("#app");
 const exerciseTimers = createExerciseTimers(app);
 app.addEventListener(
@@ -1202,12 +1203,14 @@ const cloud = createCloud({
     !document.querySelector("#program-share-dialog[open]"),
   onAuthenticated: processInvitation,
   onStatus: (label) => {
+    aiCoach?.checkAccount(label.startsWith("Synced"));
     updateSidebarIdentity();
     const el = document.querySelector("#sync-label");
     if (el) el.textContent = label;
   },
 });
-setupAiProgramPopup({
+aiCoach = setupAiProgramPopup({
+  cloud,
   getOwner: () => cloud.account()?.id,
   beforeOpen: () => cloud.flush(),
   onSaved: async (programId) => {

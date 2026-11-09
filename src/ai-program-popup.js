@@ -1,49 +1,91 @@
+import { mountAiCoach } from "./ai-programs.js";
 import "./ai-program-popup.css";
 
-// One shared popup for both workspaces; only its own same-origin chat may signal saves.
-export function setupAiProgramPopup({ getOwner, beforeOpen, onSaved }) {
-  let dialog,
-    frame,
+export function setupAiProgramPopup({ cloud, getOwner, beforeOpen, onSaved }) {
+  let panel,
+    chat,
     owner,
     trigger,
-    busy = false,
-    opening = false,
-    updating = false;
-  const close = () => {
-    if (!dialog || updating) return;
-    if (
-      busy &&
-      !confirm(
-        "Your coach is still working. Close the chat? Your last successful conversation is saved.",
-      )
-    )
-      return;
-    dialog.close();
-    dialog.remove();
-    dialog = frame = null;
-    document.body.classList.remove("ai-popup-open");
+    opening = false;
+  const launcher = document.createElement("button");
+  launcher.type = "button";
+  launcher.className = "ai-chat-launcher";
+  launcher.textContent = "✧ AI coach";
+  launcher.setAttribute("aria-label", "Chat with Buff AI");
+  launcher.setAttribute("aria-controls", "buff-ai-chat-panel");
+  launcher.setAttribute("aria-expanded", "false");
+  document.body.append(launcher);
+  const hide = () => {
+    if (!panel) return;
+    panel.hidden = true;
+    launcher.setAttribute("aria-expanded", "false");
     if (trigger?.isConnected) trigger.focus();
-    else document.querySelector('a[href^="/create-with-ai"]')?.focus();
+    else launcher.focus();
   };
-  const updatePrograms = async (programId) => {
-    if (updating || getOwner() !== owner) return;
-    updating = true;
-    const error = dialog.querySelector(".ai-popup-error");
-    error.hidden = true;
+  const destroy = () => {
+    chat?.destroy();
+    panel?.remove();
+    panel = chat = null;
+    owner = null;
+    launcher.setAttribute("aria-expanded", "false");
+  };
+  const open = async (source) => {
+    if (!getOwner()) return;
+    trigger = source;
+    if (panel && owner === getOwner() && (chat || opening)) {
+      panel.hidden = false;
+      launcher.setAttribute("aria-expanded", "true");
+      chat?.focus();
+      return;
+    }
+    if (opening) return;
+    destroy();
+    owner = getOwner();
+    opening = true;
+    panel = document.createElement("section");
+    panel.className = "ai-program-popup";
+    panel.id = "buff-ai-chat-panel";
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-labelledby", "ai-popup-title");
+    panel.innerHTML = `<header class="ai-popup-header"><div><strong id="ai-popup-title">Buff AI coach</strong><small>Let’s build your next program.</small></div><button class="ai-popup-close" type="button" aria-label="Close AI chat">×</button></header><div class="ai-coach-host"><p role="status">Connecting to your coach…</p></div>`;
+    panel.querySelector(".ai-popup-close").onclick = hide;
+    panel.addEventListener("keydown", (event) => {
+      if (
+        event.key === "Escape" &&
+        !document.querySelector("dialog[open], .modal-backdrop")
+      ) {
+        event.preventDefault();
+        hide();
+      }
+    });
+    document.body.append(panel);
+    launcher.setAttribute("aria-expanded", "true");
+    const host = panel.querySelector(".ai-coach-host");
     try {
-      await onSaved(programId);
-      updating = false;
-      busy = false;
-      close();
-    } catch {
-      updating = false;
-      error.hidden = false;
-      error.querySelector("p").textContent =
-        "Your program was saved, but the library could not refresh. Try again.";
-      error.querySelector("button").onclick = () => updatePrograms(programId);
+      await beforeOpen();
+      if (!panel || getOwner() !== owner) return;
+      chat = mountAiCoach({
+        container: host,
+        cloud,
+        onClose: hide,
+        onSaved,
+        beforeSave: async () => {
+          if (document.querySelector(".modal-backdrop, dialog[open]"))
+            throw Error(
+              "Finish or close the open editor before saving your AI program.",
+            );
+        },
+      });
+    } catch (error) {
+      if (panel)
+        host.textContent =
+          error.message ||
+          "Could not connect. Close and reopen the chat to try again.";
+    } finally {
+      opening = false;
     }
   };
-  document.addEventListener("click", async (event) => {
+  document.addEventListener("click", (event) => {
     const link = event.target.closest('a[href^="/create-with-ai"]');
     if (
       !link ||
@@ -57,59 +99,24 @@ export function setupAiProgramPopup({ getOwner, beforeOpen, onSaved }) {
     )
       return;
     event.preventDefault();
-    if (dialog || opening) return;
-    opening = true;
-    trigger = link;
-    owner = getOwner();
-    dialog = document.createElement("dialog");
-    dialog.className = "ai-program-popup";
-    dialog.setAttribute("aria-labelledby", "ai-popup-title");
-    dialog.innerHTML = `<header class="ai-popup-header"><div><strong id="ai-popup-title">Create a program with AI</strong><small>Chat, review, and save your program.</small></div><button class="ai-popup-close" type="button" aria-label="Close AI chat">×</button></header><div class="ai-popup-error" role="alert" hidden><p></p><button type="button">Try again</button></div><p class="ai-popup-loading" role="status">Opening your coach…</p>`;
-    document.body.append(dialog);
-    document.body.classList.add("ai-popup-open");
-    dialog.addEventListener("cancel", (e) => {
-      e.preventDefault();
-      close();
-    });
-    dialog.querySelector(".ai-popup-close").onclick = close;
-    dialog.showModal();
-    busy = false;
-    try {
-      await beforeOpen();
-      if (!dialog || getOwner() !== owner) return;
-      const url = new URL(link.href);
-      url.searchParams.set("embedded", "1");
-      frame = document.createElement("iframe");
-      frame.title = "AI program coach";
-      frame.src = url.href;
-      frame.addEventListener("load", () =>
-        dialog?.querySelector(".ai-popup-loading")?.remove(),
-      );
-      dialog.append(frame);
-    } catch (error) {
-      if (dialog)
-        dialog.querySelector(".ai-popup-loading").textContent =
-          error.message ||
-          "Could not open the coach. Close this window and try again.";
-    } finally {
-      opening = false;
+    void open(link);
+  });
+  launcher.onclick = () =>
+    panel && !panel.hidden ? hide() : void open(launcher);
+  const url = new URL(location.href);
+  let autoOpen = url.searchParams.get("ai") === "1";
+  if (autoOpen) {
+    url.searchParams.delete("ai");
+    history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }
+  const checkAccount = (ready = false) => {
+    if (owner && owner !== getOwner()) destroy();
+    launcher.hidden = !getOwner();
+    if (autoOpen && ready && getOwner()) {
+      autoOpen = false;
+      void open(launcher);
     }
-  });
-  window.addEventListener("message", (event) => {
-    if (
-      !dialog ||
-      !frame ||
-      event.origin !== location.origin ||
-      event.source !== frame.contentWindow ||
-      getOwner() !== owner
-    )
-      return;
-    if (event.data?.type === "buff-ai:busy") busy = event.data.busy === true;
-    if (event.data?.type === "buff-ai:close") close();
-    if (
-      event.data?.type === "buff-ai:saved" &&
-      typeof event.data.programId === "string"
-    )
-      void updatePrograms(event.data.programId);
-  });
+  };
+  checkAccount();
+  return { checkAccount };
 }

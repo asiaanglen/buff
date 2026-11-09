@@ -10,6 +10,7 @@ import "@fontsource-variable/manrope";
 import "./style.css";
 import "./themes.css";
 import "./coach.css";
+let aiCoach;
 const app = document.querySelector("#app");
 const esc = (value) =>
   String(value ?? "").replace(
@@ -155,6 +156,7 @@ const cloud = createCloud({
     render();
   },
   onStatus: (label) => {
+    aiCoach?.checkAccount(label.startsWith("Synced"));
     const el = app.querySelector("#sync-label");
     if (el) el.textContent = label;
     if (!cloud.isSignedIn() && !loading) {
@@ -541,7 +543,8 @@ app.addEventListener("submit", async (event) => {
     buttons.forEach((b) => (b.disabled = false));
   }
 });
-setupAiProgramPopup({
+aiCoach = setupAiProgramPopup({
+  cloud,
   getOwner: () => cloud.account()?.id,
   beforeOpen: () => cloud.flush(),
   onSaved: async () => {
