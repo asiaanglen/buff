@@ -97,6 +97,8 @@ export function copyProgramWeek(state, programId, from, to) {
   const copies = originals.map((w) => ({
     ...structuredClone(w),
     completed: false,
+    skipped: false,
+    performedDate: undefined,
     id: uid(),
     date: shiftDate(w.date, (to - from) * 7),
     exercises: w.exercises.map((e) => ({
@@ -152,7 +154,11 @@ export function exercisePerformanceHistory(
     exerciseByName(name)?.id || name.trim().replace(/\s+/g, " ").toLowerCase();
   const sessions = [];
   state.workouts.forEach((workout, order) => {
-    if (workout.id === currentWorkout.id || workout.date > currentWorkout.date)
+    if (
+      workout.id === currentWorkout.id ||
+      (workout.performedDate || workout.date) >
+        (currentWorkout.performedDate || currentWorkout.date)
+    )
       return;
     for (const e of workout.exercises) {
       if (
@@ -176,7 +182,7 @@ export function exercisePerformanceHistory(
       );
       if (!sets.length) continue;
       sessions.push({
-        date: workout.date,
+        date: workout.performedDate || workout.date,
         workoutName: workout.name,
         sets,
         latest: sets.at(-1),

@@ -1,7 +1,39 @@
+import { exercise } from "../../src/model.js";
 import { test, expect } from "./auth-fixture.js";
 test("mobile uses one page dropdown and clearly labeled set logging accordions", async ({
   page,
+  baseURL,
 }) => {
+  await page.request.put("/api/state", {
+    headers: { Origin: baseURL },
+    data: {
+      revision: 0,
+      state: {
+        version: 1,
+        unit: "lbs",
+        activeProgramId: "mobile",
+        programs: [
+          {
+            id: "mobile",
+            name: "Mobile program",
+            startDate: "2030-01-01",
+            weeks: 2,
+            note: "",
+          },
+        ],
+        workouts: [
+          {
+            id: "mobile-workout",
+            name: "Mobile workout",
+            date: "2030-01-01",
+            programId: "mobile",
+            note: "",
+            exercises: [exercise("Back Squat", 2, 8)],
+          },
+        ],
+      },
+    },
+  });
   for (const width of [390, 320]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto("/");
@@ -22,14 +54,13 @@ test("mobile uses one page dropdown and clearly labeled set logging accordions",
       .boundingBox();
     expect(Math.abs(menuBox.y - accountBox.y)).toBeLessThan(8);
     expect(menuBox.x).toBeLessThan(accountBox.x);
-    await expect(menu).toHaveValue("planner");
+    await expect(menu).toHaveValue("home");
     await expect(page.locator(".sidebar nav")).toBeHidden();
-    await expect(menu.locator("option")).toHaveCount(4);
+    await expect(menu.locator("option")).toHaveCount(3);
     for (const [tab, title] of [
       ["home", "Your next good workout."],
       ["programs", "Your next chapter."],
       ["history", "Completed workouts"],
-      ["planner", "Your week, in motion."],
     ]) {
       await menu.selectOption(tab);
       await expect(
@@ -37,6 +68,7 @@ test("mobile uses one page dropdown and clearly labeled set logging accordions",
       ).toBeVisible();
       await expect(menu).toHaveValue(tab);
     }
+    await menu.selectOption("home");
     await expect(page.locator(".exercise-preview-row")).not.toHaveCount(0);
     await expect(page.locator('[data-action="expand-exercise"]')).toHaveCount(
       0,

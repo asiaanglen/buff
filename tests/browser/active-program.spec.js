@@ -34,9 +34,6 @@ test("started programs persist and advance after completed sets, including undo 
   await page
     .getByRole("button", { name: "Start program →", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Start program & align →", exact: true })
-    .click();
   const next = page.getByRole("region", { name: "Next workout" });
   await expect(
     next.getByRole("heading", { name: "First session" }),
@@ -70,6 +67,7 @@ test("started programs persist and advance after completed sets, including undo 
     next.getByRole("heading", { name: "First session" }),
   ).toBeVisible();
   await next.getByRole("button", { name: "Start workout" }).click();
+  await page.getByLabel("Squat set 1 reps", { exact: true }).fill("8");
   await page.getByLabel("Squat set 1 completed").click();
   await expect(
     next.getByRole("heading", { name: "Second session" }),
@@ -86,10 +84,11 @@ test("started programs persist and advance after completed sets, including undo 
   ).toBeVisible();
   for (let i = 0; i < 2; i++) {
     await next.getByRole("button", { name: "Start workout" }).click();
+    await page.getByLabel("Squat set 1 reps", { exact: true }).fill("8");
     await page.getByLabel("Squat set 1 completed").click();
   }
   await expect(
-    next.getByText("Every workout completed. Well done!"),
+    next.getByText("You’ve reached the end of your program."),
   ).toBeVisible();
   await expect(page.locator(".home-workout.workout-complete")).toHaveCount(2);
 });
@@ -155,11 +154,9 @@ test("switching programs requires confirmation and preserves completed workouts 
   ).toBeTruthy();
   await page.goto("/");
   await navigateTo(page, "programs");
-  const target = page
-    .locator(".program-card")
-    .filter({
-      has: page.getByRole("heading", { name: "New block", exact: true }),
-    });
+  const target = page.locator(".program-card").filter({
+    has: page.getByRole("heading", { name: "New block", exact: true }),
+  });
   await expect(
     target.getByRole("button", { name: "View Program →", exact: true }),
   ).toBeVisible();
@@ -181,19 +178,14 @@ test("switching programs requires confirmation and preserves completed workouts 
   await target
     .getByRole("button", { name: "Start program →", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Start program & align →", exact: true })
-    .click();
   await expect(page.locator("#sync-label")).toContainText("Synced");
   const saved = (await (await page.request.get("/api/state")).json()).state;
   expect(saved.activeProgramId).toBe(programs[1].id);
   expect(saved.programs[0].unenrolled).toBe(true);
   expect(saved.workouts[0]).toEqual(workouts[0]);
-  await navigateTo(page, "planner");
-  await expect(page.locator('[data-calendar-workout="upcoming"]')).toHaveCount(
-    0,
-  );
-  await expect(page.locator('[data-calendar-workout="new"]')).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Next workout" }),
+  ).toContainText("New session");
   await navigateTo(page, "history");
   await expect(page.locator(".history-card")).toContainText("Finished session");
   await page.reload();

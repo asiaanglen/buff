@@ -547,3 +547,86 @@ test("completed sets can omit weight and still appear in exercise history withou
   assert.equal(history[0].sets[0].weight, "");
   assert.equal(history[0].sets[0].actual, 8);
 });
+
+test("program queue ignores calendar dates, skips without losing results, and restores skipped sessions", async () => {
+  const {
+    nextProgramWorkout,
+    skipProgramWorkout,
+    finishWorkout,
+    isWorkoutComplete,
+  } = await import("../shared/completion.js");
+  const state = {
+    version: 1,
+    unit: "lbs",
+    activeProgramId: "p",
+    programs: [
+      {
+        id: "p",
+        name: "Sequence",
+        weeks: 4,
+        startDate: "2030-01-01",
+        note: "",
+      },
+    ],
+    workouts: [0, 1, 2].map((i) => ({
+      id: "w" + i,
+      name: "Session " + i,
+      note: "",
+      programId: "p",
+      date: addDays("2030-01-01", i),
+      exercises: [exercise("Back Squat", 2, 8)],
+    })),
+  };
+  state.workouts[0].exercises[0].logs[0] = {
+    weight: 95,
+    actual: 8,
+    done: true,
+  };
+  const before = structuredClone(state.workouts[0].exercises);
+  assert.equal(nextProgramWorkout(state).id, "w0");
+  skipProgramWorkout(state, "w0");
+  assert.equal(nextProgramWorkout(state).id, "w1");
+  assert.equal(isWorkoutComplete(state.workouts[0]), false);
+  assert.deepEqual(state.workouts[0].exercises, before);
+  assert.equal(validState(state), true);
+  state.workouts[0].skipped = "yes";
+  assert.equal(validState(state), false);
+  delete state.workouts[0].skipped;
+  assert.equal(nextProgramWorkout(state).id, "w0");
+  finishWorkout(state.workouts[0]);
+  assert.equal(nextProgramWorkout(state).id, "w1");
+  assert.throws(() => skipProgramWorkout(state, "w0"), /unfinished/);
+  skipProgramWorkout(state, "w1");
+  skipProgramWorkout(state, "w2");
+  assert.equal(nextProgramWorkout(state), null);
+  finishWorkout(state.workouts[1]);
+  assert.equal(state.workouts[1].skipped, undefined);
+  const [copy] = copyProgramWeek(state, "p", 1, 2);
+  assert.equal(copy.skipped, false);
+  assert.equal(copy.completed, false);
+});
+
+test("exercise history follows actual training dates independently of program schedule", () => {
+  const first = {
+    id: "first",
+    name: "First session",
+    date: "2030-01-01",
+    performedDate: "2026-11-09",
+    exercises: [exercise("Back Squat", 1, 8)],
+  };
+  first.exercises[0].logs[0] = { weight: 95, actual: 8, done: true };
+  const next = {
+    id: "next",
+    name: "Next session",
+    date: "2030-01-02",
+    performedDate: "2026-11-09",
+    exercises: [exercise("Back Squat", 1, 8)],
+  };
+  const history = exercisePerformanceHistory(
+    { workouts: [first, next] },
+    next,
+    next.exercises[0],
+  );
+  assert.equal(history[0].date, "2026-11-09");
+  assert.equal(history[0].latest.weight, 95);
+});

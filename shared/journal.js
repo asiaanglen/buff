@@ -86,6 +86,8 @@ export function validState(s) {
       !w.name.trim() ||
       !text(w.note, 500) ||
       (w.completed !== undefined && typeof w.completed !== "boolean") ||
+      (w.skipped !== undefined && typeof w.skipped !== "boolean") ||
+      (w.performedDate !== undefined && !validDate(w.performedDate)) ||
       !validDate(w.date) ||
       !Array.isArray(w.exercises) ||
       w.exercises.length > 200

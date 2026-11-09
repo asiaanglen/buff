@@ -116,5 +116,5 @@ test("finishing a partial workout shows set counts, advances the program, keeps 
   );
   await expect(
     page.getByRole("region", { name: "Next workout", exact: true }),
-  ).toContainText("Every workout completed");
+  ).toContainText("You’ve reached the end");
 });

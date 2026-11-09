@@ -1,6 +1,6 @@
 # Buff
 
-A responsive weekly workout planner with accounts, cross-device sync, supersets, repetition or time targets, per-set logging, history, and weekly progress.
+A program-focused workout app with accounts, cross-device sync, supersets, repetition or time targets, per-set logging, and history. Follow the next workout at your own pace, with optional skips and no calendar.
 
 ## Deployed app
 
@@ -148,11 +148,11 @@ The manifest includes standard, maskable, and Apple home-screen icons. The servi
 
 ## Start a program
 
-Choose **Start program** in the program library or program detail to make it your active program. Your signed-in **Home** page features the earliest unfinished workout in scheduled order, regardless of the current calendar week. Completing every set greys out that workout and promotes the next one after closing the log. Completed logs stay available, and undoing a completed set makes the workout unfinished again. Starting another program changes the focus without resetting any logs. The active choice is stored in your account journal and syncs across devices.
+Choose **Start program** in the program library or program detail to make it your active program. Your signed-in **Home** page features the first workout that is neither completed nor skipped, in program order and without calendar dates. Completing a workout greys it out and brings the next workout forward. Skip workout moves ahead while keeping any logged results, and Undo skip restores the session. Completed logs stay available, and undoing a completed set makes the workout unfinished again. Starting another program changes the focus without resetting any logs. The active choice is stored in your account journal and syncs across devices.
 
 ## Complete a workout
 
-In the workout log, check individual sets as you complete them. Use **+ Add set** within an expanded exercise to append another set with blank actual-entry fields and unchanged planned targets (up to 30 sets per exercise). **Mark as complete** lets you finish a workout at any point, including with zero completed sets. Sets with valid reps/time are saved as done; weight is optional and stays blank when omitted. Unfinished sets remain unlogged. A confirmation says **Congrats! You completed X out of Y sets.** Workout completion is stored separately from set completion and syncs across devices, program progress, calendar, coach views, and admin metrics. Existing results, including zero weights, are preserved. Completed workouts appear under **Completed workouts**, turn grey in the program, and advance the active program's next workout. Unchecking a set makes the workout unfinished again while retaining its recorded values.
+In the workout log, check individual sets as you complete them. Use **+ Add set** within an expanded exercise to append another set with blank actual-entry fields and unchanged planned targets (up to 30 sets per exercise). **Mark as complete** lets you finish a workout at any point, including with zero completed sets. Sets with valid reps/time are saved as done; weight is optional and stays blank when omitted. Unfinished sets remain unlogged. A confirmation says **Congrats! You completed X out of Y sets.** Workout completion is stored separately from set completion and syncs across devices, program progress, coach views, and admin metrics. Existing results, including zero weights, are preserved. Completed workouts appear under **Completed workouts**, turn grey in the program, and advance the active program's next workout. Unchecking a set makes the workout unfinished again while retaining its recorded values.
 
 ## Exercise library
 
@@ -184,9 +184,9 @@ Choose **Swap exercise** to open the library and select a replacement or enter a
 
 Open **Account → Manage connected AI apps** to review or disconnect the AI apps authorized through Buff OAuth. AI management is available through Account; there is no separate navigation tab.
 
-Startup shows a branded loading screen while the session and journal are checked, including in the initial HTML before JavaScript loads. Authenticated users go straight from loading to their planner/Home; anonymous users see the public landing page only after the session check. Failed startup shows a retry screen. Session, journal-load and provider-discovery requests have a 15-second timeout. **Swap exercise** sits beside the exercise name in both previews and expanded exercise headings.
+Startup shows a branded loading screen while the session and journal are checked, including in the initial HTML before JavaScript loads. Authenticated users go straight from loading to Home; anonymous users see the public landing page only after the session check. Failed startup shows a retry screen. Session, journal-load and provider-discovery requests have a 15-second timeout. **Swap exercise** sits beside the exercise name in both previews and expanded exercise headings.
 
-On phones, the page dropdown sits at the left of the Account row beneath the logo, replacing the duplicate current-page label. Use it to switch between Home, Programs, Weekly planner and Completed workouts. The Account control remains on the right; the email/sync text is hidden in this compact row. Desktop navigation keeps its sidebar buttons. Before starting, exercise previews show only names, set counts, target reps/time and weight. After starting, exercise headings expand or fold their fields and show logged-set counts.
+On phones, the page dropdown sits at the left of the Account row beneath the logo, replacing the duplicate current-page label. Use it to switch between Home, Programs and Completed workouts. The Account control remains on the right; the email/sync text is hidden in this compact row. Desktop navigation keeps its sidebar buttons. Before starting, exercise previews show only names, set counts, target reps/time and weight. After starting, exercise headings expand or fold their fields and show logged-set counts.
 
 MCP-created exercises now store an optional `libraryId` when a catalog name or alias matches. MCP exercise inputs also accept `library_id` from `search_exercises` for explicit selection; invalid IDs and conflicting known names are rejected before approval. Recognized timed exercises use timed tracking when no mode is supplied. The Edit exercise dialog shows the selected library entry with its guide and a Swap exercise control, including for older text-only exercises that match a catalog name. Custom movements remain supported. Cable Kickback (glutes, low cable with ankle strap) and Split Squat (both feet on the floor) are included with instructions and plural search aliases.
 
@@ -198,11 +198,11 @@ Expanded phone workouts use a light, uncluttered panel with the exercise name an
 
 Before **Start workout**, the exercise list is a read-only preview with no per-exercise logging, swap, guide or edit buttons. **Edit plan** provides the exercise management controls, including adding exercises and managing supersets. Once started, the light workout editor opens the first exercise and keeps only one exercise expanded at a time. The former **Log sets** controls have been removed.
 
-## Align a program with Weekly planner
+## Follow your program in order
 
-Weekly planner remains available. **Start program** opens a Week 1 start-date chooser with This Monday / Next Monday shortcuts and a first-week date preview. Confirming activates the program and shifts all its workout dates by the same number of days, preserving numbered weeks, relative days, exercise IDs, notes, supersets and targets. No duplicate workouts are created; unrelated workouts are unchanged. The Home page links directly to the program's next workout in Weekly planner. **Align with planner** is also available from Home and program detail to adjust an unlogged program later.
+Home opens for every signed-in user. Choose **Start program** to activate one program immediately, without a date picker or calendar. Home features the first workout that is neither completed nor skipped, in the program’s existing week/workout order. Completing a workout or choosing **Skip workout** advances to the next one. **Undo skip** returns it to the queue. Skipped sessions stay separate from Completed workouts; any already-logged sets and notes remain intact. At the end, Buff shows completed and skipped counts without labeling skipped sessions as completed.
 
-Program alignment accepts a new start date even after results have been logged. **Today** uses the device’s local calendar date. Every assigned workout, including completed and partially logged workouts, shifts by the same number of days; IDs, sets, results, notes, and numbered program weeks are preserved. The dialog explains that recorded workout dates move too. Invalid dates or a rejected shift leave the whole journal unchanged.
+Navigation includes Home, Programs, and Completed workouts. Calendar, Weekly planner, date alignment, and drag-to-reschedule UI have been removed. Programs retain numbered weeks; new/edit/import flows use those weeks without calendar fields. Existing dates remain internally for backward-compatible ordering, sharing, MCP, and journal validation. New personal workout logging records the actual local training date separately for history. Standalone workouts from earlier versions remain under **Other workouts** on Home. Switching programs pauses the previous program and preserves every workout and result.
 
 ## Share a program with a friend
 
@@ -213,7 +213,7 @@ Choose **Share program** in Programs, program detail, or the active program on H
 
 Choose the recipient from your phone's contacts in Messages and send it. Supported phones also offer the native **Share…** sheet; **Copy invitation** works for any messaging app. Buff does not upload contacts, send texts automatically, or use a paid SMS service.
 
-The link opens a public Buff invitation with sign-up/sign-in actions. After authentication, the recipient automatically gets their own copy in **Programs**. Google sign-in carries the invitation through its return URL when Google auth is configured. The plan snapshot includes program/workout plan notes, exercises, sets, targets, weights in lbs and supersets; it excludes logged results and exercise session notes. The recipient gets fresh IDs and empty logs, with the program's relative schedule starting on their local current date. They can choose a different date when starting/alignment. Existing recipient programs, history and active-program choice remain intact.
+The link opens a public Buff invitation with sign-up/sign-in actions. After authentication, the recipient automatically gets their own copy in **Programs**. Google sign-in carries the invitation through its return URL when Google auth is configured. The plan snapshot includes program/workout plan notes, exercises, sets, targets, weights in lbs and supersets; it excludes logged results and exercise session notes. The recipient gets fresh IDs and empty logs, with the program's relative schedule starting on their local current date. They follow the workouts in order at their own pace. Existing recipient programs, history and active-program choice remain intact.
 
 Links remain available until disabled by their owner under **Manage invitation links** in the sharing dialog. Disabling stops future joins but does not delete copies already added. Revisiting or accepting a link concurrently adds it only once per account. The browser retains pending invitations for up to seven days to carry sign-in across redirects. Workout data is stored in D1 tables added by migration `0004_program_shares.sql`, using conditional journal revisions and an atomic import receipt to prevent duplicates or overwritten edits. Program sharing currently requires the Cloudflare Workers/D1 deployment.
 
@@ -237,11 +237,6 @@ Apply `0005_account_profiles.sql` with `npm run db:migrate:remote` before deploy
 
 Open **Account → Edit profile** to update First Name, Last Name, Date of Birth, or email. The editor loads the latest account details, validates changes, and provides Save changes and Cancel. Password accounts also have **Change password** with confirmation. Changing email or password requires the current password, preserves the current session, and signs out the account’s other browser sessions. Changing only name or birth date keeps those sessions active. Google-only accounts can update profile details while their email and sign-in remain managed through Google. Workout journals and account IDs are preserved throughout.
 
-## Calendar and drag-to-reschedule
-
-In **Weekly planner**, choose **Week** or **Month** above the calendar. Month shows a Monday-first calendar with all workouts on their assigned dates, previous/next month controls, and Today. Completed workouts appear grey. Drag a workout’s **⠿** handle onto another date with a mouse or a touch screen; touch dragging scrolls the page near the top/bottom edge. You can also select a date, choose **Move** on a workout card, and pick a date without dragging.
-
-Moving a workout changes only its date: IDs, exercises, planned sets, logged results, supersets, and notes are retained and sync to the account’s other devices. Program workouts must stay within the program’s date range; use program alignment to shift the full program. An invalid drop leaves the journal unchanged and displays a message. Calendar month calculations use date-only arithmetic, and Today uses the device’s local calendar date.
 
 ## Owner usage monitoring
 

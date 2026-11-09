@@ -1,7 +1,6 @@
 import { createCloud } from "./cloud.js";
 import { brandLogo } from "./brand.js";
 import { formatAiMessage } from "./ai-message-format.js";
-import { shiftDate } from "../shared/programs.js";
 import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/manrope";
 import "./style.css";
@@ -23,13 +22,6 @@ const today = () => {
     .toISOString()
     .slice(0, 10);
 };
-const fmt = (value) =>
-  new Date(value + "T12:00:00").toLocaleDateString(undefined, {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 const coachMode = new URL(location.href).searchParams.get("coach") === "1";
 const embedded =
   window.parent !== window &&
@@ -134,7 +126,7 @@ function preview() {
     number: i + 1,
     workouts: plan.workouts.filter((w) => Math.floor(w.offset / 7) === i),
   }));
-  return `<section class="ai-panel ai-preview"><span class="tag">DRAFT · NOT SAVED</span><h2>${esc(plan.program.name)}</h2><a class="text-button" href="#ai-revision-text">Ask for changes ↓</a><p>${esc(plan.program.note)}</p><p><strong>${plan.program.weeks} weeks · ${plan.workouts.length} workouts</strong> · Starts ${fmt(draft.startDate)}</p>${byWeek.map((week) => `<details class="ai-week" ${week.number === 1 ? "open" : ""}><summary>Week ${week.number}<span>${week.workouts.length} workouts</span></summary>${week.workouts.map((w) => `<article class="ai-workout"><div><h3>${esc(w.name)}</h3><span>${fmt(shiftDate(draft.startDate, w.offset))}</span></div>${w.note ? `<p class="ai-week-note">${esc(w.note)}</p>` : ""}<ol>${w.exercises.map((e) => `<li><strong>${esc(e.name)}</strong><span>${e.sets} sets × ${e.target} ${e.mode === "time" ? "sec" : "reps"} · ${e.weight ? e.weight + " lbs suggested" : e.weighted === false ? "Bodyweight" : "Starting weight unassigned"}${e.group ? " · Superset " + esc(e.group) : ""}</span></li>`).join("")}</ol></article>`).join("")}</details>`).join("")}<div class="ai-save"><p>Saving adds a new program to your library. Enrollment and your current program stay unchanged.</p><button type="button" class="button primary" data-action="save" ${busy || saving ? "disabled" : ""}>${saving ? "Saving…" : "Save program"}</button><button type="button" class="text-button" data-action="start-over" ${busy || saving ? "disabled" : ""}>Create a different program</button></div></section>`;
+  return `<section class="ai-panel ai-preview"><span class="tag">DRAFT · NOT SAVED</span><h2>${esc(plan.program.name)}</h2><a class="text-button" href="#ai-revision-text">Ask for changes ↓</a><p>${esc(plan.program.note)}</p><p><strong>${plan.program.weeks} weeks · ${plan.workouts.length} workouts</strong> · Train at your own pace</p>${byWeek.map((week) => `<details class="ai-week" ${week.number === 1 ? "open" : ""}><summary>Week ${week.number}<span>${week.workouts.length} workouts</span></summary>${week.workouts.map((w) => `<article class="ai-workout"><div><h3>${esc(w.name)}</h3><span>Week ${week.number} · Workout ${week.workouts.indexOf(w) + 1}</span></div>${w.note ? `<p class="ai-week-note">${esc(w.note)}</p>` : ""}<ol>${w.exercises.map((e) => `<li><strong>${esc(e.name)}</strong><span>${e.sets} sets × ${e.target} ${e.mode === "time" ? "sec" : "reps"} · ${e.weight ? e.weight + " lbs suggested" : e.weighted === false ? "Bodyweight" : "Starting weight unassigned"}${e.group ? " · Superset " + esc(e.group) : ""}</span></li>`).join("")}</ol></article>`).join("")}</details>`).join("")}<div class="ai-save"><p>Saving adds a new program to your library. Enrollment and your current program stay unchanged.</p><button type="button" class="button primary" data-action="save" ${busy || saving ? "disabled" : ""}>${saving ? "Saving…" : "Save program"}</button><button type="button" class="text-button" data-action="start-over" ${busy || saving ? "disabled" : ""}>Create a different program</button></div></section>`;
 }
 function chat() {
   const hasPlan = Boolean(draft?.plan);

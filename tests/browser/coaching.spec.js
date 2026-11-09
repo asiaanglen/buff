@@ -79,7 +79,7 @@ test("coach builds a program, invites by email/text, client joins, coach logs re
       .getByLabel("Program name", { exact: true })
       .fill("Coach strength block");
     await coach.getByLabel("Number of weeks").fill("2");
-    await coach.getByLabel("Start date", { exact: true }).fill(date());
+    await expect(coach.locator('input[type="date"]')).toHaveCount(0);
     await coach
       .getByRole("button", { name: "Create program →", exact: true })
       .click();
