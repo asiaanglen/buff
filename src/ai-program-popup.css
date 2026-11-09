@@ -26,11 +26,11 @@
   height: min(760px, calc(100dvh - 48px));
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--line);
+  border: 1px solid color-mix(in srgb, var(--purple) 45%, white);
   border-radius: 22px;
   background: white;
   color: var(--ink, #252331);
-  box-shadow: 0 20px 70px #21142b40;
+  box-shadow: 0 20px 70px #21142b55;
   overflow: hidden;
 }
 .ai-popup-header {
@@ -40,7 +40,8 @@
   gap: 12px;
   padding: 16px 20px;
   border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--purple) 7%, white);
+  background: color-mix(in srgb, var(--purple) 80%, #24182f);
+  color: white;
   flex-shrink: 0;
 }
 .ai-popup-header strong {
@@ -49,15 +50,15 @@
 .ai-popup-header small {
   display: block;
   margin-top: 4px;
-  color: var(--muted);
+  color: #ffffffe0;
 }
 .ai-popup-close {
   width: 40px;
   height: 40px;
-  border: 1px solid var(--line);
+  border: 1px solid #ffffff55;
   border-radius: 12px;
-  background: white;
-  color: var(--purple);
+  background: #ffffff18;
+  color: white;
   font-size: 26px;
   cursor: pointer;
   flex-shrink: 0;

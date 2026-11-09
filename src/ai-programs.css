@@ -17,6 +17,7 @@
 }
 .ai-main textarea {
   resize: vertical;
+  border-color: color-mix(in srgb, var(--purple) 40%, white);
 }
 .ai-main .ai-history-choice {
   display: flex;
@@ -241,26 +242,43 @@
   overflow-y: auto;
   padding: 16px;
   overscroll-behavior: contain;
+  background: color-mix(in srgb, var(--purple) 18%, #edf0f5);
 }
 .ai-coach-host .ai-message {
   margin: 0 0 14px;
   padding: 14px;
   max-width: 94%;
+  background: white;
+  border: 1px solid color-mix(in srgb, var(--purple) 22%, white);
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 6px #21142b0a;
 }
 .ai-coach-host .ai-message-user {
   margin-left: auto;
+  background: color-mix(in srgb, var(--purple) 70%, #281d3b);
+  color: white;
+  border-color: transparent;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 4px;
+}
+.ai-coach-host .ai-message-user :is(p, strong) {
+  color: white;
+}
+.ai-coach-host .ai-message:not(.ai-message-user) > strong {
+  color: var(--purple);
 }
 .ai-coach-host .ai-composer {
   flex-shrink: 0;
   padding: 12px 16px;
-  border-top: 1px solid var(--line);
-  background: white;
+  border-top: 1px solid color-mix(in srgb, var(--purple) 30%, white);
+  background: color-mix(in srgb, var(--purple) 5%, white);
 }
 .ai-coach-host .ai-composer textarea {
   min-height: 64px;
   max-height: 140px;
   font-size: 16px;
   resize: vertical;
+  border-color: color-mix(in srgb, var(--purple) 40%, white);
 }
 .ai-composer-tools {
   display: flex;
@@ -333,4 +351,10 @@
   border-radius: 12px;
   background: #eaf6ee;
   color: #285a39;
+}
+.ai-coach-host .ai-message-content {
+  color: color-mix(in srgb, var(--purple) 25%, #252331);
+}
+.ai-coach-host .ai-message-content :is(p, li) {
+  color: inherit;
 }
