@@ -1,5 +1,5 @@
 export function isWorkoutComplete(workout) {
-  if (workout.skipped) return false;
+  if (workout.skipped || workout.completionUndone) return false;
   const logs = workout.exercises.flatMap((e) => e.logs);
   return (
     workout.completed === true ||
@@ -8,6 +8,7 @@ export function isWorkoutComplete(workout) {
 }
 export function finishWorkout(workout) {
   delete workout.skipped;
+  delete workout.completionUndone;
   workout.completed = true;
   const logs = workout.exercises.flatMap((e) => e.logs);
   return { done: logs.filter((log) => log.done).length, total: logs.length };
@@ -36,5 +37,15 @@ export function skipProgramWorkout(state, workoutId) {
   )
     throw Error("Choose an unfinished workout in your active program.");
   workout.skipped = true;
+  return workout;
+}
+
+export function reopenWorkout(workout) {
+  if (!workout || !isWorkoutComplete(workout))
+    throw Error("Choose a completed workout.");
+  delete workout.completed;
+  delete workout.skipped;
+  // Preserve checked sets and results without immediately deriving completion again.
+  workout.completionUndone = true;
   return workout;
 }

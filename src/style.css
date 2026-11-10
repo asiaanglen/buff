@@ -4173,3 +4173,30 @@ body:has(#program-share-dialog[open]) .pwa-help {
     font-size: 19px;
   }
 }
+
+.history-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.history-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid #eccbd4;
+  border-radius: 12px;
+  background: #fff7f9;
+  color: #ae395c;
+  cursor: pointer;
+}
+.history-remove:hover {
+  background: #fce5ed;
+}
+.history-remove:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+}

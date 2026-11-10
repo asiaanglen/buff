@@ -98,6 +98,7 @@ export function copyProgramWeek(state, programId, from, to) {
     ...structuredClone(w),
     completed: false,
     skipped: false,
+    completionUndone: undefined,
     performedDate: undefined,
     id: uid(),
     date: shiftDate(w.date, (to - from) * 7),

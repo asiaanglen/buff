@@ -1,5 +1,9 @@
 import { setupAiProgramPopup } from "./ai-program-popup.js";
-import { finishWorkout, skipProgramWorkout } from "../shared/completion.js";
+import {
+  finishWorkout,
+  skipProgramWorkout,
+  reopenWorkout,
+} from "../shared/completion.js";
 import { avatarUrl } from "./profile-picture.js";
 import { brandLogo } from "./brand.js";
 import { createExerciseTimers } from "./exercise-timer.js";
@@ -467,7 +471,7 @@ function history() {
     .sort((a, b) =>
       (b.performedDate || b.date).localeCompare(a.performedDate || a.date),
     );
-  return `<section class="history-list">${ws.map((w) => `<article class="history-card"><div><span class="tag">${dateLabel(w.performedDate || w.date)} · ${fmt(w.performedDate || w.date, { year: "numeric" })}${programSummary(w) ? ` · ${esc(programSummary(w))}` : ""}</span><h2>${esc(w.name)}</h2><p>${progress(w).done} of ${progress(w).total} sets logged</p></div><button class="button primary" data-action="log" data-id="${w.id}">${loggingWorkouts.has(w.id) ? "Collapse workout" : "View log →"}</button>${loggingWorkouts.has(w.id) ? logForm(w) : ""}</article>`).join("") || '<div class="empty"><span>↑</span><h3>Your next finish starts with a set.</h3><p>Complete a workout to see it here.</p></div>'}</section>`;
+  return `<section class="history-list">${ws.map((w) => `<article class="history-card"><div><span class="tag">${dateLabel(w.performedDate || w.date)} · ${fmt(w.performedDate || w.date, { year: "numeric" })}${programSummary(w) ? ` · ${esc(programSummary(w))}` : ""}</span><h2>${esc(w.name)}</h2><p>${progress(w).done} of ${progress(w).total} sets logged</p></div><div class="history-actions"><button class="button primary" data-action="log" data-id="${w.id}">${loggingWorkouts.has(w.id) ? "Collapse workout" : "View log →"}</button>${isWorkoutComplete(w) ? `<button type="button" class="history-remove" data-action="undo-workout-completion" data-id="${esc(w.id)}" aria-label="Remove ${esc(w.name)} from completed workouts" title="Undo completion"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button>` : ""}</div>${loggingWorkouts.has(w.id) ? logForm(w) : ""}</article>`).join("") || '<div class="empty"><span>↑</span><h3>Your next finish starts with a set.</h3><p>Complete a workout to see it here.</p></div>'}</section>`;
 }
 function dialog() {
   if (modal.type === "supersets")
@@ -628,6 +632,25 @@ app.addEventListener("click", (event) => {
       if (cloud.isSignedIn()) await processInvitation();
       else render();
     });
+    return;
+  }
+  if (a === "undo-workout-completion") {
+    const w = state.workouts.find((w) => w.id === b.dataset.id);
+    if (!w || !isWorkoutComplete(w)) return;
+    if (
+      !confirm(
+        `Undo completion for "${w.name}"? It will leave Completed workouts and become unfinished again. The workout, logged sets, weights, reps, times and notes will be kept.`,
+      )
+    )
+      return;
+    reopenWorkout(w);
+    loggingWorkouts.delete(w.id);
+    openExerciseIds.delete(w.id);
+    if (active === w.id) active = null;
+    dismissCelebration();
+    completionMessage = `Completion undone for ${w.name}. Your logged sets and notes are kept.`;
+    save();
+    render();
     return;
   }
   if (a === "retry-start") {
@@ -1134,6 +1157,7 @@ app.addEventListener("change", (event) => {
       log.actual = actual.value;
     }
     log.done = input.checked;
+    if (input.checked) delete workout().completionUndone;
     if (!input.checked) delete workout().completed;
     input.closest(".log-row").classList.toggle("set-done", input.checked);
   } else {

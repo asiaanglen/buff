@@ -174,3 +174,125 @@ test("manual program creation uses numbered weeks instead of calendar inputs", a
     page.getByRole("region", { name: "Next workout" }),
   ).toContainText("Back Squat");
 });
+
+test("Completed workouts can undo accidental completion without deleting plans, sets or notes", async ({
+  page,
+  browser,
+  baseURL,
+}) => {
+  const program = {
+    id: "undo",
+    name: "Undo completion program",
+    startDate: "2030-01-01",
+    weeks: 2,
+    note: "",
+  };
+  const names = [
+    "Fully logged",
+    "Partially logged",
+    "No sets logged",
+    "Standalone workout",
+  ];
+  const workouts = names.map((name, i) => ({
+    id: "undo" + i,
+    name,
+    date: addDays(program.startDate, i),
+    note: "Keep workout notes",
+    ...(i < 3 ? { programId: program.id } : {}),
+    exercises: [exercise("Back Squat", 2, 8)],
+    ...(i ? { completed: true } : {}),
+  }));
+  workouts[0].exercises[0].logs = [
+    { weight: 95, actual: 8, done: true },
+    { weight: 95, actual: 6, done: true },
+  ];
+  workouts[1].exercises[0].logs[0] = { weight: 85, actual: 5, done: true };
+  workouts[0].exercises[0].note = "Keep exercise notes";
+  expect(
+    (
+      await page.request.put("/api/state", {
+        headers: { Origin: baseURL },
+        data: {
+          revision: 0,
+          state: {
+            version: 1,
+            unit: "lbs",
+            activeProgramId: program.id,
+            programs: [program],
+            workouts,
+          },
+        },
+      })
+    ).ok(),
+  ).toBeTruthy();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await navigateTo(page, "history");
+  await expect(page.locator(".history-card")).toHaveCount(4);
+  const remove = (name) =>
+    page.getByRole("button", {
+      name: `Remove ${name} from completed workouts`,
+      exact: true,
+    });
+  page.once("dialog", (d) => d.dismiss());
+  await remove(names[0]).click();
+  await expect(page.locator(".history-card")).toHaveCount(4);
+  page.once("dialog", (d) => {
+    expect(d.message()).toContain("logged sets");
+    return d.accept();
+  });
+  await remove(names[0]).click();
+  await expect(page.locator(".history-card")).toHaveCount(3);
+  await navigateTo(page, "home");
+  const next = page.getByRole("region", { name: "Next workout" });
+  await expect(next).toContainText(names[0]);
+  await next
+    .getByRole("button", { name: "Resume workout", exact: false })
+    .click();
+  await expect(
+    page.getByLabel("Back Squat set 1 reps", { exact: true }),
+  ).toHaveValue("8");
+  await expect(
+    page.getByLabel("Back Squat set 1 completed", { exact: true }),
+  ).toBeChecked();
+  await page
+    .getByRole("button", { name: "Mark as complete", exact: true })
+    .click();
+  await navigateTo(page, "history");
+  await expect(page.locator(".history-card")).toHaveCount(4);
+  for (const name of names) {
+    page.once("dialog", (d) => d.accept());
+    await remove(name).click();
+  }
+  await expect(page.locator(".history-card")).toHaveCount(0);
+  await expect(page.locator("#sync-label")).toContainText("Synced");
+  const saved = (await (await page.request.get("/api/state")).json()).state;
+  expect(saved.workouts).toHaveLength(4);
+  expect(saved.activeProgramId).toBe(program.id);
+  for (let i = 0; i < workouts.length; i++) {
+    expect(saved.workouts[i].completionUndone).toBe(true);
+    expect(saved.workouts[i].programId).toBe(workouts[i].programId);
+    expect(saved.workouts[i].note).toBe(workouts[i].note);
+  }
+  expect(saved.workouts[1].exercises).toEqual(workouts[1].exercises);
+  expect(saved.workouts[0].exercises[0].note).toBe("Keep exercise notes");
+  expect(Number(saved.workouts[0].exercises[0].logs[0].weight)).toBe(95);
+  await page.reload();
+  await navigateTo(page, "history");
+  await expect(page.locator(".history-card")).toHaveCount(0);
+  const other = await browser.newContext({
+    baseURL,
+    storageState: { cookies: await page.context().cookies(), origins: [] },
+  });
+  try {
+    const screen = await other.newPage();
+    await screen.goto("/");
+    await expect(
+      screen.getByRole("region", { name: "Next workout" }),
+    ).toContainText(names[0]);
+    await navigateTo(screen, "history");
+    await expect(screen.locator(".history-card")).toHaveCount(0);
+  } finally {
+    await other.close();
+  }
+});

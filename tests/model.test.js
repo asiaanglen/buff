@@ -630,3 +630,72 @@ test("exercise history follows actual training dates independently of program sc
   assert.equal(history[0].date, "2026-11-09");
   assert.equal(history[0].latest.weight, 95);
 });
+
+test("undoing completion keeps every result, prevents automatic recompletion, and agrees with SQL counts", async () => {
+  const { reopenWorkout, isWorkoutComplete, finishWorkout } =
+    await import("../shared/completion.js");
+  const { completedWorkoutSql } = await import("../worker/workout-sql.js");
+  const { DatabaseSync } = await import("node:sqlite");
+  const w = {
+    id: "undo",
+    name: "Undo session",
+    note: "Keep this note",
+    date: "2030-01-01",
+    programId: "undo-program",
+    exercises: [exercise("Back Squat", 1, 8)],
+  };
+  w.exercises[0].logs[0] = { weight: 95, actual: 8, done: true };
+  w.exercises[0].note = "Keep exercise notes";
+  const original = structuredClone(w.exercises);
+  assert.equal(isWorkoutComplete(w), true);
+  reopenWorkout(w);
+  assert.equal(isWorkoutComplete(w), false);
+  assert.deepEqual(w.exercises, original);
+  assert.equal(w.note, "Keep this note");
+  const state = {
+    version: 1,
+    unit: "lbs",
+    activeProgramId: "undo-program",
+    programs: [
+      {
+        id: "undo-program",
+        name: "Undo",
+        startDate: w.date,
+        weeks: 2,
+        note: "",
+      },
+    ],
+    workouts: [w],
+  };
+  assert.equal(validState(state), true);
+  const db = new DatabaseSync(":memory:");
+  try {
+    assert.equal(
+      db
+        .prepare(
+          `SELECT ${completedWorkoutSql} AS complete FROM json_each(?) w`,
+        )
+        .get(JSON.stringify([w])).complete,
+      0,
+    );
+    const [copy] = copyProgramWeek(state, "undo-program", 1, 2);
+    assert.equal(copy.completionUndone, undefined);
+    assert.equal(w.completionUndone, true);
+    w.completionUndone = "yes";
+    assert.equal(validState(state), false);
+    w.completionUndone = true;
+    finishWorkout(w);
+    assert.equal(w.completionUndone, undefined);
+    assert.equal(isWorkoutComplete(w), true);
+    assert.equal(
+      db
+        .prepare(
+          `SELECT ${completedWorkoutSql} AS complete FROM json_each(?) w`,
+        )
+        .get(JSON.stringify([w])).complete,
+      1,
+    );
+  } finally {
+    db.close();
+  }
+});

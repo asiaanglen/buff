@@ -87,6 +87,8 @@ export function validState(s) {
       !text(w.note, 500) ||
       (w.completed !== undefined && typeof w.completed !== "boolean") ||
       (w.skipped !== undefined && typeof w.skipped !== "boolean") ||
+      (w.completionUndone !== undefined &&
+        typeof w.completionUndone !== "boolean") ||
       (w.performedDate !== undefined && !validDate(w.performedDate)) ||
       !validDate(w.date) ||
       !Array.isArray(w.exercises) ||
