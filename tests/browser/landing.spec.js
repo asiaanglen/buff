@@ -28,7 +28,7 @@ test("signed-out visitors only see the landing page, including direct private UR
   }
   expect((await page.request.get("/api/state")).status()).toBe(401);
 });
-test("landing page signup leads to the planner, signed-in reloads stay there, and sign-out restores the landing page", async ({
+test("landing page signup opens Home, signed-in reloads stay there, and sign-out restores the landing page", async ({
   page,
 }) => {
   await page.goto("/");
@@ -54,13 +54,16 @@ test("landing page signup leads to the planner, signed-in reloads stay there, an
   });
   await page.getByRole("button", { name: "Close account" }).click();
   await expect(
-    page.getByRole("heading", { name: "Your week, in motion." }),
+    page.getByRole("heading", { name: "Your next good workout." }),
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "Your week, in motion." }),
+    page.getByRole("heading", { name: "Your next good workout." }),
   ).toBeVisible();
   await expect(page.locator(".landing")).toHaveCount(0);
+  await expect(
+    page.getByLabel("Buff app demonstration", { exact: true }),
+  ).toHaveCount(0);
   await page
     .getByRole("button", { name: "Account and cross-device sync" })
     .click();
@@ -121,4 +124,51 @@ test("unconfigured Google sign-in is hidden and fails closed", async ({
     page.getByRole("link", { name: "Continue with Google" }),
   ).toHaveCount(0);
   expect((await page.request.get("/api/auth/google/start")).status()).toBe(503);
+});
+
+test("public landing demo plays inline with captions and fits mobile screens", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const video = page.getByLabel("Buff app demonstration", { exact: true });
+  await expect(video).toBeVisible();
+  await expect(video).toHaveAttribute("preload", "none");
+  expect(
+    await video.evaluate((v) => ({
+      controls: v.controls,
+      inline: v.playsInline,
+      autoplay: v.autoplay,
+      paused: v.paused,
+    })),
+  ).toEqual({ controls: true, inline: true, autoplay: false, paused: true });
+  await expect(video.locator("track")).toHaveAttribute(
+    "src",
+    "/media/buff-demo.en.vtt",
+  );
+  const captions = await page.request.get("/media/buff-demo.en.vtt");
+  expect(captions.ok()).toBeTruthy();
+  expect(await captions.text()).toContain("WEBVTT");
+  await page
+    .getByRole("link", { name: "Watch the demo", exact: false })
+    .click();
+  await video.evaluate(async (v) => {
+    v.muted = true;
+    await v.play();
+  });
+  await expect
+    .poll(() => video.evaluate((v) => v.currentTime))
+    .toBeGreaterThan(0);
+  expect(await video.evaluate((v) => v.duration)).toBeGreaterThan(280);
+  await video.evaluate((v) => v.pause());
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    const box = await video.boundingBox();
+    expect(box.width).toBeLessThanOrEqual(width);
+    expect(box.width / box.height).toBeCloseTo(16 / 9, 1);
+  }
 });

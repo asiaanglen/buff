@@ -4200,3 +4200,48 @@ body:has(#program-share-dialog[open]) .pwa-help {
   outline: 2px solid var(--purple);
   outline-offset: 2px;
 }
+
+.lp-watch-demo {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--purple);
+  font-size: 14px;
+  font-weight: 650;
+  margin-top: 20px;
+  text-underline-offset: 4px;
+}
+.lp-video-section {
+  padding: 0 0 70px;
+  scroll-margin-top: 24px;
+}
+.lp-video-section .lp-section-intro p {
+  max-width: 580px;
+  margin: 14px auto 28px;
+  color: #786b89;
+  line-height: 1.6;
+}
+.lp-video-frame {
+  overflow: hidden;
+  border: 1px solid #ded5ed;
+  border-radius: 22px;
+  background: #211b2b;
+  box-shadow: 0 16px 48px #37214c15;
+}
+.lp-video-frame video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+@media (max-width: 600px) {
+  .lp-video-section {
+    padding-bottom: 42px;
+  }
+  .lp-video-frame {
+    border-radius: 14px;
+  }
+  .lp-video-section .lp-section-intro p {
+    font-size: 14px;
+  }
+}

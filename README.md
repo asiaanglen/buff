@@ -6,6 +6,10 @@ A program-focused workout app with accounts, cross-device sync, supersets, repet
 
 Buff is deployed at **https://buff.asiaanglen.workers.dev**. Cloudflare confirmed the deployment and public routing. Live checks verified account creation, saving a 10-week program, loading Week 10 and logged sets from a second session, stale-update protection, and sign-out. The temporary verification account was removed. The full browser workflow also passed against the local Workers/D1 runtime. CSV/XLSX uploads and the authenticated MCP server are deployed, with live OAuth/MCP approval and revocation checks passing.
 
+## Public demo video
+
+Signed-out visitors can watch the Buff demo below the landing-page introduction or use **Watch the demo** to jump to it. The native player supports inline mobile playback, controls, and English captions extracted from the supplied video. It does not autoplay or preload the video; a lightweight poster displays first. The video, poster, and WebVTT captions are public static assets under `public/media`, served by the existing Cloudflare deployment. The demo player does not appear in signed-in Home. No external video service is required.
+
 ## Free hosting: Cloudflare Workers + D1
 
 The frontend and API run together on a Cloudflare Worker. Accounts and workout history live in Cloudflare D1, so no paid server or persistent disk is needed. Use a Cloudflare **Free** account/Workers plan and stay within its Workers and D1 allowances. Free hosting is subject to request, database, and storage quotas; monitor usage in Cloudflare. Nothing in this project enables a paid plan or automatic upgrades.
