@@ -8,7 +8,7 @@ Buff is deployed at **https://buff.asiaanglen.workers.dev**. Cloudflare confirme
 
 ## Public demo video
 
-Signed-out visitors can watch the Buff demo below the landing-page introduction or use **Watch the demo** to jump to it. The native player supports inline mobile playback, controls, and English captions extracted from the supplied video. It does not autoplay or preload the video; a lightweight poster displays first. The video, poster, and WebVTT captions are public static assets under `public/media`, served by the existing Cloudflare deployment. The demo player does not appear in signed-in Home. No external video service is required.
+Signed-out visitors can watch the Buff demo below the landing-page introduction or use **Watch the demo** to jump to it. The native player supports inline mobile playback, controls, and English captions extracted from the supplied video. A web-optimized 720p copy preserves the full walkthrough and narration while keeping the download near 5 MB. It does not autoplay or preload the video; a lightweight poster displays first. The video, poster, and WebVTT captions are public static assets under `public/media`, served by the existing Cloudflare deployment. The demo player does not appear in signed-in Home. No external video service is required.
 
 ## Free hosting: Cloudflare Workers + D1
 
